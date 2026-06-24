@@ -100,7 +100,9 @@ export default function UIOverlay({
   isItemEditingActive,
   onStartEdit,
   onSaveEdit,
-  onCancelEdit
+  onCancelEdit,
+  toast = null,
+  crosshairHovered = null
 }) {
   const [pages, setPages] = useState([{ text: '', image: null, layout: 'image-top-text-bottom' }]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -206,6 +208,54 @@ export default function UIOverlay({
 
   return (
     <div className="ui-container">
+      {/* Merkez Crosshair Noktası */}
+      {cameraMode === 'free' && !isEditorOpen && !isDashboardOpen && !isSettingsOpen && !isItemDrawerOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: crosshairHovered ? '8px' : '4px',
+            height: crosshairHovered ? '8px' : '4px',
+            borderRadius: '50%',
+            background: crosshairHovered ? '#00f0ff' : 'rgba(255, 255, 255, 0.45)',
+            boxShadow: crosshairHovered ? '0 0 10px #00f0ff, 0 0 20px rgba(0, 240, 255, 0.5)' : 'none',
+            pointerEvents: 'none',
+            transition: 'all 0.15s ease',
+            zIndex: 99999
+          }}
+        />
+      )}
+
+      {/* Auto-Save Toast Bildirimi */}
+      {toast && toast.show && (
+        <div 
+          className="interactive-ui"
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            color: '#00f0ff',
+            fontSize: '0.85rem',
+            fontFamily: 'sans-serif',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 0 20px rgba(0, 240, 255, 0.25)',
+            zIndex: 999999,
+            pointerEvents: 'auto'
+          }}
+        >
+          <span style={{ fontWeight: 'bold' }}>{toast.message}</span>
+        </div>
+      )}
       {/* Modal Backdrop */}
       {isOpen && (
         <div 
@@ -480,7 +530,8 @@ export default function UIOverlay({
         const handleRotate = (direction) => {
           const step = Math.PI / 12; // 15 derece
           const newRy = rotationVal + (direction === 'left' ? step : -step);
-          onUpdatePlacedItem(activeItemId, { rotation: { x: 0, y: newRy, z: 0 } });
+          const snappedRy = Math.round(newRy / step) * step;
+          onUpdatePlacedItem(activeItemId, { rotation: { x: 0, y: snappedRy, z: 0 } });
         };
 
         const handleMoveCoord = (axis, amount) => {

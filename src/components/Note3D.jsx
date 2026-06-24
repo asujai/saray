@@ -22,7 +22,8 @@ export default function Note3D({
   onEditClick, 
   onSetPageIndex,
   isFlashed,
-  onHoverChange
+  onHoverChange,
+  isCrosshairHovered = false
 }) {
   const [hovered, setHovered] = useState(false);
   const [texture, setTexture] = useState(null);
@@ -221,7 +222,7 @@ export default function Note3D({
     }
   };
 
-  const scale = isSelected ? 1.03 : hovered && !isPreview ? 1.01 : 1;
+  const scale = isSelected ? 1.03 : (hovered || isCrosshairHovered) && !isPreview ? 1.01 : 1;
 
   useEffect(() => {
     if (!isAddMode && !isPreview) {
@@ -278,7 +279,7 @@ export default function Note3D({
       onWheel={handleWheel}
     >
       {/* 3D Sticky Note Paper */}
-      <mesh castShadow receiveShadow>
+      <mesh name={`note_mesh_${note.id}`} castShadow receiveShadow>
         <boxGeometry args={[w, h, 0.01]} />
         <meshStandardMaterial 
           color={note.color || '#fef08a'} 
@@ -286,8 +287,8 @@ export default function Note3D({
           metalness={0.1}
           transparent={isPreview}
           opacity={isPreview ? 0.6 : 1.0}
-          emissive={isFlashed ? '#00f0ff' : isSelected ? '#ffffff' : note.color || '#fef08a'}
-          emissiveIntensity={isFlashed ? 1.5 : isSelected ? 0.25 : hovered && !isPreview ? 0.12 : 0.0}
+          emissive={isFlashed ? '#00f0ff' : isSelected ? '#ffffff' : isCrosshairHovered ? '#ffffff' : note.color || '#fef08a'}
+          emissiveIntensity={isFlashed ? 1.5 : isSelected ? 0.25 : (hovered || isCrosshairHovered) && !isPreview ? 0.15 : 0.0}
         />
       </mesh>
  

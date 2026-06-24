@@ -8,12 +8,24 @@ import Note3D from './components/Note3D';
 import PlacedItem3D from './components/PlacedItem3D';
 import UIOverlay from './components/UIOverlay';
 import NoteDashboard from './components/NoteDashboard';
+import CrosshairRaycaster from './components/CrosshairRaycaster';
 import { getAllNotes, saveAllNotesToDB, initDB } from './utils/db';
 
 const LOCAL_STORAGE_KEY = 'saray_3d_mindmap_notes';
 
 export default function App() {
   const [notes, setNotes] = useState([]);
+  const [crosshairHovered, setCrosshairHovered] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: '' });
+  const toastTimeoutRef = useRef(null);
+
+  const showSavedToast = (message = '✓ Kaydedildi') => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ show: true, message });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast({ show: false, message: '' });
+    }, 1000);
+  };
   const [isLoaded, setIsLoaded] = useState(false);
   const [cameraMode, setCameraMode] = useState('free'); // 'free' or 'third-person'
   const [isAddMode, setIsAddMode] = useState(false);
@@ -113,14 +125,17 @@ export default function App() {
 
   const handleUpdateRoomName = (roomId, newName) => {
     setRoomNames((prev) => ({ ...prev, [roomId]: newName }));
+    showSavedToast('✓ Oda adı kaydedildi');
   };
 
   const handleUpdateRoomFloorColor = (roomId, color) => {
     setRoomFloorColors((prev) => ({ ...prev, [roomId]: color }));
+    showSavedToast('✓ Oda rengi kaydedildi');
   };
 
   const handleUpdateRoomWallColor = (roomId, color) => {
     setRoomWallColors((prev) => ({ ...prev, [roomId]: color }));
+    showSavedToast('✓ Oda rengi kaydedildi');
   };
 
   const handleResetColors = () => {
@@ -138,6 +153,7 @@ export default function App() {
       study: null,
       living: null
     });
+    showSavedToast('✓ Özelleştirmeler sıfırlandı');
   };
 
   const getRoomIdFromPosition = (x, z) => {
@@ -206,6 +222,7 @@ export default function App() {
     if (activeItemId === id) {
       setActiveItemId(null);
     }
+    showSavedToast('✓ Eşya silindi');
   };
 
   const handleStartEdit = (itemId) => {
@@ -220,6 +237,7 @@ export default function App() {
   const handleSaveEdit = () => {
     setIsItemEditingActive(false);
     setEditingItemBackup(null);
+    showSavedToast('✓ Eşya düzenlemesi kaydedildi');
   };
 
   const handleCancelEdit = () => {
@@ -228,6 +246,7 @@ export default function App() {
     }
     setIsItemEditingActive(false);
     setEditingItemBackup(null);
+    showSavedToast('✓ Değişiklikler iptal edildi');
   };
 
   const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info') => {
@@ -250,6 +269,7 @@ export default function App() {
       })
     );
     setIsEditorOpen(false);
+    showSavedToast('✓ Not kaydedildi');
   };
 
   const handleDeleteItemNote = (itemId) => {
@@ -263,6 +283,7 @@ export default function App() {
       })
     );
     setIsEditorOpen(false);
+    showSavedToast('✓ Not silindi');
   };
 
   const handleGoToItem = (item) => {
@@ -430,17 +451,20 @@ export default function App() {
       if (activeItemId && isItemEditingActive) {
         const item = placedItems.find((i) => i.id === activeItemId);
         if (item) {
+          const ROTATION_SNAP = Math.PI / 12;
           if (e.code === 'KeyQ') {
             const currentRot = item.rotation || { x: 0, y: 0, z: 0 };
-            const ry = (currentRot.y || 0) + Math.PI / 12; // 15 derece sola
-            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: ry } });
+            const ry = (currentRot.y || 0) + ROTATION_SNAP;
+            const snappedRy = Math.round(ry / ROTATION_SNAP) * ROTATION_SNAP;
+            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: snappedRy } });
             e.preventDefault();
             return;
           }
           if (e.code === 'KeyE') {
             const currentRot = item.rotation || { x: 0, y: 0, z: 0 };
-            const ry = (currentRot.y || 0) - Math.PI / 12; // 15 derece sağa
-            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: ry } });
+            const ry = (currentRot.y || 0) - ROTATION_SNAP;
+            const snappedRy = Math.round(ry / ROTATION_SNAP) * ROTATION_SNAP;
+            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: snappedRy } });
             e.preventDefault();
             return;
           }
@@ -482,6 +506,50 @@ export default function App() {
         }
       }
 
+      if (e.code === 'KeyN') {
+        const isBlocked = isEditorOpen || isDashboardOpen || isItemEditingActive;
+        if (cameraMode === 'free' && !isBlocked) {
+          if (crosshairHovered && crosshairHovered.type === 'wall') {
+            const bounds = calculateNoteBounds({
+              wallId: crosshairHovered.id,
+              startPoint: crosshairHovered.point,
+              normal: crosshairHovered.normal,
+              currentPoint: crosshairHovered.point
+            });
+
+            if (bounds) {
+              let defaultColor = '#fef08a';
+              if (theme === 'library') defaultColor = '#fef9c3';
+              else if (theme === 'sci-fi') defaultColor = '#00f0ff';
+
+              const newNote = {
+                id: 'note_' + Date.now(),
+                wallId: crosshairHovered.id,
+                position: bounds.position,
+                rotation: bounds.rotation,
+                width: 2.0, // 2x2 boyut
+                height: 2.0,
+                pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
+                currentPageIndex: 0,
+                color: defaultColor
+              };
+
+              setNotes((prev) => [...prev, newNote]);
+              setEditorMode('note');
+              setActiveNoteId(newNote.id);
+              setActiveItemId(null);
+              setIsEditorOpen(true);
+              setIsAddMode(false);
+              showSavedToast('✓ Hızlı not oluşturuldu');
+            }
+          } else {
+            showSavedToast('⚠️ Hızlı not için duvara bakın');
+          }
+          e.preventDefault();
+          return;
+        }
+      }
+
       if (e.code === 'KeyC') {
         setCameraMode((prev) => (prev === 'free' ? 'third-person' : 'free'));
       }
@@ -511,7 +579,7 @@ export default function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem]);
+  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, cameraMode, isEditorOpen]);
 
   // Context Menu (Right Click) global listener to close editor and deselect active note / cancel item edit
   useEffect(() => {
@@ -727,6 +795,7 @@ export default function App() {
       prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, updatedAt: new Date().toISOString() } : n))
     );
     setIsEditorOpen(false);
+    showSavedToast('✓ Not kaydedildi');
   };
 
   // Delete note
@@ -734,6 +803,7 @@ export default function App() {
     setNotes((prev) => prev.filter((n) => n.id !== id));
     setIsEditorOpen(false);
     setActiveNoteId(null);
+    showSavedToast('✓ Not silindi');
   };
 
   // Handle focusing/teleporting camera to note and flashing it
@@ -780,6 +850,11 @@ export default function App() {
     setIsEditorOpen(false);
   };
 
+  const handleSetTheme = (newTheme) => {
+    setTheme(newTheme);
+    showSavedToast('✓ Konsept değiştirildi');
+  };
+
   const activeNote = React.useMemo(() => {
     if (editorMode === 'note') {
       return notes.find((n) => n.id === activeNoteId);
@@ -822,6 +897,13 @@ export default function App() {
           gl.shadowMap.type = THREE.PCFShadowMap;
         }}
       >
+        {/* Ekran merkezinden nesne tespiti yapan raycaster */}
+        <CrosshairRaycaster
+          cameraMode={cameraMode}
+          isBlocked={isEditorOpen || isDashboardOpen || isItemEditingActive}
+          onHoverChange={setCrosshairHovered}
+        />
+
         {/* 3D Room Environment */}
         <Room 
           currentTheme={theme}
@@ -847,6 +929,7 @@ export default function App() {
             onSetPageIndex={handleSetNotePageIndex}
             isFlashed={flashedNoteId === note.id}
             onHoverChange={setHoveredNoteId}
+            isCrosshairHovered={crosshairHovered?.type === 'note' && crosshairHovered?.id === note.id}
           />
         ))}
 
@@ -874,6 +957,7 @@ export default function App() {
               setActiveNoteId(null);
               setIsEditorOpen(true);
             }}
+            isCrosshairHovered={crosshairHovered?.type === 'item' && crosshairHovered?.id === item.id}
           />
         ))}
 
@@ -914,7 +998,7 @@ export default function App() {
       {/* HTML overlay UI */}
       <UIOverlay
         theme={theme}
-        setTheme={setTheme}
+        setTheme={handleSetTheme}
         roomNames={roomNames}
         roomFloorColors={roomFloorColors}
         roomWallColors={roomWallColors}
@@ -946,6 +1030,7 @@ export default function App() {
         onStartEdit={handleStartEdit}
         onSaveEdit={handleSaveEdit}
         onCancelEdit={handleCancelEdit}
+        toast={toast}
       />
 
       {/* Not Kontrol Paneli */}

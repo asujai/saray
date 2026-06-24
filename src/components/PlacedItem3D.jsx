@@ -278,7 +278,8 @@ export default function PlacedItem3D({
   onSelect,
   onStartEdit,
   onUpdate,
-  onOpenNote
+  onOpenNote,
+  isCrosshairHovered = false
 }) {
   const dragRef = useRef({ isDragging: false, pointerId: null, startPosition: [0, 0, 0], dragged: false, timer: null, progressInterval: null });
   const helperMeshRef = useRef();
@@ -292,6 +293,10 @@ export default function PlacedItem3D({
         helperMeshRef.current.material.opacity = pulse;
       } else if (isSelected) {
         helperMeshRef.current.material.opacity = 0.7;
+      } else if (isCrosshairHovered) {
+        helperMeshRef.current.material.opacity = 0.25;
+      } else {
+        helperMeshRef.current.material.opacity = 0;
       }
     }
     if (iconRef.current) {
@@ -474,6 +479,7 @@ export default function PlacedItem3D({
   return (
     <group>
       <group
+        name={`item_mesh_${item.id}`}
         position={posArray}
         rotation={rotArray}
         scale={itemScale}
@@ -483,7 +489,7 @@ export default function PlacedItem3D({
         onPointerLeave={handlePointerLeave}
       >
         {renderModel()}
-        {(isSelected || isFlashed) && (
+        {(isSelected || isFlashed || isCrosshairHovered) && (
           <mesh ref={helperMeshRef} position={[0, helperBounds[1] / 2, 0]}>
             <boxGeometry args={helperBounds} />
             <meshBasicMaterial
