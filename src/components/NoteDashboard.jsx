@@ -196,6 +196,21 @@ export default function NoteDashboard({
     return [...wallNotes, ...itemNotes];
   }, [notes, placedItems, roomNames]);
 
+  // Extract all unique tags dynamically from all notes
+  const allAvailableTags = useMemo(() => {
+    const tagsSet = new Set();
+    allNotes.forEach((note) => {
+      const noteTags = note.tags || [];
+      noteTags.forEach((tag) => {
+        const trimmed = tag ? tag.trim() : '';
+        if (trimmed) {
+          tagsSet.add(trimmed);
+        }
+      });
+    });
+    return ['all', ...Array.from(tagsSet)];
+  }, [allNotes]);
+
   // Process and filter notes
   const filteredNotes = useMemo(() => {
     return allNotes.filter((note) => {
@@ -237,7 +252,7 @@ export default function NoteDashboard({
 
       return false;
     });
-  }, [allNotes, searchQuery, selectedRoom]);
+  }, [allNotes, searchQuery, selectedRoom, selectedTag]);
 
   if (!isOpen) return null;
 
@@ -339,7 +354,7 @@ export default function NoteDashboard({
 
           <div className="room-filters" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginTop: '10px' }}>
             <span style={{ fontSize: '0.75rem', color: '#94a3b8', alignSelf: 'center', marginRight: '6px' }}>Etiket:</span>
-            {['all', 'Fikir', 'Araştırma', 'Acil', 'Görev', 'Özet', 'Kaynak'].map((tag) => (
+            {allAvailableTags.map((tag) => (
               <button
                 key={tag}
                 className={`room-filter-btn ${selectedTag === tag ? 'active' : ''}`}
