@@ -460,6 +460,7 @@ export default function UIOverlay({
         className={`settings-modal glass-panel interactive-ui ${isSettingsOpen ? 'open' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         style={{ zIndex: 112 }}
       >
         <div className="settings-header">
@@ -698,6 +699,7 @@ export default function UIOverlay({
         className={`item-drawer glass-panel interactive-ui ${isItemDrawerOpen ? 'open' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         style={{ zIndex: 112 }}
       >
         <div className="drawer-header">
@@ -881,6 +883,7 @@ export default function UIOverlay({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
             style={{ padding: isItemEditingActive ? '12px 20px' : '16px 24px', flexWrap: 'wrap', gap: '12px' }}
           >
             <div className="item-info">
@@ -1089,6 +1092,7 @@ export default function UIOverlay({
         className={`editor-modal glass-panel interactive-ui ${isOpen ? 'open' : ''}`}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div className="editor-header">
           <h2 className="editor-title">Notu Oku & Düzenle</h2>
@@ -1376,11 +1380,13 @@ export default function UIOverlay({
                   />
                   <div 
                     className="editor-popover" 
+                    onWheel={(e) => e.stopPropagation()}
                     style={{ 
                       display: 'grid', 
                       gridTemplateColumns: 'repeat(5, 1fr)', 
                       gap: '8px', 
                       right: 0, 
+                      left: 'auto',
                       bottom: '100%', 
                       marginBottom: '8px', 
                       width: 'max-content',
@@ -1448,6 +1454,7 @@ export default function UIOverlay({
                   />
                   <div 
                     className="editor-popover tags-popover" 
+                    onWheel={(e) => e.stopPropagation()}
                     style={{ 
                       width: '280px', 
                       right: 0, 
@@ -1921,6 +1928,7 @@ export default function UIOverlay({
         >
           <div 
             className="glass-panel"
+            onWheel={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
               top: '50%',
@@ -1929,10 +1937,10 @@ export default function UIOverlay({
               width: '320px',
               padding: '24px',
               borderRadius: '16px',
-              border: '1px solid rgba(0, 240, 255, 0.3)',
-              background: 'rgba(15, 23, 42, 0.95)',
+              border: '1px solid var(--panel-border)',
+              background: 'var(--panel-bg-solid)',
               backdropFilter: 'blur(16px)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              boxShadow: 'var(--card-shadow)',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
@@ -1968,9 +1976,9 @@ export default function UIOverlay({
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    color: '#f8fafc',
+                    border: '1px solid var(--panel-border)',
+                    background: 'var(--button-bg-secondary)',
+                    color: 'var(--text-main)',
                     cursor: 'pointer',
                     fontSize: '0.85rem',
                     textAlign: 'left',
