@@ -1,5 +1,5 @@
 // Hologram dashboard integration active
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import Room from './components/Room';
@@ -10,8 +10,149 @@ import UIOverlay from './components/UIOverlay';
 import NoteDashboard from './components/NoteDashboard';
 import CrosshairRaycaster from './components/CrosshairRaycaster';
 import { getAllNotes, saveAllNotesToDB, initDB } from './utils/db';
+import MiniMapTracker from './components/MiniMapTracker';
+import { QuadraticBezierLine } from '@react-three/drei';
 
 const LOCAL_STORAGE_KEY = 'saray_3d_mindmap_notes';
+
+const PRESET_ITEMS = [
+  {
+    id: "preset_item_desk",
+    type: "desk",
+    source: "preset",
+    roomId: "study",
+    position: { x: 15, y: 0.005, z: 9 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#a1a1aa",
+    linkedNote: {
+      title: "Ana Çalışma Alanı",
+      pages: [{ text: "Bu masayı aktif çalıştığın konular için kullanabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+      currentPageIndex: 0,
+      iconType: "info",
+      tags: ["Çalışma"]
+    },
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_chair",
+    type: "chair",
+    source: "preset",
+    roomId: "study",
+    position: { x: 15, y: 0.005, z: 10.2 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#3f3f46",
+    linkedNote: null,
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_shelf",
+    type: "shelf",
+    source: "preset",
+    roomId: "study",
+    position: { x: 23.5, y: 0.005, z: 15 },
+    rotation: { x: 0, y: -Math.PI / 2, z: 0 },
+    scale: [1, 1, 1],
+    color: "#71717a",
+    linkedNote: {
+      title: "Kaynaklar",
+      pages: [{ text: "Kitap, makale, video ve araştırma kaynaklarını bu alana bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+      currentPageIndex: 0,
+      iconType: "info",
+      tags: ["Kaynak"]
+    },
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_board",
+    type: "board",
+    source: "preset",
+    roomId: "study",
+    position: { x: 15, y: 1.5, z: 6.2 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#d97706",
+    linkedNote: {
+      title: "Başlangıç",
+      pages: [{ text: "Buraya ilk ana fikrini yaz. Sonra diğer notları bu fikirle ilişkilendir.", image: null, layout: 'image-top-text-bottom' }],
+      currentPageIndex: 0,
+      iconType: "info",
+      tags: ["Başlangıç"]
+    },
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_plant",
+    type: "plant",
+    source: "preset",
+    roomId: "study",
+    position: { x: 23.2, y: 0.005, z: 7.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#22c55e",
+    linkedNote: null,
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_lamp",
+    type: "lamp",
+    source: "preset",
+    roomId: "study",
+    position: { x: 7.5, y: 0.005, z: 7.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#eab308",
+    linkedNote: null,
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_wallshelf",
+    type: "wallshelf",
+    source: "preset",
+    roomId: "study",
+    position: { x: 23.5, y: 1.5, z: 9 },
+    rotation: { x: 0, y: -Math.PI / 2, z: 0 },
+    scale: [1, 1, 1],
+    color: "#52525b",
+    linkedNote: {
+      title: "Kısa Fikirler",
+      pages: [{ text: "Henüz tam gelişmemiş fikirleri burada tutabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+      currentPageIndex: 0,
+      iconType: "info",
+      tags: ["Fikir"]
+    },
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "preset_item_rug",
+    type: "rug",
+    source: "preset",
+    roomId: "study",
+    position: { x: 15, y: 0.001, z: 13.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: [1, 1, 1],
+    color: "#e4e4e7",
+    linkedNote: null,
+    isRemovable: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
 
 export default function App() {
   const [notes, setNotes] = useState([]);
@@ -27,22 +168,42 @@ export default function App() {
     }, 1000);
   };
   const [isLoaded, setIsLoaded] = useState(false);
-  const [cameraMode, setCameraMode] = useState('free'); // 'free' or 'third-person'
+  const [cameraMode, setCameraMode] = useState('third-person'); // 'free' or 'third-person'
   const [isAddMode, setIsAddMode] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false); // New state to control large editor modal visibility
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isItemDrawerOpen, setIsItemDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [cameraFocusRequest, setCameraFocusRequest] = useState(null);
   const [flashedNoteId, setFlashedNoteId] = useState(null);
   const [flashedItemId, setFlashedItemId] = useState(null);
   const [hoveredNoteId, setHoveredNoteId] = useState(null);
   const [editorMode, setEditorMode] = useState('note'); // 'note' or 'item'
+  const [allowQuickTravel, setAllowQuickTravel] = useState(() => localStorage.getItem('saray_allow_quick_travel') === 'true');
+  const [freeFlightEnabled, setFreeFlightEnabled] = useState(() => localStorage.getItem('saray_free_flight_enabled') === 'true');
+  const [devMode, setDevMode] = useState(() => localStorage.getItem('saray_dev_mode_enabled') === 'true');
+  const [highlightedRoomId, setHighlightedRoomId] = useState(null);
+  const highlightTimeoutRef = useRef(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('saray_mindmap_theme') || 'minimal');
+  const [uiTheme, setUiTheme] = useState(() => localStorage.getItem('saray_ui_theme') || 'dark');
+
+  useEffect(() => {
+    document.body.classList.remove('light-theme', 'dark-theme');
+    document.body.classList.add(`${uiTheme}-theme`);
+    localStorage.setItem('saray_ui_theme', uiTheme);
+  }, [uiTheme]);
 
   // Eşya yerleştirme sistemi state'leri
   const [placedItems, setPlacedItems] = useState(() => {
     const saved = localStorage.getItem('saray_placed_items');
-    if (!saved) return [];
+    const presetInitialized = localStorage.getItem('saray_preset_rooms_initialized');
+    if (!saved) {
+      if (!presetInitialized) {
+        return PRESET_ITEMS;
+      }
+      return [];
+    }
     try {
       const items = JSON.parse(saved);
       return items.map(item => {
@@ -68,6 +229,7 @@ export default function App() {
   const [isItemEditingActive, setIsItemEditingActive] = useState(false);
   const [editingItemBackup, setEditingItemBackup] = useState(null);
   const playerPositionRef = useRef([0, 1.6, 5]);
+  const playerDirectionRef = useRef([0, 0, -1]);
 
   useEffect(() => {
     localStorage.setItem('saray_placed_items', JSON.stringify(placedItems));
@@ -75,6 +237,66 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('saray_mindmap_theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_allow_quick_travel', allowQuickTravel);
+  }, [allowQuickTravel]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_free_flight_enabled', freeFlightEnabled);
+  }, [freeFlightEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_dev_mode_enabled', devMode);
+  }, [devMode]);
+
+  useEffect(() => {
+    if (!devMode) {
+      setFreeFlightEnabled(false);
+      if (cameraMode === 'free') {
+        setCameraMode('third-person');
+      }
+    }
+  }, [devMode, cameraMode]);
+
+  const triggerHighlight = (roomId) => {
+    if (!roomId || roomId === 'unknown') return;
+    setHighlightedRoomId(roomId);
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedRoomId(null);
+    }, 8000);
+  };
+
+  const envConfig = useMemo(() => {
+    switch (theme) {
+      case 'library':
+        return {
+          bgColor: '#ebd9c0', // Sıcak krem tonu
+          fogNear: 35,
+          fogFar: 95,
+          outerFloorColor: '#c2b3a1', // Kütüphane bahçesi / toprak tonu
+          leafColor: '#854d0e', // Sonbahar tonlarında yaprak rengi
+        };
+      case 'sci-fi':
+        return {
+          bgColor: '#060810', // Karanlık neon atmosfer
+          fogNear: 35,
+          fogFar: 95,
+          outerFloorColor: '#0c101d', // Koyu metalik mavi/mor
+          leafColor: '#00f0ff', // Hologram cyan çalı rengi
+        };
+      case 'minimal':
+      default:
+        return {
+          bgColor: '#e2e8f0', // Pastel tatlı gri-mavi
+          fogNear: 35,
+          fogFar: 95,
+          outerFloorColor: '#cbd5e1', // Temiz minimalist gri zemin
+          leafColor: '#10b981', // Canlı minimalist yeşil çalı
+        };
+    }
   }, [theme]);
 
   // Oda isimleri ve renk özelleştirme state'leri
@@ -123,6 +345,69 @@ export default function App() {
     localStorage.setItem('saray_room_wall_colors', JSON.stringify(roomWallColors));
   }, [roomWallColors]);
 
+  // --- 3D Bağlantı (İlişki) ve Kavram Yönetim State'leri ---
+  const [connections, setConnections] = useState(() => {
+    const saved = localStorage.getItem('saray_connections');
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map(c => ({
+        ...c,
+        isVisible: c.isVisible ?? true,
+        conceptId: c.conceptId || 'concept_general',
+        label: c.label || '',
+        fromType: c.fromType || (c.fromId?.startsWith('note_') ? 'note' : 'item'),
+        toType: c.toType || (c.toId?.startsWith('note_') ? 'note' : 'item')
+      }));
+    } catch {
+      return [];
+    }
+  });
+
+  const [connectionConcepts, setConnectionConcepts] = useState(() => {
+    const saved = localStorage.getItem('saray_connection_concepts');
+    if (!saved) return [
+      { id: "concept_general", name: "Genel", color: "#00f0ff" },
+      { id: "concept_idea", name: "Fikir", color: "#a78bfa" },
+      { id: "concept_source", name: "Kaynak", color: "#60a5fa" },
+      { id: "concept_task", name: "Görev", color: "#facc15" },
+      { id: "concept_cause", name: "Sebep-Sonuç", color: "#fb923c" },
+      { id: "concept_continue", name: "Devamı", color: "#4ade80" },
+      { id: "concept_compare", name: "Karşılaştırma", color: "#f472b6" }
+    ];
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return [];
+    }
+  });
+
+  const [pendingConnectionSource, setPendingConnectionSource] = useState(null);
+  const [pendingConnectionTarget, setPendingConnectionTarget] = useState(null);
+  const [isConceptSelectOpen, setIsConceptSelectOpen] = useState(false);
+  const [connectionVisibilityMode, setConnectionVisibilityMode] = useState(() => {
+    return localStorage.getItem('saray_connection_visibility_mode') || 'selected-only';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('saray_connections', JSON.stringify(connections));
+  }, [connections]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_connection_concepts', JSON.stringify(connectionConcepts));
+  }, [connectionConcepts]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_connection_visibility_mode', connectionVisibilityMode);
+  }, [connectionVisibilityMode]);
+
+  const handleSetIsAddMode = (val) => {
+    if (val && pendingConnectionSource) {
+      handleCancelConnection();
+    }
+    setIsAddMode(val);
+  };
+
   const handleUpdateRoomName = (roomId, newName) => {
     setRoomNames((prev) => ({ ...prev, [roomId]: newName }));
     showSavedToast('✓ Oda adı kaydedildi');
@@ -156,6 +441,96 @@ export default function App() {
     showSavedToast('✓ Özelleştirmeler sıfırlandı');
   };
 
+  const handleLoadPresetTemplate = async () => {
+    setPlacedItems((prev) => {
+      const filtered = prev.filter(item => item.roomId !== 'study');
+      const updated = [...filtered, ...PRESET_ITEMS];
+      localStorage.setItem('saray_placed_items', JSON.stringify(updated));
+      return updated;
+    });
+
+    const studyWalls = ['wall_front_study', 'wall_right_study', 'wall_inner_right_division'];
+    try {
+      let dbNotes = await getAllNotes();
+      dbNotes = dbNotes.filter(n => !studyWalls.includes(n.wallId));
+
+      const defaultColor = theme === 'library' ? '#fef9c3' : theme === 'sci-fi' ? '#00f0ff' : '#fef08a';
+      const presetNotes = [
+        {
+          id: 'note_preset_1',
+          wallId: 'wall_inner_right_division',
+          position: [15, 1.8, 0.02],
+          rotation: [0, 0, 0],
+          width: 0.7,
+          height: 0.7,
+          title: "Bugünkü Odak",
+          pages: [{ text: "Bugün çalışacağın ana konuyu buraya yaz. Büyük konuları küçük notlara böl.", image: null, layout: 'image-top-text-bottom' }],
+          currentPageIndex: 0,
+          color: defaultColor,
+          tags: ["Görev"]
+        },
+        {
+          id: 'note_preset_2',
+          wallId: 'wall_right_study',
+          position: [24.98, 1.8, 11],
+          rotation: [0, -Math.PI / 2, 0],
+          width: 0.7,
+          height: 0.7,
+          title: "Kaynak Listesi",
+          pages: [{ text: "Okuduğun kitapları, izlediğin videoları veya araştırma linklerini burada toplayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+          currentPageIndex: 0,
+          color: defaultColor,
+          tags: ["Kaynak"]
+        },
+        {
+          id: 'note_preset_3',
+          wallId: 'wall_front_study',
+          position: [10, 1.8, 24.98],
+          rotation: [0, Math.PI, 0],
+          width: 0.7,
+          height: 0.7,
+          title: "Fikir Alanı",
+          pages: [{ text: "Aklına gelen fikirleri hızlıca buraya ekle. Daha sonra bağlantılarla diğer notlara bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+          currentPageIndex: 0,
+          color: defaultColor,
+          tags: ["Fikir"]
+        }
+      ];
+
+      const existingIds = new Set(dbNotes.map(n => n.id));
+      const notesToAppend = presetNotes.filter(n => !existingIds.has(n.id));
+      const finalNotes = [...dbNotes, ...notesToAppend];
+      
+      await saveAllNotesToDB(finalNotes);
+      setNotes(finalNotes);
+    } catch (err) {
+      console.error('Şablon notları yüklenirken hata:', err);
+    }
+
+    localStorage.setItem('saray_preset_rooms_initialized', 'true');
+    showSavedToast('✓ Hazır Oda Tasarımı Yüklendi');
+  };
+
+  const handleClearRoomTemplate = async () => {
+    setPlacedItems((prev) => {
+      const filtered = prev.filter(item => item.roomId !== 'study');
+      localStorage.setItem('saray_placed_items', JSON.stringify(filtered));
+      return filtered;
+    });
+
+    const studyWalls = ['wall_front_study', 'wall_right_study', 'wall_inner_right_division'];
+    try {
+      let dbNotes = await getAllNotes();
+      const filteredNotes = dbNotes.filter(n => !studyWalls.includes(n.wallId));
+      await saveAllNotesToDB(filteredNotes);
+      setNotes(filteredNotes);
+    } catch (err) {
+      console.error('Oda temizlenirken hata:', err);
+    }
+
+    showSavedToast('✓ Çalışma Odası Boşaltıldı');
+  };
+
   const getRoomIdFromPosition = (x, z) => {
     if (x >= -5 && x <= 5) return 'hall';
     if (x < -5 && z > 0) return 'bedroom';
@@ -167,10 +542,28 @@ export default function App() {
 
   const handleAddPlacedItem = (type) => {
     const [px, , pz] = playerPositionRef.current || [0, 1.6, 5];
-    const roomId = getRoomIdFromPosition(px, pz);
+    const [dx, , dz] = playerDirectionRef.current || [0, 0, -1];
     
-    // Halı zemin hizasında, raf havada, diğerleri zeminde
-    const yPos = type === 'wallshelf' ? 1.4 : type === 'rug' ? 0.001 : 0.005;
+    // Yön vektörünü normalize et
+    const len = Math.sqrt(dx * dx + dz * dz);
+    const nx = len > 0.001 ? dx / len : 0;
+    const nz = len > 0.001 ? dz / len : -1;
+    
+    // Eşyayı oyuncunun 2.5 metre önünde oluştur
+    const spawnX = px + nx * 2.5;
+    const spawnZ = pz + nz * 2.5;
+    
+    // Eşyanın oluştuğu yerdeki odayı bul
+    const roomId = getRoomIdFromPosition(spawnX, spawnZ);
+    
+    // Halı zemin hizasında, raflar ve panolar havada, masa lambası masaüstü seviyesinde, diğerleri zeminde
+    const yPos = (type === 'wallshelf' || type === 'small_wallshelf' || type === 'large_board') 
+      ? 1.4 
+      : type === 'desk_lamp' 
+        ? 0.72 
+        : type === 'rug' 
+          ? 0.001 
+          : 0.005;
 
     const limits = {
       hall: { minX: -4.5, maxX: 4.5, minZ: -24.5, maxZ: 24.5 },
@@ -183,8 +576,8 @@ export default function App() {
 
     const roomLimit = limits[roomId] || limits.unknown;
     
-    const clampedX = Math.max(roomLimit.minX, Math.min(roomLimit.maxX, px));
-    const clampedZ = Math.max(roomLimit.minZ, Math.min(roomLimit.maxZ, pz));
+    const clampedX = Math.max(roomLimit.minX, Math.min(roomLimit.maxX, spawnX));
+    const clampedZ = Math.max(roomLimit.minZ, Math.min(roomLimit.maxZ, spawnZ));
 
     const newItem = {
       id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -226,6 +619,10 @@ export default function App() {
   };
 
   const handleStartEdit = (itemId) => {
+    if (pendingConnectionSource) {
+      showSavedToast('⚠️ Bağlantı modu aktifken eşya düzenlenemez');
+      return;
+    }
     const item = placedItems.find(i => i.id === itemId);
     if (item) {
       setEditingItemBackup(JSON.parse(JSON.stringify(item)));
@@ -236,6 +633,7 @@ export default function App() {
 
   const handleSaveEdit = () => {
     setIsItemEditingActive(false);
+    setActiveItemId(null);
     setEditingItemBackup(null);
     showSavedToast('✓ Eşya düzenlemesi kaydedildi');
   };
@@ -245,11 +643,12 @@ export default function App() {
       setPlacedItems(prev => prev.map(i => i.id === editingItemBackup.id ? editingItemBackup : i));
     }
     setIsItemEditingActive(false);
+    setActiveItemId(null);
     setEditingItemBackup(null);
     showSavedToast('✓ Değişiklikler iptal edildi');
   };
 
-  const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info') => {
+  const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info', tags = []) => {
     setPlacedItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
@@ -260,6 +659,7 @@ export default function App() {
               pages,
               currentPageIndex,
               iconType,
+              tags,
               updatedAt: new Date().toISOString()
             },
             updatedAt: new Date().toISOString()
@@ -293,28 +693,36 @@ export default function App() {
     setActiveNoteId(null);
     setIsAddMode(false);
     
-    // Trigger flash effect
+    // Trigger flash effect for 8 seconds
     setFlashedItemId(item.id);
     setTimeout(() => {
       setFlashedItemId(null);
-    }, 2000);
+    }, 8000);
 
-    // Eşyaya gitmek için kamera odağı ayarla
-    try {
-      const itemPos = new THREE.Vector3(item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0);
-      const camPos = itemPos.clone().add(new THREE.Vector3(0, 1.4, 1.8));
-      const lookDir = itemPos.clone().sub(camPos).normalize();
-      const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
-      const pitchVal = Math.asin(lookDir.y);
-      
-      setCameraFocusRequest({
-        position: [camPos.x, camPos.y, camPos.z],
-        pitch: pitchVal,
-        yaw: yawVal,
-        time: Date.now()
-      });
-    } catch (err) {
-      console.error('Teleport to item error:', err);
+    // Oda vurgulamasını tetikle
+    const itemRoomId = item.roomId || getRoomIdFromPosition(item.position.x, item.position.z);
+    triggerHighlight(itemRoomId);
+
+    // Eşyaya gitmek için kamera odağı ayarla (Sadece hızlı ışınlanma açıksa)
+    if (allowQuickTravel) {
+      try {
+        const itemPos = new THREE.Vector3(item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0);
+        const camPos = itemPos.clone().add(new THREE.Vector3(0, 1.4, 1.8));
+        const lookDir = itemPos.clone().sub(camPos).normalize();
+        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
+        const pitchVal = Math.asin(lookDir.y);
+        
+        setCameraFocusRequest({
+          position: [camPos.x, camPos.y, camPos.z],
+          pitch: pitchVal,
+          yaw: yawVal,
+          time: Date.now()
+        });
+      } catch (err) {
+        console.error('Teleport to item error:', err);
+      }
+    } else {
+      showSavedToast(`📍 Eşya ${roomNames[itemRoomId] || itemRoomId} odasında parlıyor!`);
     }
   };
   
@@ -407,6 +815,60 @@ export default function App() {
             console.error('Legacy data migration error:', migrateErr);
           }
         }
+
+        const presetInitialized = localStorage.getItem('saray_preset_rooms_initialized');
+        if (!presetInitialized) {
+          const defaultColor = theme === 'library' ? '#fef9c3' : theme === 'sci-fi' ? '#00f0ff' : '#fef08a';
+          const presetNotes = [
+            {
+              id: 'note_preset_1',
+              wallId: 'wall_inner_right_division',
+              position: [15, 1.8, 0.02],
+              rotation: [0, 0, 0],
+              width: 0.7,
+              height: 0.7,
+              title: "Bugünkü Odak",
+              pages: [{ text: "Bugün çalışacağın ana konuyu buraya yaz. Büyük konuları küçük notlara böl.", image: null, layout: 'image-top-text-bottom' }],
+              currentPageIndex: 0,
+              color: defaultColor,
+              tags: ["Görev"]
+            },
+            {
+              id: 'note_preset_2',
+              wallId: 'wall_right_study',
+              position: [24.98, 1.8, 11],
+              rotation: [0, -Math.PI / 2, 0],
+              width: 0.7,
+              height: 0.7,
+              title: "Kaynak Listesi",
+              pages: [{ text: "Okuduğun kitapları, izlediğin videoları veya araştırma linklerini burada toplayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+              currentPageIndex: 0,
+              color: defaultColor,
+              tags: ["Kaynak"]
+            },
+            {
+              id: 'note_preset_3',
+              wallId: 'wall_front_study',
+              position: [10, 1.8, 24.98],
+              rotation: [0, Math.PI, 0],
+              width: 0.7,
+              height: 0.7,
+              title: "Fikir Alanı",
+              pages: [{ text: "Aklına gelen fikirleri hızlıca buraya ekle. Daha sonra bağlantılarla diğer notlara bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
+              currentPageIndex: 0,
+              color: defaultColor,
+              tags: ["Fikir"]
+            }
+          ];
+
+          const existingIds = new Set(dbNotes.map(n => n.id));
+          const notesToAppend = presetNotes.filter(n => !existingIds.has(n.id));
+          if (notesToAppend.length > 0) {
+            dbNotes = [...dbNotes, ...notesToAppend];
+            await saveAllNotesToDB(dbNotes);
+          }
+          localStorage.setItem('saray_preset_rooms_initialized', 'true');
+        }
         
         setNotes(dbNotes);
       } catch (dbErr) {
@@ -438,6 +900,25 @@ export default function App() {
   // Global Keyboard Shortcuts (C: Camera, E: Add Mode, H: Dashboard, Q/E/PageUp/PageDown/Scale/Delete for Items)
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Geliştirici Modu Kısayolu: Ctrl + Shift + F
+      if (e.ctrlKey && e.shiftKey && e.code === 'KeyF') {
+        setDevMode((prev) => {
+          const next = !prev;
+          if (next) {
+            setFreeFlightEnabled(true);
+            setCameraMode('free');
+            showSavedToast('✓ Geliştirici Modu & Uçuş Aktif');
+          } else {
+            setFreeFlightEnabled(false);
+            setCameraMode('third-person');
+            showSavedToast('✓ Geliştirici Modu Kapatıldı');
+          }
+          return next;
+        });
+        e.preventDefault();
+        return;
+      }
+
       // Prevent shortcut trigger when user is typing in form inputs/textarea
       if (
         document.activeElement.tagName === 'TEXTAREA' || 
@@ -508,7 +989,7 @@ export default function App() {
 
       if (e.code === 'KeyN') {
         const isBlocked = isEditorOpen || isDashboardOpen || isItemEditingActive;
-        if (cameraMode === 'free' && !isBlocked) {
+        if (cameraMode !== 'birds-eye' && !isBlocked) {
           if (crosshairHovered && crosshairHovered.type === 'wall') {
             const bounds = calculateNoteBounds({
               wallId: crosshairHovered.id,
@@ -551,11 +1032,15 @@ export default function App() {
       }
 
       if (e.code === 'KeyC') {
-        setCameraMode((prev) => (prev === 'free' ? 'third-person' : 'free'));
+        setCameraMode((prev) => {
+          if (prev === 'third-person') return 'birds-eye';
+          if (prev === 'birds-eye') return freeFlightEnabled ? 'free' : 'third-person';
+          return 'third-person'; // free → third-person
+        });
       }
       
       if (e.code === 'KeyE') {
-        if (!isDashboardOpen) {
+        if (!isDashboardOpen && cameraMode !== 'birds-eye') {
           setIsAddMode((prev) => !prev);
         }
       }
@@ -565,6 +1050,11 @@ export default function App() {
       }
 
       if (e.code === 'Escape') {
+        if (pendingConnectionSource) {
+          handleCancelConnection();
+          e.preventDefault();
+          return;
+        }
         if (isItemEditingActive) {
           handleCancelEdit();
         } else {
@@ -579,7 +1069,7 @@ export default function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, cameraMode, isEditorOpen]);
+  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, cameraMode, isEditorOpen, pendingConnectionSource, freeFlightEnabled]);
 
   // Context Menu (Right Click) global listener to close editor and deselect active note / cancel item edit
   useEffect(() => {
@@ -599,6 +1089,10 @@ export default function App() {
       }
 
       e.preventDefault(); // Prevent standard browser context menu on 3D scene
+      if (pendingConnectionSource) {
+        handleCancelConnection();
+        return;
+      }
       if (isItemEditingActive) {
         handleCancelEdit();
       } else {
@@ -612,7 +1106,7 @@ export default function App() {
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [isItemEditingActive, editingItemBackup]);
+  }, [isItemEditingActive, editingItemBackup, pendingConnectionSource]);
 
   // Keyboard navigation for active note pages (using ArrowLeft and ArrowRight)
   useEffect(() => {
@@ -769,6 +1263,16 @@ export default function App() {
 
   // Open note details (Select only, does not open modal editor)
   const handleNoteClick = (id) => {
+    if (pendingConnectionSource) {
+      if (isEditorOpen || isDashboardOpen) return;
+      if (pendingConnectionSource.id === id) {
+        showSavedToast('⚠️ Aynı öğeler bağlanamaz');
+        return;
+      }
+      setPendingConnectionTarget({ id, type: 'note' });
+      setIsConceptSelectOpen(true);
+      return;
+    }
     setEditorMode('note');
     setActiveNoteId(id);
     setActiveItemId(null); // Eşya seçimini kaldır
@@ -779,6 +1283,7 @@ export default function App() {
   const handleDeselect = () => {
     setActiveNoteId(null);
     setActiveItemId(null);
+    setIsItemEditingActive(false);
     setIsEditorOpen(false); // Close editor when deselecting
   };
 
@@ -790,9 +1295,9 @@ export default function App() {
   };
 
   // Save changes to note
-  const handleSaveNote = (id, pages, currentPageIndex, color) => {
+  const handleSaveNote = (id, pages, currentPageIndex, color, tags = []) => {
     setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, updatedAt: new Date().toISOString() } : n))
+      prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, tags, updatedAt: new Date().toISOString() } : n))
     );
     setIsEditorOpen(false);
     showSavedToast('✓ Not kaydedildi');
@@ -814,36 +1319,216 @@ export default function App() {
     setActiveItemId(null); // Eşya seçimini kaldır
     setIsAddMode(false);
     
-    // Trigger flash effect
+    // Trigger flash effect for 8 seconds
     setFlashedNoteId(note.id);
     setTimeout(() => {
       setFlashedNoteId(null);
-    }, 2000);
+    }, 8000);
 
-    // Calculate look position and orientation
-    try {
-      const euler = new THREE.Euler(...note.rotation);
-      const normal = new THREE.Vector3(0, 0, 1).applyEuler(euler).normalize();
-      
-      const notePos = new THREE.Vector3(...note.position);
-      // Position camera 1.6 meters in front of the note
-      const camPos = notePos.clone().addScaledVector(normal, 1.6);
-      
-      // Let it look at the note
-      const lookDir = notePos.clone().sub(camPos).normalize();
-      const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
-      const pitchVal = Math.asin(lookDir.y);
-      
-      setCameraFocusRequest({
-        position: [camPos.x, camPos.y, camPos.z],
-        pitch: pitchVal,
-        yaw: yawVal,
-        time: Date.now()
-      });
-    } catch (err) {
-      console.error('Teleport error:', err);
+    // Oda vurgulamasını tetikle
+    const noteRoomId = note.roomId || getRoomIdFromPosition(note.position[0], note.position[2]);
+    triggerHighlight(noteRoomId);
+
+    // Sadece hızlı ışınlanma açıksa kamerayı taşı
+    if (allowQuickTravel) {
+      try {
+        const euler = new THREE.Euler(...note.rotation);
+        const normal = new THREE.Vector3(0, 0, 1).applyEuler(euler).normalize();
+        
+        const notePos = new THREE.Vector3(...note.position);
+        // Position camera 1.6 meters in front of the note
+        const camPos = notePos.clone().addScaledVector(normal, 1.6);
+        
+        // Let it look at the note
+        const lookDir = notePos.clone().sub(camPos).normalize();
+        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
+        const pitchVal = Math.asin(lookDir.y);
+        
+        setCameraFocusRequest({
+          position: [camPos.x, camPos.y, camPos.z],
+          pitch: pitchVal,
+          yaw: yawVal,
+          time: Date.now()
+        });
+      } catch (err) {
+        console.error('Teleport error:', err);
+      }
+    } else {
+      showSavedToast(`📍 Not ${roomNames[noteRoomId] || noteRoomId} odasında parlıyor!`);
     }
   };
+
+  // Target navigation logic (called from link clicking)
+  const handleNavigateToTarget = (targetId, isWallNote) => {
+    setIsEditorOpen(false);
+    setIsDashboardOpen(false);
+    if (isWallNote) {
+      const note = notes.find(n => n.id === targetId);
+      if (note) {
+        handleGoToNote(note);
+      }
+    } else {
+      const item = placedItems.find(i => i.id === targetId);
+      if (item) {
+        handleGoToItem(item);
+      }
+    }
+  };
+
+  // --- 3D Bağlantı ve Kavram Yardımcı İş Mantığı ---
+  const getObjectPosition = (id, type) => {
+    if (type === 'note') {
+      const note = notes.find(n => n.id === id);
+      if (note && note.position) return note.position;
+    } else if (type === 'item') {
+      const item = placedItems.find(i => i.id === id);
+      if (item && item.position) {
+        return [item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0];
+      }
+    }
+    return null;
+  };
+
+  const handleStartConnection = (id, type) => {
+    setPendingConnectionSource({ id, type });
+    setPendingConnectionTarget(null);
+    setIsConceptSelectOpen(false);
+    setIsAddMode(false);
+    if (isItemEditingActive) {
+      handleCancelEdit();
+    }
+  };
+
+  const handleCompleteConnection = (conceptId) => {
+    if (!pendingConnectionSource || !pendingConnectionTarget) return;
+
+    // Aynı nesneleri birbirine bağlama engeli
+    if (pendingConnectionSource.id === pendingConnectionTarget.id) {
+      showSavedToast('⚠️ Aynı öğeler bağlanamaz');
+      setPendingConnectionSource(null);
+      setPendingConnectionTarget(null);
+      setIsConceptSelectOpen(false);
+      return;
+    }
+
+    // Zaten varsa tekrar oluşturmama
+    const exists = connections.some(c => 
+      c.fromId === pendingConnectionSource.id && 
+      c.toId === pendingConnectionTarget.id && 
+      c.conceptId === conceptId
+    );
+
+    if (exists) {
+      showSavedToast('⚠️ Bu bağlantı zaten mevcut');
+      setPendingConnectionSource(null);
+      setPendingConnectionTarget(null);
+      setIsConceptSelectOpen(false);
+      return;
+    }
+
+    const concept = connectionConcepts.find(cc => cc.id === conceptId) || { color: '#00f0ff' };
+
+    const newConnection = {
+      id: 'connection_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      fromId: pendingConnectionSource.id,
+      toId: pendingConnectionTarget.id,
+      fromType: pendingConnectionSource.type,
+      toType: pendingConnectionTarget.type,
+      conceptId,
+      color: concept.color,
+      isVisible: true,
+      label: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setConnections(prev => [...prev, newConnection]);
+    setPendingConnectionSource(null);
+    setPendingConnectionTarget(null);
+    setIsConceptSelectOpen(false);
+    showSavedToast('✓ Bağlantı oluşturuldu');
+  };
+
+  const handleCancelConnection = () => {
+    setPendingConnectionSource(null);
+    setPendingConnectionTarget(null);
+    setIsConceptSelectOpen(false);
+    showSavedToast('✓ Bağlantı modu iptal edildi');
+  };
+
+  const handleDeleteConnection = (id) => {
+    setConnections(prev => prev.filter(c => c.id !== id));
+    showSavedToast('✓ Bağlantı silindi');
+  };
+
+  const handleToggleConnectionVisibility = (id) => {
+    setConnections(prev => prev.map(c => c.id === id ? { ...c, isVisible: !c.isVisible } : c));
+  };
+
+  const handleAddConcept = (name, color) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const exists = connectionConcepts.some(c => c.name.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      showSavedToast('⚠️ Aynı isimde bir kavram zaten var');
+      return;
+    }
+
+    const newConcept = {
+      id: 'concept_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      name: trimmed,
+      color
+    };
+
+    setConnectionConcepts(prev => [...prev, newConcept]);
+    showSavedToast('✓ Yeni kavram eklendi');
+  };
+
+  const handleUpdateConcept = (id, fields) => {
+    setConnectionConcepts(prev => prev.map(c => c.id === id ? { ...c, ...fields } : c));
+    if (fields.color) {
+      setConnections(prev => prev.map(c => c.conceptId === id ? { ...c, color: fields.color } : c));
+    }
+    showSavedToast('✓ Kavram güncellendi');
+  };
+
+  const handleDeleteConcept = (id) => {
+    if (id === 'concept_general') {
+      showSavedToast('⚠️ Genel kavramı silinemez');
+      return;
+    }
+    setConnectionConcepts(prev => prev.filter(c => c.id !== id));
+    setConnections(prev => prev.map(c => {
+      if (c.conceptId === id) {
+        return { ...c, conceptId: 'concept_general', color: '#00f0ff' };
+      }
+      return c;
+    }));
+    showSavedToast('✓ Kavram silindi ve bağlantıları Genel\'e taşındı');
+  };
+
+  const visibleConnections = React.useMemo(() => {
+    if (connectionVisibilityMode === 'hidden') return [];
+
+    const objectExists = (id, type) => {
+      if (type === 'note') return notes.some(n => n.id === id);
+      if (type === 'item') return placedItems.some(i => i.id === id);
+      return false;
+    };
+
+    return connections.filter(c => {
+      if (!c.isVisible) return false;
+      if (!objectExists(c.fromId, c.fromType) || !objectExists(c.toId, c.toType)) return false;
+
+      if (connectionVisibilityMode === 'selected-only') {
+        const selectedId = activeNoteId || activeItemId;
+        if (!selectedId) return false;
+        return c.fromId === selectedId || c.toId === selectedId;
+      }
+      return true;
+    });
+  }, [connections, connectionVisibilityMode, notes, placedItems, activeNoteId, activeItemId]);
 
   // Close Editor Panel only, keeps note selected
   const handleCloseEditor = () => {
@@ -857,7 +1542,14 @@ export default function App() {
 
   const activeNote = React.useMemo(() => {
     if (editorMode === 'note') {
-      return notes.find((n) => n.id === activeNoteId);
+      const foundNote = notes.find((n) => n.id === activeNoteId);
+      if (foundNote) {
+        return {
+          ...foundNote,
+          tags: foundNote.tags || []
+        };
+      }
+      return null;
     } else {
       const item = placedItems.find((i) => i.id === activeItemId);
       if (item && item.linkedNote) {
@@ -868,6 +1560,7 @@ export default function App() {
           color: item.color,
           title: item.linkedNote.title || 'Eşya Notu',
           iconType: item.linkedNote.iconType || 'info',
+          tags: item.linkedNote.tags || [],
           width: 0.7,
           height: 0.7
         };
@@ -879,6 +1572,7 @@ export default function App() {
           color: (item && item.color) || '#818cf8',
           title: 'Eşya Notu',
           iconType: 'info',
+          tags: [],
           width: 0.7,
           height: 0.7
         };
@@ -886,17 +1580,23 @@ export default function App() {
     }
   }, [editorMode, notes, activeNoteId, placedItems, activeItemId]);
 
+  const isAnyPanelOpen = isEditorOpen || isDashboardOpen || isItemDrawerOpen || isSettingsOpen || isConceptSelectOpen;
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       {/* 3D Canvas rendering */}
       <Canvas 
-        style={{ pointerEvents: (isEditorOpen || isDashboardOpen) ? 'none' : 'auto' }}
+        style={{ pointerEvents: isAnyPanelOpen ? 'none' : 'auto' }}
         shadows 
         camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.6, 5] }}
         onCreated={({ gl }) => {
           gl.shadowMap.type = THREE.PCFShadowMap;
         }}
       >
+        {/* Sis ve Yumuşak Gökyüzü Atmosferi */}
+        <color attach="background" args={[envConfig.bgColor]} />
+        <fog attach="fog" args={[envConfig.bgColor, envConfig.fogNear, envConfig.fogFar]} />
+
         {/* Ekran merkezinden nesne tespiti yapan raycaster */}
         <CrosshairRaycaster
           cameraMode={cameraMode}
@@ -904,13 +1604,20 @@ export default function App() {
           onHoverChange={setCrosshairHovered}
         />
 
+        {/* 2D MiniMap için pozisyon takibi yapan bileşen */}
+        <MiniMapTracker />
+
         {/* 3D Room Environment */}
         <Room 
           currentTheme={theme}
+          envConfig={envConfig}
           roomNames={roomNames}
           roomFloorColors={roomFloorColors}
           roomWallColors={roomWallColors}
           isAddMode={isAddMode && !activeItemId} 
+          isItemEditingActive={isItemEditingActive}
+          isItemDrawerOpen={isItemDrawerOpen}
+          highlightedRoomId={highlightedRoomId}
           onDrawingStart={handleDrawingStart}
           onDrawingMove={handleDrawingMove}
           onDrawingEnd={handleDrawingEnd}
@@ -930,6 +1637,13 @@ export default function App() {
             isFlashed={flashedNoteId === note.id}
             onHoverChange={setHoveredNoteId}
             isCrosshairHovered={crosshairHovered?.type === 'note' && crosshairHovered?.id === note.id}
+            notes={notes}
+            placedItems={placedItems}
+            onNavigateToTarget={handleNavigateToTarget}
+            pendingConnectionSource={pendingConnectionSource}
+            onStartConnection={handleStartConnection}
+            onCancelConnection={handleCancelConnection}
+            hideControls={isAnyPanelOpen}
           />
         ))}
 
@@ -943,6 +1657,16 @@ export default function App() {
             isAddMode={isAddMode}
             isItemEditingActive={isItemEditingActive && activeItemId === item.id}
             onSelect={(id) => {
+              if (pendingConnectionSource) {
+                if (isEditorOpen || isDashboardOpen) return;
+                if (pendingConnectionSource.id === id) {
+                  showSavedToast('⚠️ Aynı öğeler bağlanamaz');
+                  return;
+                }
+                setPendingConnectionTarget({ id, type: 'item' });
+                setIsConceptSelectOpen(true);
+                return;
+              }
               if (isItemEditingActive && activeItemId !== id) {
                 handleCancelEdit();
               }
@@ -961,6 +1685,35 @@ export default function App() {
           />
         ))}
 
+        {/* 3D Görsel Bağlantı Çizgileri */}
+        {visibleConnections.map((conn) => {
+          const fromPos = getObjectPosition(conn.fromId, conn.fromType);
+          const toPos = getObjectPosition(conn.toId, conn.toType);
+          if (!fromPos || !toPos) return null;
+
+          const midPos = [
+            (fromPos[0] + toPos[0]) / 2,
+            ((fromPos[1] + toPos[1]) / 2) + 1.2,
+            (fromPos[2] + toPos[2]) / 2
+          ];
+
+          // Temaya göre opaklık ayarı
+          const opacity = theme === 'minimal' ? 0.35 : theme === 'library' ? 0.45 : 0.65;
+
+          return (
+            <QuadraticBezierLine
+              key={conn.id}
+              start={fromPos}
+              end={toPos}
+              mid={midPos}
+              color={conn.color || '#00f0ff'}
+              lineWidth={1.5}
+              transparent
+              opacity={opacity}
+            />
+          );
+        })}
+
         {/* Drawing Preview */}
         {drawing && (() => {
           const bounds = calculateNoteBounds(drawing);
@@ -975,6 +1728,7 @@ export default function App() {
                 currentPageIndex: 0
               }}
               isPreview={true}
+              hideControls={isAnyPanelOpen}
             />
           );
         })()}
@@ -989,14 +1743,20 @@ export default function App() {
           isDrawing={!!drawing}
           isEditorOpen={isEditorOpen}
           isDashboardOpen={isDashboardOpen}
+          isItemDrawerOpen={isItemDrawerOpen}
           cameraFocusRequest={cameraFocusRequest}
           hoveredNoteId={hoveredNoteId}
           playerPositionRef={playerPositionRef}
+          playerDirectionRef={playerDirectionRef}
         />
       </Canvas>
 
       {/* HTML overlay UI */}
       <UIOverlay
+        isSettingsOpen={isSettingsOpen}
+        setIsSettingsOpen={setIsSettingsOpen}
+        uiTheme={uiTheme}
+        setUiTheme={setUiTheme}
         theme={theme}
         setTheme={handleSetTheme}
         roomNames={roomNames}
@@ -1006,10 +1766,12 @@ export default function App() {
         onUpdateRoomFloorColor={handleUpdateRoomFloorColor}
         onUpdateRoomWallColor={handleUpdateRoomWallColor}
         onResetColors={handleResetColors}
+        onLoadPresetTemplate={handleLoadPresetTemplate}
+        onClearRoomTemplate={handleClearRoomTemplate}
         cameraMode={cameraMode}
         setCameraMode={setCameraMode}
         isAddMode={isAddMode}
-        setIsAddMode={setIsAddMode}
+        setIsAddMode={handleSetIsAddMode}
         activeNote={activeNote}
         isEditorOpen={isEditorOpen}
         onSaveNote={editorMode === 'note' ? handleSaveNote : handleSaveItemNote}
@@ -1017,6 +1779,8 @@ export default function App() {
         onCloseEditor={handleCloseEditor}
         isDashboardOpen={isDashboardOpen}
         setIsDashboardOpen={setIsDashboardOpen}
+        isItemDrawerOpen={isItemDrawerOpen}
+        setIsItemDrawerOpen={setIsItemDrawerOpen}
         placedItems={placedItems}
         activeItemId={activeItemId}
         setActiveItemId={setActiveItemId}
@@ -1031,7 +1795,50 @@ export default function App() {
         onSaveEdit={handleSaveEdit}
         onCancelEdit={handleCancelEdit}
         toast={toast}
+        notes={notes}
+        onNavigateToTarget={handleNavigateToTarget}
+        connections={connections}
+        connectionConcepts={connectionConcepts}
+        pendingConnectionSource={pendingConnectionSource}
+        pendingConnectionTarget={pendingConnectionTarget}
+        isConceptSelectOpen={isConceptSelectOpen}
+        setIsConceptSelectOpen={setIsConceptSelectOpen}
+        onStartConnection={handleStartConnection}
+        onCompleteConnection={handleCompleteConnection}
+        onCancelConnection={handleCancelConnection}
+        onDeleteConnection={handleDeleteConnection}
+        onToggleConnectionVisibility={handleToggleConnectionVisibility}
+        connectionVisibilityMode={connectionVisibilityMode}
+        onChangeVisibilityMode={setConnectionVisibilityMode}
+        setConnections={setConnections}
+        allowQuickTravel={allowQuickTravel}
+        setAllowQuickTravel={setAllowQuickTravel}
+        freeFlightEnabled={freeFlightEnabled}
+        setFreeFlightEnabled={setFreeFlightEnabled}
+        devMode={devMode}
       />
+
+      {/* Dev Mode Göstergesi */}
+      {devMode && (
+        <div style={{
+          position: 'fixed',
+          bottom: '16px',
+          left: '16px',
+          background: 'rgba(99, 102, 241, 0.15)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          color: '#a5b4fc',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '10px',
+          fontFamily: 'monospace',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          letterSpacing: '1px',
+          backdropFilter: 'blur(4px)',
+        }}>
+          [DEV MODE]
+        </div>
+      )}
 
       {/* Not Kontrol Paneli */}
       <NoteDashboard
@@ -1062,6 +1869,15 @@ export default function App() {
             if (item) handleGoToItem(item);
           }
         }}
+        connections={connections}
+        connectionConcepts={connectionConcepts}
+        connectionVisibilityMode={connectionVisibilityMode}
+        onChangeVisibilityMode={setConnectionVisibilityMode}
+        onDeleteConnection={handleDeleteConnection}
+        onToggleConnectionVisibility={handleToggleConnectionVisibility}
+        onAddConcept={handleAddConcept}
+        onUpdateConcept={handleUpdateConcept}
+        onDeleteConcept={handleDeleteConcept}
       />
     </div>
   );

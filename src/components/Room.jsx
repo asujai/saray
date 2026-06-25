@@ -355,10 +355,14 @@ function NeonLine({ start, end, color }) {
 
 export default function Room({ 
   currentTheme = 'minimal', 
+  envConfig,
   roomNames,
   roomFloorColors,
   roomWallColors,
   isAddMode, 
+  isItemEditingActive,
+  isItemDrawerOpen,
+  highlightedRoomId,
   onDrawingStart, 
   onDrawingMove, 
   onDrawingEnd, 
@@ -368,6 +372,70 @@ export default function Room({
   const isMinimal = currentTheme === 'minimal';
   const isLibrary = currentTheme === 'library';
   const isSciFi = currentTheme === 'sci-fi';
+  const showGrid = isAddMode || isItemEditingActive || isItemDrawerOpen;
+
+  const outerFloorColor = envConfig?.outerFloorColor || '#cbd5e1';
+  const leafColor = envConfig?.leafColor || '#10b981';
+
+  // Çalışma odası ön duvarı için yapay zekayla üretilen görsel dokusunu yükle
+  const studyWallTexture = useMemo(() => {
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load('/study_wall_art.png');
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  // Odaların sınırları dışında yer alacak minimalist low-poly bahçe/çevre objelerinin koordinatları
+  const outerElements = useMemo(() => {
+    const list = [];
+    const seedRandom = (str) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return () => {
+        const x = Math.sin(hash++) * 10000;
+        return x - Math.floor(x);
+      };
+    };
+
+    const rand = seedRandom("saray_secret_garden_v2");
+
+    // 14 ağaç
+    for (let i = 0; i < 16; i++) {
+      const angle = rand() * Math.PI * 2;
+      const radius = 32 + rand() * 48; // 32m ile 80m arası
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const scale = 0.7 + rand() * 0.6;
+      list.push({ type: 'tree', position: [x, 0, z], scale, id: `tree_${i}` });
+    }
+
+    // 18 çalı
+    for (let i = 0; i < 22; i++) {
+      const angle = rand() * Math.PI * 2;
+      const radius = 28 + rand() * 52; // 28m ile 80m arası
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const scale = 0.4 + rand() * 0.6;
+      list.push({ type: 'bush', position: [x, 0, z], scale, id: `bush_${i}` });
+    }
+
+    // 10 kaya
+    for (let i = 0; i < 12; i++) {
+      const angle = rand() * Math.PI * 2;
+      const radius = 29 + rand() * 45; // 29m ile 74m arası
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const scaleX = 0.7 + rand() * 1.0;
+      const scaleY = 0.4 + rand() * 0.7;
+      const scaleZ = 0.7 + rand() * 1.0;
+      const rotationY = rand() * Math.PI;
+      list.push({ type: 'rock', position: [x, 0, z], scale: [scaleX, scaleY, scaleZ], rotationY, id: `rock_${i}` });
+    }
+
+    return list;
+  }, []);
 
   // Tema Varsayılan Duvar Renkleri
   const defaultWallColor = isMinimal ? '#f8fafc' : isLibrary ? '#ebd9c0' : '#1e293b';
@@ -535,6 +603,28 @@ export default function Room({
         <meshStandardMaterial color={floorColors.living} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
       </mesh>
 
+      {/* Oda Vurgu Overlay'leri (Panelden nota git tıklanınca oda parlıyor) */}
+      {highlightedRoomId && (() => {
+        const highlightConfig = {
+          hall:    { position: [0, 0.03, 0],      size: [10, 50] },
+          bedroom: { position: [-15, 0.03, 12.5], size: [20, 25] },
+          kitchen: { position: [-15, 0.03, -12.5],size: [20, 25] },
+          study:   { position: [15, 0.03, 12.5],  size: [20, 25] },
+          living:  { position: [15, 0.03, -12.5], size: [20, 25] },
+        };
+        const cfg = highlightConfig[highlightedRoomId];
+        if (!cfg) return null;
+        return (
+          <mesh
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={cfg.position}
+          >
+            <planeGeometry args={cfg.size} />
+            <meshBasicMaterial color="#fbbf24" transparent opacity={0.18} depthWrite={false} />
+          </mesh>
+        );
+      })()}
+
       {/* Dinamik Oda Etiketleri */}
       <Text
         position={[0, 0.02, 0]}
@@ -592,8 +682,10 @@ export default function Room({
         {roomNames?.living || 'Salon'}
       </Text>
 
-      {/* Grid Helper - Geometri algısı için */}
-      <gridHelper args={[WIDTH, 50, isSciFi ? '#a855f7' : '#6366f1', isSciFi ? '#1e1b4b' : '#334155']} position={[0, 0.01, 0]} />
+      {/* Grid Helper - Sadece ekleme/düzenleme/taşıma veya çekmece açıkken gösterilir */}
+      {showGrid && (
+        <gridHelper args={[WIDTH, 50, isSciFi ? '#a855f7' : '#6366f1', isSciFi ? '#1e1b4b' : '#334155']} position={[0, 0.01, 0]} />
+      )}
 
       {/* --- Duvarlar (Oda Sınırlarına Göre Parçalanmış & Özelleştirilebilir Duvarlar) --- */}
 
@@ -629,6 +721,12 @@ export default function Room({
       <mesh position={[15, 2.5, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_study" receiveShadow castShadow>
         <boxGeometry args={[20, 5, 0.2]} />
         <meshStandardMaterial color={wallColors.study} roughness={0.6} />
+      </mesh>
+
+      {/* Çalışma Odası Ön Duvar Kağıdı (Mural/Art) */}
+      <mesh position={[15, 2.5, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
+        <planeGeometry args={[20, 5]} />
+        <meshStandardMaterial map={studyWallTexture} roughness={0.5} />
       </mesh>
 
       {/* Sol Dış Duvar (X = -25) */}
@@ -724,86 +822,23 @@ export default function Room({
 
       {/* --- Tema Seçimine Göre Mobilyaların Yerleşimi --- */}
 
-      {/* 1. Minimal Çalışma Evi Mobilyaları */}
+      {/* 1. Minimal Çalışma Evi Mobilyaları (Dinamik eşyalarla yer değiştirildi) */}
       {isMinimal && (
         <group>
-          {/* Çalışma Odası */}
-          <Desk position={[15, 0, 8]} color="#f1f5f9" metalColor="#cbd5e1" />
-          <Chair position={[15, 0, 9.2]} color="#334155" baseColor="#64748b" />
-          <Shelf position={[23.8, 0, 15]} color="#f1f5f9" rotation={[0, -Math.PI / 2, 0]} />
-          <TableLamp position={[14.6, 0.38, 8]} color="#64748b" bulbColor="#fef08a" lightColor="#fef08a" />
-          <mesh position={[15, 1.8, 6.01]}>
-            <boxGeometry args={[1.8, 1.0, 0.02]} />
-            <meshStandardMaterial color="#cbd5e1" roughness={0.9} />
-          </mesh>
-          
-          {/* Salon */}
-          <Sofa position={[15, 0, -18]} color="#e2e8f0" cushionColor="#cbd5e1" />
-          <CoffeeTable position={[15, 0, -14]} color="#ffffff" legColor="#94a3b8" />
-          <Rug position={[15, 0.005, -14]} color="#f8fafc" />
-          <Plant position={[23, 0, -23]} potColor="#cbd5e1" plantColor="#22c55e" />
-
-          {/* Mutfak */}
-          <KitchenBlocks position={[-23.8, 0, -12.5]} color="#ffffff" counterColor="#e2e8f0" />
-          <Desk position={[-13, 0, -12.5]} color="#ffffff" metalColor="#e2e8f0" />
-          <Chair position={[-13, 0, -10.8]} color="#64748b" baseColor="#cbd5e1" rotation={[0, Math.PI, 0]} />
-          <Chair position={[-13, 0, -14.2]} color="#64748b" baseColor="#cbd5e1" />
-
-          {/* Yatak Odası */}
-          <Bed position={[-20, 0, 20]} baseColor="#f1f5f9" sheetColor="#ffffff" pillowColor="#cbd5e1" />
-          <CoffeeTable position={[-23.8, 0, 15]} color="#ffffff" legColor="#cbd5e1" />
-          <Wardrobe position={[-10, 0, 8]} color="#ffffff" handleColor="#cbd5e1" rotation={[0, Math.PI, 0]} />
-
-          {/* Hol */}
-          <CoffeeTable position={[-3.5, 0, -5]} color="#ffffff" legColor="#cbd5e1" />
-          <CoatRack position={[3.5, 0, 2]} color="#cbd5e1" />
+          {/* Sadece boş grup, hazır eşyalar artık placedItems state'inde dinamik olarak yaratılıyor */}
         </group>
       )}
 
-      {/* 2. Kütüphane / Bilgi Evi Mobilyaları */}
+      {/* 2. Kütüphane / Bilgi Evi Mobilyaları (Dinamik eşyalarla yer değiştirildi) */}
       {isLibrary && (
         <group>
-          {/* Çalışma Odası */}
-          <Desk position={[15, 0, 8]} color="#5c4033" metalColor="#3e2723" />
-          <Chair position={[15, 0, 9.2]} color="#1a0f0a" baseColor="#3e2723" />
-          <Shelf position={[23.8, 0, 15]} color="#4a3525" args={[1.5, 2.2, 0.4]} rotation={[0, -Math.PI / 2, 0]} />
-          <Shelf position={[23.8, 0, 12]} color="#4a3525" args={[1.5, 2.2, 0.4]} rotation={[0, -Math.PI / 2, 0]} />
-          <TableLamp position={[14.6, 0.38, 8]} color="#d97706" bulbColor="#fbbf24" lightColor="#fbbf24" />
-          <mesh position={[15, 1.8, 6.01]}>
-            <boxGeometry args={[1.8, 1.0, 0.02]} />
-            <meshStandardMaterial color="#b45309" roughness={0.9} />
-          </mesh>
-
-          {/* Salon */}
-          <Sofa position={[15, 0, -18]} color="#7c2d12" cushionColor="#9a3412" />
-          <CoffeeTable position={[15, 0, -14]} color="#4a3525" legColor="#3e2723" />
-          <Rug position={[15, 0.005, -14]} color="#7f1d1d" args={[2.5, 0.01, 1.8]} />
-          <Shelf position={[23.8, 0, -18]} color="#4a3525" rotation={[0, -Math.PI / 2, 0]} />
-          <CoatRack position={[8, 0, -22]} color="#fbbf24" />
-
-          {/* Mutfak */}
-          <KitchenBlocks position={[-23.8, 0, -12.5]} color="#5c4033" counterColor="#854d0e" />
-          <Desk position={[-13, 0, -12.5]} color="#5c4033" metalColor="#3e2723" />
-          <Chair position={[-13, 0, -10.8]} color="#3e2723" baseColor="#1a0f0a" rotation={[0, Math.PI, 0]} />
-          <Chair position={[-13, 0, -14.2]} color="#3e2723" baseColor="#1a0f0a" />
-
-          {/* Yatak Odası */}
-          <Bed position={[-20, 0, 20]} baseColor="#4a3525" sheetColor="#fef3c7" pillowColor="#b45309" />
-          <Shelf position={[-23.8, 0, 15]} color="#4a3525" args={[0.8, 1.6, 0.3]} rotation={[0, Math.PI / 2, 0]} />
-          <CoffeeTable position={[-10, 0, 8]} color="#4a3525" legColor="#3e2723" />
-
-          {/* Hol */}
-          <Shelf position={[-3.5, 0, -5]} color="#4a3525" args={[0.8, 1.4, 0.35]} rotation={[0, Math.PI / 2, 0]} />
-          <CoatRack position={[3.5, 0, 2]} color="#4a3525" />
+          {/* Sadece boş grup, hazır eşyalar artık placedItems state'inde dinamik olarak yaratılıyor */}
         </group>
       )}
 
       {/* 3. Bilim Kurgu / Hologram Evi Mobilyaları */}
       {isSciFi && (
         <group>
-          {/* Çalışma Odası */}
-          <Desk position={[15, 0, 8]} color="#0f172a" metalColor="#00f0ff" />
-          <Chair position={[15, 0, 9.2]} color="#1e293b" baseColor="#00f0ff" />
           {/* Yarı Saydam Ekran Panelleri */}
           <mesh position={[23.8, 1.2, 14]} rotation={[0, -Math.PI / 2, 0]}>
             <planeGeometry args={[1.5, 1.0]} />
@@ -819,25 +854,12 @@ export default function Room({
           <NeonLine start={[6, 0.012, 6]} end={[6, 0.012, 24]} color="#00f0ff" />
           <NeonLine start={[24, 0.012, 6]} end={[24, 0.012, 24]} color="#00f0ff" />
 
-          {/* Salon */}
-          <Sofa position={[15, 0, -18]} color="#0f172a" cushionColor="#3b82f6" />
-          <CoffeeTable position={[15, 0, -14]} color="#1e293b" legColor="#00f0ff" shape="circle" />
-          <Rug position={[15, 0.005, -14]} color="#1e1b4b" shape="circle" args={[2.0, 0.01]} />
           {/* Neon çizgiler salon */}
           <NeonLine start={[6, 0.012, -24]} end={[24, 0.012, -24]} color="#a855f7" />
           <NeonLine start={[6, 0.012, -6]} end={[24, 0.012, -6]} color="#a855f7" />
           <NeonLine start={[6, 0.012, -24]} end={[6, 0.012, -6]} color="#a855f7" />
           <NeonLine start={[24, 0.012, -24]} end={[24, 0.012, -6]} color="#a855f7" />
 
-          {/* Mutfak */}
-          <KitchenBlocks position={[-23.8, 0, -12.5]} color="#1e293b" counterColor="#0f172a" faucetColor="#00f0ff" />
-          <Desk position={[-13, 0, -12.5]} color="#0f172a" metalColor="#3b82f6" />
-          <Chair position={[-13, 0, -10.8]} color="#1e293b" baseColor="#3b82f6" rotation={[0, Math.PI, 0]} />
-          <Chair position={[-13, 0, -14.2]} color="#1e293b" baseColor="#3b82f6" />
-
-          {/* Yatak Odası */}
-          <Bed position={[-20, 0, 20]} baseColor="#0f172a" sheetColor="#1e1b4b" pillowColor="#00f0ff" />
-          <CoffeeTable position={[-23.8, 0, 15]} color="#1e293b" legColor="#3b82f6" />
           {/* Yatak odası neon çizgileri */}
           <NeonLine start={[-24, 0.012, 6]} end={[-6, 0.012, 6]} color="#00f0ff" />
           <NeonLine start={[-24, 0.012, 24]} end={[-6, 0.012, 24]} color="#00f0ff" />
@@ -854,6 +876,56 @@ export default function Room({
           </mesh>
         </group>
       )}
+
+      {/* Sade Dış Çevre Platformu (Büyük Ada) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow>
+        <planeGeometry args={[300, 300]} />
+        <meshStandardMaterial color={outerFloorColor} roughness={0.9} metalness={isSciFi ? 0.3 : 0.05} />
+      </mesh>
+
+      {/* Dış Çevredeki Minimal Low-Poly Bitki Örtüsü ve Kayalar */}
+      {outerElements.map((el) => {
+        if (el.type === 'tree') {
+          return (
+            <group key={el.id} position={el.position} scale={[el.scale, el.scale, el.scale]}>
+              {/* Ağaç Gövdesi */}
+              <mesh position={[0, 0.9, 0]} castShadow>
+                <cylinderGeometry args={[0.08, 0.12, 1.8, 5]} />
+                <meshStandardMaterial color={isSciFi ? '#1e1b4b' : '#5c4033'} roughness={0.9} />
+              </mesh>
+              {/* Ağaç Yaprakları (Minimal Konik) */}
+              <mesh position={[0, 2.0, 0]} castShadow>
+                <coneGeometry args={[0.7, 1.4, 5]} />
+                <meshStandardMaterial color={leafColor} roughness={0.8} />
+              </mesh>
+            </group>
+          );
+        } else if (el.type === 'bush') {
+          return (
+            <group key={el.id} position={el.position} scale={[el.scale, el.scale, el.scale]}>
+              {/* Çalı Yaprağı */}
+              <mesh position={[0, 0.3, 0]} castShadow>
+                <sphereGeometry args={[0.45, 5, 5]} />
+                <meshStandardMaterial color={leafColor} roughness={0.9} />
+              </mesh>
+            </group>
+          );
+        } else if (el.type === 'rock') {
+          return (
+            <mesh 
+              key={el.id} 
+              position={[el.position[0], 0.15 * el.scale[1], el.position[2]]} 
+              scale={el.scale}
+              rotation={[0, el.rotationY, 0]}
+              castShadow
+            >
+              <dodecahedronGeometry args={[0.5]} />
+              <meshStandardMaterial color={isSciFi ? '#1f2937' : '#94a3b8'} roughness={0.9} />
+            </mesh>
+          );
+        }
+        return null;
+      })}
     </group>
   );
 }

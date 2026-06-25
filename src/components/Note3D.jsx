@@ -23,7 +23,14 @@ export default function Note3D({
   onSetPageIndex,
   isFlashed,
   onHoverChange,
-  isCrosshairHovered = false
+  isCrosshairHovered = false,
+  notes = [],
+  placedItems = [],
+  onNavigateToTarget,
+  pendingConnectionSource = null,
+  onStartConnection,
+  onCancelConnection,
+  hideControls = false
 }) {
   const [hovered, setHovered] = useState(false);
   const [texture, setTexture] = useState(null);
@@ -150,6 +157,58 @@ export default function Note3D({
 
     return wrappedLines;
   }, [currentPage.text, textMaxWidth, fontSize]);
+
+  // Extract BKZ links from page text
+  const pageLinks = useMemo(() => {
+    if (isPreview || !currentPage.text) return [];
+    const text = currentPage.text;
+    const links = [];
+    // Matching case-insensitive [Bkz: ...] or [bkz: ...] or [BKZ: ...]
+    const matches = [...text.matchAll(/\[[Bb][Kk][Zz]:\s*([^\]]+)\]/g)];
+    matches.forEach(match => {
+      const targetName = match[1].trim().toLowerCase();
+      
+      // Look in wall notes
+      const matchedWallNote = notes.find(n => {
+        if (n.id.toLowerCase() === targetName) return true;
+        // First line title matching
+        const firstLine = (n.pages?.[0]?.text || '').split('\n')[0].trim().toLowerCase();
+        const title = (n.title || firstLine).toLowerCase();
+        return title === targetName;
+      });
+
+      if (matchedWallNote) {
+        const firstLine = (matchedWallNote.pages?.[0]?.text || '').split('\n')[0].trim();
+        links.push({
+          matchText: match[0],
+          targetId: matchedWallNote.id,
+          targetTitle: matchedWallNote.title || firstLine || matchedWallNote.id,
+          isWallNote: true
+        });
+        return;
+      }
+
+      // Look in item notes
+      const matchedItem = placedItems.find(item => {
+        if (item.id.toLowerCase() === targetName) return true;
+        if (item.linkedNote) {
+          const title = (item.linkedNote.title || '').trim().toLowerCase();
+          return title === targetName;
+        }
+        return false;
+      });
+
+      if (matchedItem) {
+        links.push({
+          matchText: match[0],
+          targetId: matchedItem.id,
+          targetTitle: matchedItem.linkedNote.title || matchedItem.id,
+          isWallNote: false
+        });
+      }
+    });
+    return links;
+  }, [currentPage.text, notes, placedItems, isPreview]);
 
   const hasImage = !isPreview && !!texture;
 
@@ -349,8 +408,31 @@ export default function Note3D({
       )}
 
       {/* 3D Interactive HTML Overlays for selected note */}
-      {isSelected && !isPreview && (
+      {isSelected && !isPreview && !hideControls && (
         <>
+          <Html position={[-w / 2, h / 2 + 0.04, 0.015]} center distanceFactor={4}>
+            <button 
+              className="note-edit-btn interactive-ui"
+              style={{
+                background: (pendingConnectionSource?.id === note.id) ? 'rgba(239, 68, 68, 0.85)' : 'rgba(99, 102, 241, 0.85)',
+                borderColor: (pendingConnectionSource?.id === note.id) ? '#fca5a5' : '#818cf8',
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (pendingConnectionSource?.id === note.id) {
+                  if (onCancelConnection) onCancelConnection();
+                } else {
+                  if (onStartConnection) onStartConnection(note.id, 'note');
+                }
+              }}
+            >
+              {(pendingConnectionSource?.id === note.id) ? '❌ İptal' : '🔗 Bağlantı'}
+            </button>
+          </Html>
+
           <Html position={[w / 2, h / 2 + 0.04, 0.015]} center distanceFactor={4}>
             <button 
               className="note-edit-btn interactive-ui"
@@ -394,6 +476,57 @@ export default function Note3D({
               >▶</button>
             </div>
           </Html>
+
+          {pageLinks.length > 0 && (
+            <Html position={[0, -h / 2 - 0.25, 0.015]} center distanceFactor={4}>
+              <div 
+                className="note-link-controls interactive-ui"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  maxHeight: '80px',
+                  overflowY: 'auto'
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {pageLinks.map((link, idx) => (
+                  <button
+                    key={idx}
+                    className="btn-primary-item"
+                    style={{
+                      background: 'rgba(99, 102, 241, 0.2)',
+                      border: '1px solid rgba(99, 102, 241, 0.4)',
+                      color: '#a5b4fc',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onNavigateToTarget) {
+                        onNavigateToTarget(link.targetId, link.isWallNote);
+                      }
+                    }}
+                  >
+                    🔗 Git: {link.targetTitle.length > 18 ? link.targetTitle.substring(0, 18) + '...' : link.targetTitle}
+                  </button>
+                ))}
+              </div>
+            </Html>
+          )}
         </>
       )}
     </group>

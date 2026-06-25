@@ -267,6 +267,661 @@ function BoardModel({ color }) {
   );
 }
 
+function LargeDeskModel({ color }) {
+  return (
+    <group>
+      {/* Geniş Tabla */}
+      <mesh castShadow receiveShadow position={[0, 0.72, 0]}>
+        <boxGeometry args={[2.2, 0.08, 1.0]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* Metal Yan Ayaklar (U şeklinde kalın ayaklar) */}
+      <mesh castShadow position={[-0.95, 0.33, 0]}>
+        <boxGeometry args={[0.08, 0.66, 0.88]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+      </mesh>
+      <mesh castShadow position={[0.95, 0.33, 0]}>
+        <boxGeometry args={[0.08, 0.66, 0.88]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Çekmece Bloğu (Keson) */}
+      <mesh castShadow position={[0.6, 0.35, 0.2]}>
+        <boxGeometry args={[0.45, 0.5, 0.5]} />
+        <meshStandardMaterial color="#475569" roughness={0.5} />
+      </mesh>
+      {/* Çekmece Kulpları */}
+      <mesh position={[0.6, 0.48, 0.46]}>
+        <boxGeometry args={[0.15, 0.02, 0.02]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+      </mesh>
+      <mesh position={[0.6, 0.3, 0.46]}>
+        <boxGeometry args={[0.15, 0.02, 0.02]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+function MeetingTableModel({ color }) {
+  return (
+    <group>
+      {/* Masif Kalın Tabla */}
+      <mesh castShadow receiveShadow position={[0, 0.75, 0]}>
+        <boxGeometry args={[3.2, 0.1, 1.4]} />
+        <meshStandardMaterial color={color || '#78350f'} roughness={0.5} />
+      </mesh>
+      {/* Kalın Merkez Ayak Bloğu 1 */}
+      <mesh castShadow position={[-0.9, 0.35, 0]}>
+        <boxGeometry args={[0.4, 0.7, 0.6]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      {/* Kalın Merkez Ayak Bloğu 2 */}
+      <mesh castShadow position={[0.9, 0.35, 0]}>
+        <boxGeometry args={[0.4, 0.7, 0.6]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+function LDeskModel({ color }) {
+  return (
+    <group>
+      {/* Ana Tabla */}
+      <mesh castShadow receiveShadow position={[0, 0.72, 0.2]}>
+        <boxGeometry args={[1.8, 0.06, 0.8]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* L Dönüş Tablası */}
+      <mesh castShadow receiveShadow position={[-0.5, 0.72, -0.6]}>
+        <boxGeometry args={[0.8, 0.06, 0.8]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* Ayaklar */}
+      <mesh castShadow position={[-0.8, 0.35, 0.5]}>
+        <boxGeometry args={[0.06, 0.7, 0.06]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0.8, 0.35, 0.5]}>
+        <boxGeometry args={[0.06, 0.7, 0.06]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0.8, 0.35, -0.1]}>
+        <boxGeometry args={[0.06, 0.7, 0.06]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[-0.8, 0.35, -0.9]}>
+        <boxGeometry args={[0.06, 0.7, 0.06]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[-0.1, 0.35, -0.9]}>
+        <boxGeometry args={[0.06, 0.7, 0.06]} />
+        <meshStandardMaterial color="#334155" metalness={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+function RoundTableModel({ color }) {
+  return (
+    <group>
+      {/* Yuvarlak Tabla */}
+      <mesh castShadow receiveShadow position={[0, 0.72, 0]}>
+        <cylinderGeometry args={[0.7, 0.7, 0.06, 24]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* Merkez Sütun Ayak */}
+      <mesh castShadow position={[0, 0.34, 0]}>
+        <cylinderGeometry args={[0.08, 0.12, 0.68, 16]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} />
+      </mesh>
+      {/* Dairesel Taban */}
+      <mesh castShadow position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.35, 0.35, 0.04, 20]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function LargeBookshelfModel({ color }) {
+  return (
+    <group>
+      {/* Dış Çerçeve */}
+      <mesh castShadow position={[0, 1.0, 0]}>
+        <boxGeometry args={[1.8, 2.0, 0.35]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {/* Dikey Bölme Paneli (İç Kısmı İkiye Böler) */}
+      <mesh position={[0, 1.0, 0.01]} castShadow>
+        <boxGeometry args={[0.04, 1.9, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      {/* Yatay Raflar Sol */}
+      <mesh position={[-0.43, 0.5, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[-0.43, 1.0, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[-0.43, 1.5, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      {/* Yatay Raflar Sağ */}
+      <mesh position={[0.43, 0.35, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[0.43, 0.85, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[0.43, 1.35, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[0.43, 1.75, 0.01]} castShadow>
+        <boxGeometry args={[0.82, 0.03, 0.33]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+    </group>
+  );
+}
+
+function LowBookshelfModel({ color }) {
+  return (
+    <group>
+      {/* Dış Çerçeve */}
+      <mesh castShadow position={[0, 0.45, 0]}>
+        <boxGeometry args={[1.6, 0.9, 0.4]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Orta Dikey Bölme */}
+      <mesh position={[0, 0.43, 0.01]} castShadow>
+        <boxGeometry args={[0.04, 0.78, 0.38]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      {/* Raflar */}
+      <mesh position={[-0.38, 0.43, 0.01]} castShadow>
+        <boxGeometry args={[0.72, 0.03, 0.38]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+      <mesh position={[0.38, 0.43, 0.01]} castShadow>
+        <boxGeometry args={[0.72, 0.03, 0.38]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+    </group>
+  );
+}
+
+function FileCabinetModel({ color }) {
+  return (
+    <group>
+      {/* Metal Gövde */}
+      <mesh castShadow position={[0, 0.75, 0]}>
+        <boxGeometry args={[0.6, 1.5, 0.6]} />
+        <meshStandardMaterial color={color || '#475569'} metalness={0.5} roughness={0.4} />
+      </mesh>
+      {/* Çekmece Bölmeleri */}
+      {[0.2, 0.55, 0.9, 1.25].map((y, idx) => (
+        <group key={idx} position={[0, y, 0.301]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.52, 0.3, 0.01]} />
+            <meshStandardMaterial color="#334155" roughness={0.5} />
+          </mesh>
+          {/* Metal Kulp */}
+          <mesh position={[0, 0, 0.01]}>
+            <boxGeometry args={[0.16, 0.03, 0.02]} />
+            <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+          </mesh>
+          {/* Etiketlik */}
+          <mesh position={[0.18, 0.08, 0.006]}>
+            <boxGeometry args={[0.08, 0.04, 0.002]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function DrawerCabinetModel({ color }) {
+  return (
+    <group>
+      {/* Ahşap Gövde */}
+      <mesh castShadow position={[0, 0.45, 0]}>
+        <boxGeometry args={[0.8, 0.9, 0.5]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Üst Çekmece Sol */}
+      <mesh castShadow position={[-0.18, 0.68, 0.251]}>
+        <boxGeometry args={[0.34, 0.32, 0.01]} />
+        <meshStandardMaterial color="#3f3f46" roughness={0.5} />
+      </mesh>
+      <mesh position={[-0.18, 0.68, 0.26]}>
+        <boxGeometry args={[0.08, 0.02, 0.02]} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.8} />
+      </mesh>
+      {/* Üst Çekmece Sağ */}
+      <mesh castShadow position={[0.18, 0.68, 0.251]}>
+        <boxGeometry args={[0.34, 0.32, 0.01]} />
+        <meshStandardMaterial color="#3f3f46" roughness={0.5} />
+      </mesh>
+      <mesh position={[0.18, 0.68, 0.26]}>
+        <boxGeometry args={[0.08, 0.02, 0.02]} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.8} />
+      </mesh>
+      {/* Alt Çekmece Büyük */}
+      <mesh castShadow position={[0, 0.26, 0.251]}>
+        <boxGeometry args={[0.7, 0.42, 0.01]} />
+        <meshStandardMaterial color="#27272a" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0.26, 0.26]}>
+        <boxGeometry args={[0.18, 0.02, 0.02]} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function LargeBoardModel({ color }) {
+  return (
+    <group>
+      {/* Büyük Pano Yüzeyi */}
+      <mesh castShadow position={[0, 1.4, 0]}>
+        <boxGeometry args={[2.4, 1.3, 0.04]} />
+        <meshStandardMaterial color={color || '#fef08a'} roughness={0.8} />
+      </mesh>
+      {/* Ahşap Çerçeve */}
+      <mesh castShadow position={[0, 1.4, 0]}>
+        <boxGeometry args={[2.46, 1.36, 0.02]} />
+        <meshStandardMaterial color="#78350f" roughness={0.8} />
+      </mesh>
+      {/* Küçük Post-it Temsilleri */}
+      <mesh position={[-0.6, 1.6, 0.022]}>
+        <boxGeometry args={[0.12, 0.12, 0.005]} />
+        <meshStandardMaterial color="#fb7185" roughness={0.6} />
+      </mesh>
+      <mesh position={[-0.4, 1.6, 0.022]}>
+        <boxGeometry args={[0.12, 0.12, 0.005]} />
+        <meshStandardMaterial color="#38bdf8" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.2, 1.3, 0.022]}>
+        <boxGeometry args={[0.14, 0.14, 0.005]} />
+        <meshStandardMaterial color="#4ade80" roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+function WhiteboardModel() {
+  return (
+    <group>
+      {/* Parlak Beyaz Panel */}
+      <mesh castShadow position={[0, 1.2, 0]}>
+        <boxGeometry args={[1.4, 1.0, 0.02]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.1} />
+      </mesh>
+      {/* Alüminyum İnce Çerçeve */}
+      <mesh castShadow position={[0, 1.2, 0]}>
+        <boxGeometry args={[1.44, 1.04, 0.015]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+      </mesh>
+      {/* Kalemlik Çıkıntısı */}
+      <mesh position={[0, 0.69, 0.05]} castShadow>
+        <boxGeometry args={[0.6, 0.01, 0.08]} />
+        <meshStandardMaterial color="#64748b" metalness={0.7} />
+      </mesh>
+      {/* Ayak Destekleri */}
+      <mesh position={[-0.55, 0.35, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.7, 0.03]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      <mesh position={[0.55, 0.35, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.7, 0.03]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      {/* Yatay Alt Ayaklar */}
+      <mesh position={[-0.55, 0.01, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.5, 0.03]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+      <mesh position={[0.55, 0.01, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.5, 0.03]} />
+        <meshStandardMaterial color="#475569" />
+      </mesh>
+    </group>
+  );
+}
+
+function OfficeChairModel({ color }) {
+  return (
+    <group>
+      {/* Kalın Oturak */}
+      <mesh castShadow position={[0, 0.48, 0]}>
+        <boxGeometry args={[0.5, 0.08, 0.5]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Ergonomik Sırtlık */}
+      <mesh castShadow position={[0, 0.88, -0.22]} rotation={[0.05, 0, 0]}>
+        <boxGeometry args={[0.46, 0.62, 0.06]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Kolçak Sol */}
+      <group position={[-0.27, 0.62, 0]}>
+        <mesh castShadow position={[0, 0, 0]}>
+          <boxGeometry args={[0.03, 0.22, 0.22]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh castShadow position={[0, 0.1, -0.04]}>
+          <boxGeometry args={[0.04, 0.02, 0.3]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
+        </mesh>
+      </group>
+      {/* Kolçak Sağ */}
+      <group position={[0.27, 0.62, 0]}>
+        <mesh castShadow position={[0, 0, 0]}>
+          <boxGeometry args={[0.03, 0.22, 0.22]} />
+          <meshStandardMaterial color="#1e293b" />
+        </mesh>
+        <mesh castShadow position={[0, 0.1, -0.04]}>
+          <boxGeometry args={[0.04, 0.02, 0.3]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
+        </mesh>
+      </group>
+      {/* Ayak Mekanizması */}
+      <mesh position={[0, 0.22, 0]} castShadow>
+        <cylinderGeometry args={[0.04, 0.04, 0.44, 8]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} />
+      </mesh>
+      {/* Yıldız Ayak Tabanı */}
+      {[0, Math.PI / 2.5, (2 * Math.PI) / 2.5, (3 * Math.PI) / 2.5, (4 * Math.PI) / 2.5].map((angle, idx) => (
+        <group key={idx} rotation={[0, angle, 0]} position={[0, 0.02, 0]}>
+          <mesh castShadow position={[0, 0, 0.25]}>
+            <boxGeometry args={[0.06, 0.03, 0.5]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+          {/* Tekerlek */}
+          <mesh castShadow position={[0, -0.02, 0.46]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.04, 8]} />
+            <meshStandardMaterial color="#0f172a" />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function GuestChairModel({ color }) {
+  return (
+    <group>
+      {/* Oturak */}
+      <mesh castShadow position={[0, 0.45, 0]}>
+        <boxGeometry args={[0.48, 0.04, 0.46]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Sırtlık */}
+      <mesh castShadow position={[0, 0.8, -0.2]}>
+        <boxGeometry args={[0.46, 0.45, 0.04]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Kızak Metal Ayak (U şeklinde kıvrılan boru ayaklar) */}
+      <mesh castShadow position={[-0.22, 0.22, 0.02]}>
+        <boxGeometry args={[0.03, 0.42, 0.42]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh castShadow position={[0.22, 0.22, 0.02]}>
+        <boxGeometry args={[0.03, 0.42, 0.42]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} roughness={0.1} />
+      </mesh>
+      {/* Taban Zemin Bağlantısı */}
+      <mesh position={[0, 0.015, 0.02]}>
+        <boxGeometry args={[0.44, 0.03, 0.03]} />
+        <meshStandardMaterial color="#94a3b8" />
+      </mesh>
+    </group>
+  );
+}
+
+function StoolModel({ color }) {
+  return (
+    <group>
+      {/* Yuvarlak Oturak */}
+      <mesh castShadow position={[0, 0.45, 0]}>
+        <cylinderGeometry args={[0.2, 0.2, 0.04, 16]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* 4 Ayak */}
+      {[-0.12, 0.12].map((x) =>
+        [-0.12, 0.12].map((z, idx) => (
+          <mesh key={`${x}-${z}-${idx}`} castShadow position={[x, 0.225, z]} rotation={[x * 0.2, 0, -z * 0.2]}>
+            <cylinderGeometry args={[0.018, 0.012, 0.45, 8]} />
+            <meshStandardMaterial color="#78350f" roughness={0.6} />
+          </mesh>
+        ))
+      )}
+      {/* Ayak Çemberi (Destek) */}
+      <mesh position={[0, 0.18, 0]}>
+        <cylinderGeometry args={[0.16, 0.16, 0.02, 12]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function SideTableModel({ color }) {
+  return (
+    <group>
+      {/* Sehpa Tablası */}
+      <mesh castShadow receiveShadow position={[0, 0.48, 0]}>
+        <boxGeometry args={[0.55, 0.04, 0.55]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* 4 İnce Ayak */}
+      <mesh castShadow position={[-0.23, 0.24, -0.23]}>
+        <boxGeometry args={[0.04, 0.48, 0.04]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0.23, 0.24, -0.23]}>
+        <boxGeometry args={[0.04, 0.48, 0.04]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[-0.23, 0.24, 0.23]}>
+        <boxGeometry args={[0.04, 0.48, 0.04]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0.23, 0.24, 0.23]}>
+        <boxGeometry args={[0.04, 0.48, 0.04]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+function LargeRackModel({ color }) {
+  return (
+    <group>
+      {/* 4 Dikey Metal Direk */}
+      <mesh castShadow position={[-0.78, 0.9, -0.22]}>
+        <boxGeometry args={[0.04, 1.8, 0.04]} />
+        <meshStandardMaterial color="#475569" metalness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.9, -0.22]}>
+        <boxGeometry args={[0.04, 1.8, 0.04]} />
+        <meshStandardMaterial color="#475569" metalness={0.8} />
+      </mesh>
+      <mesh castShadow position={[-0.78, 0.9, 0.22]}>
+        <boxGeometry args={[0.04, 1.8, 0.04]} />
+        <meshStandardMaterial color="#475569" metalness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.9, 0.22]}>
+        <boxGeometry args={[0.04, 1.8, 0.04]} />
+        <meshStandardMaterial color="#475569" metalness={0.8} />
+      </mesh>
+
+      {/* 4 Katlı Ahşap/Metal Raflar */}
+      {[0.2, 0.7, 1.2, 1.7].map((y, idx) => (
+        <mesh key={idx} castShadow position={[0, y, 0]}>
+          <boxGeometry args={[1.56, 0.03, 0.44]} />
+          <meshStandardMaterial color={color || '#b45309'} roughness={0.7} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function SmallWallShelfModel({ color }) {
+  return (
+    <group>
+      {/* Alt Raf */}
+      <mesh castShadow position={[0, 0.02, 0]}>
+        <boxGeometry args={[0.7, 0.03, 0.2]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Üst Raf */}
+      <mesh castShadow position={[0, 0.32, -0.02]}>
+        <boxGeometry args={[0.7, 0.03, 0.16]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* İki Rafı Birleştiren Yan Teller */}
+      <mesh position={[-0.32, 0.17, -0.02]} castShadow>
+        <boxGeometry args={[0.02, 0.34, 0.18]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} />
+      </mesh>
+      <mesh position={[0.32, 0.17, -0.02]} castShadow>
+        <boxGeometry args={[0.02, 0.34, 0.18]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function FloorLampModel({ color }) {
+  return (
+    <group>
+      {/* Tripod Ayak 1 */}
+      <mesh position={[-0.15, 0.75, -0.08]} rotation={[0.1, 0, -0.1]} castShadow>
+        <cylinderGeometry args={[0.015, 0.015, 1.5, 8]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      {/* Tripod Ayak 2 */}
+      <mesh position={[0.15, 0.75, -0.08]} rotation={[0.1, 0, 0.1]} castShadow>
+        <cylinderGeometry args={[0.015, 0.015, 1.5, 8]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      {/* Tripod Ayak 3 */}
+      <mesh position={[0, 0.75, 0.15]} rotation={[-0.1, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.015, 0.015, 1.5, 8]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.7} />
+      </mesh>
+      {/* Büyük Şapka */}
+      <mesh position={[0, 1.6, 0]} castShadow>
+        <cylinderGeometry args={[0.26, 0.32, 0.45, 16]} />
+        <meshStandardMaterial color={color || '#fef08a'} roughness={0.6} />
+      </mesh>
+      {/* Ampul ve Işık */}
+      <mesh position={[0, 1.45, 0]}>
+        <sphereGeometry args={[0.07, 12, 12]} />
+        <meshBasicMaterial color="#fffbeb" />
+      </mesh>
+      <pointLight position={[0, 1.4, 0]} intensity={1.8} color="#fffbeb" distance={10} decay={1.5} />
+    </group>
+  );
+}
+
+function DeskLampModel({ color }) {
+  return (
+    <group>
+      {/* Küçük Taban */}
+      <mesh castShadow position={[0, 0.01, 0]}>
+        <cylinderGeometry args={[0.08, 0.08, 0.02, 12]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} />
+      </mesh>
+      {/* Eğimli Gövde Borusu */}
+      <mesh position={[-0.04, 0.15, 0]} rotation={[0, 0, -0.2]} castShadow>
+        <cylinderGeometry args={[0.01, 0.01, 0.28, 8]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+      </mesh>
+      <mesh position={[0.02, 0.3, 0]} rotation={[0, 0, 0.4]} castShadow>
+        <cylinderGeometry args={[0.01, 0.01, 0.18, 8]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.9} />
+      </mesh>
+      {/* Küçük Şapka */}
+      <mesh position={[0.07, 0.38, 0]} rotation={[0, 0, 0.5]} castShadow>
+        <cylinderGeometry args={[0.06, 0.09, 0.1, 12]} />
+        <meshStandardMaterial color={color || '#fbbf24'} roughness={0.4} />
+      </mesh>
+      {/* Ampul & Işık */}
+      <mesh position={[0.08, 0.34, 0]}>
+        <sphereGeometry args={[0.025, 8, 8]} />
+        <meshBasicMaterial color="#fff" />
+      </mesh>
+      <pointLight position={[0.08, 0.32, 0]} intensity={1.0} color="#fffbeb" distance={3} decay={2.0} />
+    </group>
+  );
+}
+
+function LargePlantModel({ color }) {
+  return (
+    <group>
+      {/* Büyük Seramik Saksı */}
+      <mesh castShadow position={[0, 0.28, 0]}>
+        <cylinderGeometry args={[0.3, 0.22, 0.56, 16]} />
+        <meshStandardMaterial color={color || '#f1f5f9'} roughness={0.2} />
+      </mesh>
+      {/* Toprak */}
+      <mesh position={[0, 0.54, 0]}>
+        <cylinderGeometry args={[0.28, 0.28, 0.02, 16]} />
+        <meshStandardMaterial color="#451a03" roughness={0.9} />
+      </mesh>
+      {/* Büyük Yapraklı Bitki Gövdesi */}
+      <mesh position={[0, 0.65, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.3, 8]} />
+        <meshStandardMaterial color="#78350f" />
+      </mesh>
+      {/* 5 adet büyük monstera benzeri yaprak (box) */}
+      {[0, (2 * Math.PI) / 5, (4 * Math.PI) / 5, (6 * Math.PI) / 5, (8 * Math.PI) / 5].map((angle, idx) => (
+        <group key={idx} rotation={[0, angle, 0]} position={[0, 0.75, 0]}>
+          <mesh castShadow position={[0.18, 0.18, 0]} rotation={[0.4, 0, -0.4]}>
+            <boxGeometry args={[0.34, 0.02, 0.24]} />
+            <meshStandardMaterial color="#16a34a" roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function ArchiveBoxModel({ color }) {
+  return (
+    <group>
+      {/* Sandık/Karton Gövde */}
+      <mesh castShadow position={[0, 0.22, 0]}>
+        <boxGeometry args={[0.62, 0.44, 0.44]} />
+        <meshStandardMaterial color={color || '#d97706'} roughness={0.9} />
+      </mesh>
+      {/* Sandık Kapağı */}
+      <mesh castShadow position={[0, 0.44, 0]}>
+        <boxGeometry args={[0.64, 0.05, 0.46]} />
+        <meshStandardMaterial color="#b45309" roughness={0.8} />
+      </mesh>
+      {/* Yan Tutma Boşluğu Detayı Sol */}
+      <mesh position={[-0.311, 0.26, 0]}>
+        <boxGeometry args={[0.002, 0.05, 0.12]} />
+        <meshStandardMaterial color="#27272a" />
+      </mesh>
+      {/* Yan Tutma Boşluğu Detayı Sağ */}
+      <mesh position={[0.311, 0.26, 0]}>
+        <boxGeometry args={[0.002, 0.05, 0.12]} />
+        <meshStandardMaterial color="#27272a" />
+      </mesh>
+    </group>
+  );
+}
+
 // --- Ana PlacedItem3D Bileşeni ---
 
 export default function PlacedItem3D({
@@ -383,7 +1038,15 @@ export default function PlacedItem3D({
     const clampedX = Math.max(limits.minX, Math.min(limits.maxX, targetX));
     const clampedZ = Math.max(limits.minZ, Math.min(limits.maxZ, targetZ));
 
-    const currentY = item.position?.y ?? (item.type === 'wallshelf' ? 1.4 : item.type === 'rug' ? 0.001 : 0.005);
+    const currentY = item.position?.y ?? (
+      (item.type === 'wallshelf' || item.type === 'small_wallshelf' || item.type === 'large_board') 
+        ? 1.4 
+        : item.type === 'desk_lamp' 
+          ? 0.72 
+          : item.type === 'rug' 
+            ? 0.001 
+            : 0.005
+    );
 
     onUpdate(item.id, { position: { x: clampedX, y: currentY, z: clampedZ } });
   };
@@ -424,6 +1087,47 @@ export default function PlacedItem3D({
         return <BoxModel color={item.color} />;
       case 'board':
         return <BoardModel color={item.color} />;
+      // Yeni Eşyalar
+      case 'large_desk':
+        return <LargeDeskModel color={item.color} />;
+      case 'meeting_table':
+        return <MeetingTableModel color={item.color} />;
+      case 'l_desk':
+        return <LDeskModel color={item.color} />;
+      case 'round_table':
+        return <RoundTableModel color={item.color} />;
+      case 'large_bookshelf':
+        return <LargeBookshelfModel color={item.color} />;
+      case 'low_bookshelf':
+        return <LowBookshelfModel color={item.color} />;
+      case 'file_cabinet':
+        return <FileCabinetModel color={item.color} />;
+      case 'drawer_cabinet':
+        return <DrawerCabinetModel color={item.color} />;
+      case 'large_board':
+        return <LargeBoardModel color={item.color} />;
+      case 'whiteboard':
+        return <WhiteboardModel />;
+      case 'office_chair':
+        return <OfficeChairModel color={item.color} />;
+      case 'guest_chair':
+        return <GuestChairModel color={item.color} />;
+      case 'stool':
+        return <StoolModel color={item.color} />;
+      case 'side_table':
+        return <SideTableModel color={item.color} />;
+      case 'large_rack':
+        return <LargeRackModel color={item.color} />;
+      case 'small_wallshelf':
+        return <SmallWallShelfModel color={item.color} />;
+      case 'floor_lamp':
+        return <FloorLampModel color={item.color} />;
+      case 'desk_lamp':
+        return <DeskLampModel color={item.color} />;
+      case 'large_plant':
+        return <LargePlantModel color={item.color} />;
+      case 'archive_box':
+        return <ArchiveBoxModel color={item.color} />;
       default:
         return null;
     }
@@ -451,6 +1155,47 @@ export default function PlacedItem3D({
         return [0.56, 0.56, 0.56];
       case 'board':
         return [1.6, 1.8, 0.45];
+      // Yeni Eşyalar
+      case 'large_desk':
+        return [2.3, 0.82, 1.1];
+      case 'meeting_table':
+        return [3.3, 0.9, 1.5];
+      case 'l_desk':
+        return [1.9, 0.8, 1.7];
+      case 'round_table':
+        return [1.5, 0.8, 1.5];
+      case 'large_bookshelf':
+        return [1.9, 2.1, 0.45];
+      case 'low_bookshelf':
+        return [1.7, 1.0, 0.5];
+      case 'file_cabinet':
+        return [0.7, 1.6, 0.7];
+      case 'drawer_cabinet':
+        return [0.9, 1.0, 0.6];
+      case 'large_board':
+        return [2.5, 1.4, 0.15];
+      case 'whiteboard':
+        return [1.5, 1.8, 0.6];
+      case 'office_chair':
+        return [0.6, 1.25, 0.6];
+      case 'guest_chair':
+        return [0.55, 1.1, 0.55];
+      case 'stool':
+        return [0.45, 0.55, 0.45];
+      case 'side_table':
+        return [0.6, 0.6, 0.6];
+      case 'large_rack':
+        return [1.7, 1.9, 0.55];
+      case 'small_wallshelf':
+        return [0.8, 0.4, 0.3];
+      case 'floor_lamp':
+        return [0.7, 1.9, 0.7];
+      case 'desk_lamp':
+        return [0.25, 0.48, 0.25];
+      case 'large_plant':
+        return [0.8, 1.2, 0.8];
+      case 'archive_box':
+        return [0.7, 0.55, 0.52];
       default:
         return [1, 1, 1];
     }

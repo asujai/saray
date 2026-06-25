@@ -7,9 +7,16 @@ const ROOM_LIMIT = 24.5; // (50 / 2) - 0.5 boundary margin
 const MIN_HEIGHT = 0.5;
 const MAX_HEIGHT = 22.5; // Raised boundary to allow full overhead view of the roofless house
 
-export default function Player({ cameraMode, activeNoteId, activeItemId, isItemEditingActive, isAddMode, isDrawing, isEditorOpen, isDashboardOpen, cameraFocusRequest, hoveredNoteId, playerPositionRef }) {
+export default function Player({ cameraMode, activeNoteId, activeItemId, isItemEditingActive, isAddMode, isDrawing, isEditorOpen, isDashboardOpen, isItemDrawerOpen, cameraFocusRequest, hoveredNoteId, playerPositionRef, playerDirectionRef }) {
   const { camera, gl } = useThree();
   const avatarRef = useRef();
+
+  // Yürüyüş animasyonu ve zıplama için gerekli referanslar
+  const verticalVelocity = useRef(0);
+  const leftLegRef = useRef();
+  const rightLegRef = useRef();
+  const leftArmRef = useRef();
+  const rightArmRef = useRef();
 
   // Create refs to prevent React stale closures in event listeners
   const isAddModeRef = useRef(isAddMode);
@@ -20,6 +27,7 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
   const isDrawingRef = useRef(isDrawing);
   const isEditorOpenRef = useRef(isEditorOpen);
   const isDashboardOpenRef = useRef(isDashboardOpen);
+  const isItemDrawerOpenRef = useRef(isItemDrawerOpen);
   const hoveredNoteIdRef = useRef(hoveredNoteId);
 
   useEffect(() => {
@@ -31,6 +39,7 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
     isDrawingRef.current = isDrawing;
     isEditorOpenRef.current = isEditorOpen;
     isDashboardOpenRef.current = isDashboardOpen;
+    isItemDrawerOpenRef.current = isItemDrawerOpen;
     hoveredNoteIdRef.current = hoveredNoteId;
   });
 
@@ -46,6 +55,22 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       yaw.current = cameraFocusRequest.yaw;
     }
   }, [cameraFocusRequest]);
+
+  useEffect(() => {
+    if (!isItemDrawerOpen) {
+      Object.keys(keys.current).forEach((k) => {
+        keys.current[k] = false;
+      });
+    }
+  }, [isItemDrawerOpen]);
+
+  useEffect(() => {
+    if (!isItemEditingActive) {
+      Object.keys(keys.current).forEach((k) => {
+        keys.current[k] = false;
+      });
+    }
+  }, [isItemEditingActive]);
 
   // Track keyboard states (Added Space, Shift, and Arrow Keys)
   const keys = useRef({
@@ -117,8 +142,8 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
     // 2. Drag to look
     const handleMouseDown = (e) => {
       if (e.target.closest('.interactive-ui')) return;
-      // Do not rotate camera if in Add Mode, drawing a note, or editor modal is open
-      if (isAddModeRef.current || activeNoteIdRef.current || isDrawingRef.current || isEditorOpenRef.current || isDashboardOpenRef.current) return;
+      // Do not rotate camera if in Add Mode, drawing a note, editor modal is open, item drawer is open, or birds-eye mode
+      if (isAddModeRef.current || activeNoteIdRef.current || isDrawingRef.current || isEditorOpenRef.current || isDashboardOpenRef.current || isItemDrawerOpenRef.current || cameraModeRef.current === 'birds-eye') return;
       if (e.button === 0) {
         isDragging.current = true;
         document.body.style.cursor = 'grabbing';
@@ -142,8 +167,23 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
 
     // 3. Mouse Wheel zoom-in / zoom-out (approach note easily)
     const handleWheel = (e) => {
-      // Don't zoom if editor or dashboard is open
-      if (isEditorOpenRef.current || isDashboardOpenRef.current) return;
+      // Don't zoom or prevent default if hovering over interactive UI components
+      if (e.target && e.target.closest && (
+        e.target.closest('.interactive-ui') || 
+        e.target.closest('.item-drawer') || 
+        e.target.closest('.item-editor-bar') || 
+        e.target.closest('.note-dashboard') || 
+        e.target.closest('.note-3d-panel') ||
+        e.target.closest('.editor-modal') ||
+        e.target.closest('.dashboard-window') ||
+        e.target.closest('.settings-modal') ||
+        e.target.closest('.toast')
+      )) {
+        return;
+      }
+
+      // Don't zoom if editor or dashboard is open, or in birds-eye mode, or item drawer is open
+      if (isEditorOpenRef.current || isDashboardOpenRef.current || isItemDrawerOpenRef.current || cameraModeRef.current === 'birds-eye') return;
       
       // Prevent zoom if hovering over the active/selected note to allow scrolling inside the note
       if (activeNoteIdRef.current && hoveredNoteIdRef.current === activeNoteIdRef.current) {
@@ -190,14 +230,37 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
 
+    // Kuş bakışı modda kamerayı sabit tepeden konumla ve tüm hareketi atla
+    if (cameraMode === 'birds-eye') {
+      // Sabit tepeden bakış: evin merkezinin üstünden, düz aşağıya bak
+      const birdsEyeTarget = new THREE.Vector3(0, 42, 0);
+      camera.position.lerp(birdsEyeTarget, 0.08);
+      
+      // Kamerayı tam aşağı baktır (-Y yönü)
+      const targetQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0, 'YXZ'));
+      camera.quaternion.slerp(targetQuat, 0.08);
+      
+      // Avatar gizle
+      if (avatarRef.current) avatarRef.current.visible = false;
+      
+      // Pozisyon ref'lerini güncelle (eşya yerleştirme vb. için)
+      if (playerPositionRef) {
+        playerPositionRef.current = [currentPosition.current.x, currentPosition.current.y, currentPosition.current.z];
+      }
+      return; // Diğer tüm hareket mantığını atla
+    }
+
+    // Avatar'ı tekrar görünür yap (kuş bakışından çıkıldığında)
+    if (avatarRef.current) avatarRef.current.visible = true;
+
     // Apply rotation quaternion to camera
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
     euler.x = pitch.current;
     euler.y = yaw.current;
     camera.quaternion.setFromEuler(euler);
 
-    // WASD + Space/Shift Flying movement (disabled when in large editor, dashboard, or editing item active)
-    const canMove = !isEditorOpen && !isDashboardOpen && !isItemEditingActive;
+    // WASD + Space/Shift Flying movement (disabled when in large editor, dashboard, editing item active, or item drawer open)
+    const canMove = !isEditorOpen && !isDashboardOpen && !isItemEditingActive && !isItemDrawerOpen;
 
     if (canMove) {
       const moveForward = (keys.current.KeyW || keys.current.ArrowUp) ? 1 : 0;
@@ -205,8 +268,6 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       // Suppress Arrow keys from moving player horizontal if a note is selected
       const moveLeft = (keys.current.KeyA || (!activeNoteId && keys.current.ArrowLeft)) ? 1 : 0;
       const moveRight = (keys.current.KeyD || (!activeNoteId && keys.current.ArrowRight)) ? 1 : 0;
-      const moveUp = keys.current.Space ? 1 : 0;
-      const moveDown = (keys.current.ShiftLeft || keys.current.ShiftRight) ? 1 : 0;
 
       moveVector.set(0, 0, 0);
 
@@ -228,22 +289,70 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
         targetPosition.current.add(moveVector);
       }
 
-      // Vertical translation (Space/Shift)
-      if (moveUp) {
-        targetPosition.current.y += SPEED * dt;
-      }
-      if (moveDown) {
-        targetPosition.current.y -= SPEED * dt;
+      if (cameraMode === 'free') {
+        const moveUp = keys.current.Space ? 1 : 0;
+        const moveDown = (keys.current.ShiftLeft || keys.current.ShiftRight) ? 1 : 0;
+        if (moveUp) {
+          targetPosition.current.y += SPEED * dt;
+        }
+        if (moveDown) {
+          targetPosition.current.y -= SPEED * dt;
+        }
+      } else {
+        // Yürüme Modu Fiziği (Gravity + Jump)
+        const isGrounded = targetPosition.current.y <= 1.6;
+        if (keys.current.Space && isGrounded && verticalVelocity.current === 0) {
+          verticalVelocity.current = 5.5; // Zıplama gücü
+        }
+
+        if (!isGrounded || verticalVelocity.current > 0) {
+          targetPosition.current.y += verticalVelocity.current * dt;
+          verticalVelocity.current -= 18.0 * dt; // Yerçekimi ivmesi
+          if (targetPosition.current.y <= 1.6) {
+            targetPosition.current.y = 1.6;
+            verticalVelocity.current = 0;
+          }
+        } else {
+          targetPosition.current.y = 1.6; // Yerde yürüme yüksekliği (göz hizası)
+          verticalVelocity.current = 0;
+        }
       }
 
       // Clamp target position boundaries
       targetPosition.current.x = THREE.MathUtils.clamp(targetPosition.current.x, -ROOM_LIMIT, ROOM_LIMIT);
-      targetPosition.current.y = THREE.MathUtils.clamp(targetPosition.current.y, MIN_HEIGHT, MAX_HEIGHT);
+      const maxY = cameraMode === 'free' ? MAX_HEIGHT : Math.max(MAX_HEIGHT, targetPosition.current.y);
+      targetPosition.current.y = THREE.MathUtils.clamp(targetPosition.current.y, MIN_HEIGHT, maxY);
       targetPosition.current.z = THREE.MathUtils.clamp(targetPosition.current.z, -ROOM_LIMIT, ROOM_LIMIT);
     }
 
     // Pürüzsüz süzülme (lerp) - smooth transition towards target
     currentPosition.current.lerp(targetPosition.current, 0.12);
+
+    // Yürüyüş sallantı animasyonunu hesapla (kollar ve bacaklar için)
+    const isMoving = canMove && (
+      keys.current.KeyW || keys.current.ArrowUp ||
+      keys.current.KeyS || keys.current.ArrowDown ||
+      keys.current.KeyA || (!activeNoteId && keys.current.ArrowLeft) ||
+      keys.current.KeyD || (!activeNoteId && keys.current.ArrowRight)
+    );
+
+    const time = state.clock.getElapsedTime();
+    const speedMultiplier = 12; // Sallanma sıklığı
+    const swingRange = 0.45; // Sallanma genliği (yaklaşık 25 derece)
+
+    if (isMoving) {
+      const angle = Math.sin(time * speedMultiplier) * swingRange;
+      if (leftLegRef.current) leftLegRef.current.rotation.x = angle;
+      if (rightLegRef.current) rightLegRef.current.rotation.x = -angle;
+      if (leftArmRef.current) leftArmRef.current.rotation.x = -angle * 0.8;
+      if (rightArmRef.current) rightArmRef.current.rotation.x = angle * 0.8;
+    } else {
+      // Yumuşakça hareketsiz poza dön
+      if (leftLegRef.current) leftLegRef.current.rotation.x = THREE.MathUtils.lerp(leftLegRef.current.rotation.x, 0, 0.15);
+      if (rightLegRef.current) rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, 0, 0.15);
+      if (leftArmRef.current) leftArmRef.current.rotation.x = THREE.MathUtils.lerp(leftArmRef.current.rotation.x, 0, 0.15);
+      if (rightArmRef.current) rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, 0, 0.15);
+    }
 
     // Update Avatar position (always follows camera position)
     if (avatarRef.current) {
@@ -260,60 +369,161 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       ];
     }
 
+    // Eşya yerleşimi için oyuncunun o anki bakış yönünü ref üzerinden App.jsx'e ilet
+    if (playerDirectionRef) {
+      const dirVec = new THREE.Vector3();
+      camera.getWorldDirection(dirVec);
+      dirVec.y = 0;
+      dirVec.normalize();
+      if (dirVec.lengthSq() > 0.001) {
+        playerDirectionRef.current = [dirVec.x, dirVec.y, dirVec.z];
+      } else {
+        playerDirectionRef.current = [0, 0, -1];
+      }
+    }
+
     // Camera Placement according to mode
     if (cameraMode === 'free') {
       // Free mode: camera is exactly at the current fly position
       camera.position.copy(currentPosition.current);
     } else {
-      // Third Person (Position review mode): pull camera backwards to reveal the avatar
+      // Omuz Üstü Üçüncü Şahıs Kamera Açısı (Over-the-shoulder look)
       const backDirection = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion);
+      const rightDirection = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
       
       const targetCamPos = new THREE.Vector3()
         .copy(currentPosition.current)
-        .addScaledVector(backDirection, 3.5) // Orbit distance
-        .add(new THREE.Vector3(0, 0.5, 0));  // slight height offset
+        .addScaledVector(backDirection, 2.2)    // Arkasında 2.2 metre mesafe
+        .addScaledVector(rightDirection, 0.4)   // Omuz üstü için hafif sağa ofset
+        .add(new THREE.Vector3(0, 0.3, 0));     // Hafif yükseklik ofseti
 
       camera.position.copy(targetCamPos);
+
+      // Kameranın evin dış sınırlarından dışarı taşmasını önle
+      camera.position.x = THREE.MathUtils.clamp(camera.position.x, -24.8, 24.8);
+      camera.position.z = THREE.MathUtils.clamp(camera.position.z, -24.8, 24.8);
     }
   });
 
   // Avatar representation: Render only in Third Person mode so it doesn't obstruct view in Free Mode
-  const showAvatar = cameraMode === 'third-person';
+  const showAvatar = cameraMode === 'third-person'; // Kuş bakışı ve serbest uçuşta avatar gizli
 
   return (
     <group ref={avatarRef}>
       {showAvatar && (
         <group>
-          {/* Minimalist, cute robot/human avatar representing position */}
-          {/* Base/Stand */}
-          <mesh position={[0, -0.4, 0]} castShadow>
-            <cylinderGeometry args={[0.2, 0.25, 0.1, 16]} />
+          {/* 1. Kafa & Kapüşon (Hoodie Head) */}
+          {/* Dış Kapüşon */}
+          <mesh position={[0, 0.1, -0.02]} castShadow>
+            <sphereGeometry args={[0.18, 20, 20]} />
             <meshStandardMaterial color="#6366f1" roughness={0.4} />
           </mesh>
-
-          {/* Main Body */}
-          <mesh position={[0, 0, 0]} castShadow>
-            <sphereGeometry args={[0.25, 16, 16]} />
-            <meshStandardMaterial color="#818cf8" roughness={0.3} metalness={0.1} />
+          {/* Yüz Alanı */}
+          <mesh position={[0, 0.1, -0.04]} castShadow>
+            <sphereGeometry args={[0.155, 16, 16]} />
+            <meshStandardMaterial color="#fed7aa" roughness={0.8} />
+          </mesh>
+          {/* Gözler (Ön yüze bakıyor, -Z yönünde) */}
+          <mesh position={[-0.05, 0.14, -0.17]} castShadow>
+            <sphereGeometry args={[0.025, 8, 8]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.5} />
+          </mesh>
+          <mesh position={[0.05, 0.14, -0.17]} castShadow>
+            <sphereGeometry args={[0.025, 8, 8]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.5} />
+          </mesh>
+          {/* Ağız (Gülümseme) */}
+          <mesh position={[0, 0.07, -0.17]} rotation={[0, 0, Math.PI]} castShadow>
+            <torusGeometry args={[0.02, 0.005, 8, 16, Math.PI]} />
+            <meshStandardMaterial color="#e11d48" roughness={0.5} />
           </mesh>
 
-          {/* Head */}
-          <mesh position={[0, 0.45, 0]} castShadow>
-            <sphereGeometry args={[0.18, 16, 16]} />
-            <meshStandardMaterial color="#cbd5e1" roughness={0.2} />
+          {/* 2. Gövde (Jacket / Torso) */}
+          <mesh position={[0, -0.35, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.16, 0.16, 0.65, 16]} />
+            <meshStandardMaterial color="#4f46e5" roughness={0.4} />
+          </mesh>
+          {/* Ceket Detayı (Ön Cep) */}
+          <mesh position={[0, -0.45, -0.14]} castShadow>
+            <boxGeometry args={[0.18, 0.08, 0.04]} />
+            <meshStandardMaterial color="#818cf8" roughness={0.5} />
           </mesh>
 
-          {/* Glowing visor eyes */}
-          <mesh position={[0, 0.48, 0.12]} castShadow>
-            <boxGeometry args={[0.2, 0.05, 0.05]} />
-            <meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={0.8} />
-          </mesh>
+          {/* 3. Sırt Çantası (Backpack - Arkaya bakıyor, +Z yönünde) */}
+          <group position={[0, -0.3, 0.13]}>
+            {/* Ana Çanta */}
+            <mesh castShadow>
+              <boxGeometry args={[0.2, 0.3, 0.12]} />
+              <meshStandardMaterial color="#b45309" roughness={0.6} />
+            </mesh>
+            {/* Çanta Kapağı */}
+            <mesh position={[0, 0.1, 0.01]} castShadow>
+              <boxGeometry args={[0.18, 0.08, 0.13]} />
+              <meshStandardMaterial color="#78350f" roughness={0.6} />
+            </mesh>
+            {/* Sol Askı */}
+            <mesh position={[-0.09, 0.02, -0.16]} rotation={[0.1, 0, 0]} castShadow>
+              <boxGeometry args={[0.03, 0.35, 0.03]} />
+              <meshStandardMaterial color="#78350f" />
+            </mesh>
+            {/* Sağ Askı */}
+            <mesh position={[0.09, 0.02, -0.16]} rotation={[0.1, 0, 0]} castShadow>
+              <boxGeometry args={[0.03, 0.35, 0.03]} />
+              <meshStandardMaterial color="#78350f" />
+            </mesh>
+          </group>
 
-          {/* Halo ring for spatial futuristic look */}
-          <mesh position={[0, 0.7, 0]} rotation={[Math.PI / 12, 0, 0]}>
-            <torusGeometry args={[0.22, 0.02, 8, 24]} />
-            <meshBasicMaterial color="#6366f1" />
-          </mesh>
+          {/* 4. Sol Bacak (Left Leg) */}
+          <group ref={leftLegRef} position={[-0.08, -0.65, 0]}>
+            <mesh position={[0, -0.425, 0]} castShadow receiveShadow>
+              <boxGeometry args={[0.075, 0.85, 0.075]} />
+              <meshStandardMaterial color="#312e81" roughness={0.6} />
+            </mesh>
+            {/* Ayakkabı */}
+            <mesh position={[0, -0.85, -0.03]} castShadow>
+              <boxGeometry args={[0.08, 0.08, 0.13]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.5} />
+            </mesh>
+          </group>
+
+          {/* 5. Sağ Bacak (Right Leg) */}
+          <group ref={rightLegRef} position={[0.08, -0.65, 0]}>
+            <mesh position={[0, -0.425, 0]} castShadow receiveShadow>
+              <boxGeometry args={[0.075, 0.85, 0.075]} />
+              <meshStandardMaterial color="#312e81" roughness={0.6} />
+            </mesh>
+            {/* Ayakkabı */}
+            <mesh position={[0, -0.85, -0.03]} castShadow>
+              <boxGeometry args={[0.08, 0.08, 0.13]} />
+              <meshStandardMaterial color="#1e293b" roughness={0.5} />
+            </mesh>
+          </group>
+
+          {/* 6. Sol Kol (Left Arm) */}
+          <group ref={leftArmRef} position={[-0.20, -0.15, 0]}>
+            <mesh position={[0, -0.24, 0]} castShadow>
+              <boxGeometry args={[0.065, 0.48, 0.065]} />
+              <meshStandardMaterial color="#6366f1" roughness={0.4} />
+            </mesh>
+            {/* El */}
+            <mesh position={[0, -0.48, 0]}>
+              <sphereGeometry args={[0.035, 8, 8]} />
+              <meshStandardMaterial color="#fed7aa" roughness={0.8} />
+            </mesh>
+          </group>
+
+          {/* 7. Sağ Kol (Right Arm) */}
+          <group ref={rightArmRef} position={[0.20, -0.15, 0]}>
+            <mesh position={[0, -0.24, 0]} castShadow>
+              <boxGeometry args={[0.065, 0.48, 0.065]} />
+              <meshStandardMaterial color="#6366f1" roughness={0.4} />
+            </mesh>
+            {/* El */}
+            <mesh position={[0, -0.48, 0]}>
+              <sphereGeometry args={[0.035, 8, 8]} />
+              <meshStandardMaterial color="#fed7aa" roughness={0.8} />
+            </mesh>
+          </group>
         </group>
       )}
     </group>
