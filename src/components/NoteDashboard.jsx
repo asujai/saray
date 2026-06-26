@@ -1,9 +1,121 @@
 import React, { useState, useMemo } from 'react';
 import { Search, X, MapPin, FileText, ImageIcon, Calendar, Eye, Compass } from 'lucide-react';
 
-export function getRoomInfo(note, roomNames = {}) {
+const DASH_TRANSLATIONS = {
+  tr: {
+    title: 'HOLOGRAFİK KONTROL PANELİ',
+    subtitle: 'ZİHİN HARİTASI EVİ NOT NAVİGATÖRÜ',
+    close_esc: 'Kapat (ESC)',
+    tab_notes: '📚 Notlar & Eşyalar',
+    tab_connections: '🔗 3D İlişkiler',
+    tab_concepts: '🎨 Kavram Yönetimi',
+    search_placeholder: 'Not metni, başlık veya oda ara...',
+    all: 'Tümü',
+    tag_label: 'Etiket:',
+    no_notes: 'Aramanızla eşleşen not bulunamadı.',
+    try_filter: 'Filtreleri değiştirmeyi veya yeni not eklemeyi deneyin.',
+    select: 'Seç',
+    go_to_note: 'Nota Git',
+    has_image: 'Görsel İçeriyor',
+    total: 'Toplam',
+    listed: 'Listelenen',
+    note_singular: 'not',
+    visibility_mode: 'Görünürlük Modu:',
+    show_all: 'Tümünü Göster',
+    selected_only: 'Sadece Seçili Olanlar',
+    hide_all: 'Tümünü Gizle',
+    no_connections: 'Henüz hiçbir 3D bağlantı oluşturulmadı.',
+    use_connection_btn: 'Bir not veya eşya seçip "Bağlantı" butonunu kullanın.',
+    wall_note: 'Duvar Notu',
+    item: 'Eşya',
+    visible: 'Görünür',
+    hidden: 'Gizli',
+    delete: 'Sil',
+    define_concept: 'Yeni Kavram Tanımla',
+    concept_placeholder: 'Kavram adı yazın...',
+    add: 'Ekle',
+    change_color: 'Rengi değiştirmek için tıklayın',
+    untitled_note: 'Başlıksız Not',
+    empty_content: 'İçerik boş...',
+    room_hall: 'Giriş / Hol',
+    room_bedroom: 'Yatak Odası',
+    room_kitchen: 'Mutfak',
+    room_study: 'Çalışma Odası',
+    room_living: 'Salon',
+    room_unknown: 'Bilinmeyen Oda',
+    item_desk: 'Çalışma Masası',
+    item_chair: 'Ofis Sandalyesi',
+    item_shelf: 'Büyük Kitaplık',
+    item_wallshelf: 'Duvar Rafı',
+    item_plant: 'Saksı Bitkisi',
+    item_lamp: 'Ayaklı Lamba',
+    item_rug: 'Desenli Halı',
+    item_pc: 'Bilgisayar Seti',
+    item_box: 'Koli / Kutu',
+    item_board: 'Çalışma Panosu',
+    item_generic: 'Eşya',
+    lost_object: 'Kayıp Nesne',
+    note_suffix: 'Notu'
+  },
+  en: {
+    title: 'HOLOGRAPHIC CONTROL PANEL',
+    subtitle: 'MIND MAP HOUSE NOTE NAVIGATOR',
+    close_esc: 'Close (ESC)',
+    tab_notes: '📚 Notes & Items',
+    tab_connections: '🔗 3D Relations',
+    tab_concepts: '🎨 Concept Management',
+    search_placeholder: 'Search note text, title or room...',
+    all: 'All',
+    tag_label: 'Tag:',
+    no_notes: 'No notes match your search.',
+    try_filter: 'Try changing filters or adding new notes.',
+    select: 'Select',
+    go_to_note: 'Go to Note',
+    has_image: 'Contains Image',
+    total: 'Total',
+    listed: 'Listed',
+    note_singular: 'notes',
+    visibility_mode: 'Visibility Mode:',
+    show_all: 'Show All',
+    selected_only: 'Selected Only',
+    hide_all: 'Hide All',
+    no_connections: 'No 3D connections created yet.',
+    use_connection_btn: 'Select a note or item and use the "Connection" button.',
+    wall_note: 'Wall Note',
+    item: 'Item',
+    visible: 'Visible',
+    hidden: 'Hidden',
+    delete: 'Delete',
+    define_concept: 'Define New Concept',
+    concept_placeholder: 'Write concept name...',
+    add: 'Add',
+    change_color: 'Click to change color',
+    untitled_note: 'Untitled Note',
+    empty_content: 'Empty content...',
+    room_hall: 'Entrance / Hall',
+    room_bedroom: 'Bedroom',
+    room_kitchen: 'Kitchen',
+    room_study: 'Study Room',
+    room_living: 'Living Room',
+    room_unknown: 'Unknown Room',
+    item_desk: 'Study Desk',
+    item_chair: 'Office Chair',
+    item_shelf: 'Bookshelf',
+    item_wallshelf: 'Wall Shelf',
+    item_plant: 'Potted Plant',
+    item_lamp: 'Floor Lamp',
+    item_rug: 'Patterned Rug',
+    item_pc: 'PC Set',
+    item_box: 'Box',
+    item_board: 'Study Board',
+    item_generic: 'Item',
+    lost_object: 'Lost Object',
+    note_suffix: 'Note'
+  }
+};
+
+export function getRoomInfo(note, roomNames = {}, lang = 'tr') {
   if (note.roomId && note.roomName) {
-    // If the note has both fields pre-set (from legacy or specific source), respect it unless roomNames has an override
     return { roomId: note.roomId, roomName: roomNames[note.roomId] || note.roomName };
   }
   
@@ -22,23 +134,24 @@ export function getRoomInfo(note, roomNames = {}) {
     roomId = 'living';
   }
 
+  const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const defaultNames = {
-    hall: 'Giriş / Hol',
-    bedroom: 'Yatak Odası',
-    kitchen: 'Mutfak',
-    study: 'Çalışma Odası',
-    living: 'Salon',
-    unknown: 'Bilinmeyen Oda'
+    hall: dt.room_hall,
+    bedroom: dt.room_bedroom,
+    kitchen: dt.room_kitchen,
+    study: dt.room_study,
+    living: dt.room_living,
+    unknown: dt.room_unknown
   };
 
-  return { roomId, roomName: roomNames[roomId] || defaultNames[roomId] || 'Bilinmeyen Oda' };
+  return { roomId, roomName: roomNames[roomId] || defaultNames[roomId] || dt.room_unknown };
 }
 
-function formatDate(dateString) {
+function formatDate(dateString, lang = 'tr') {
   if (!dateString) return '';
   try {
     const d = new Date(dateString);
-    return d.toLocaleString('tr-TR', {
+    return d.toLocaleString(lang === 'en' ? 'en-GB' : 'tr-TR', {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
@@ -50,21 +163,23 @@ function formatDate(dateString) {
   }
 }
 
-function getNoteTitle(note) {
+function getNoteTitle(note, lang = 'tr') {
+  const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const firstPageText = note.pages?.[0]?.text || '';
   const lines = firstPageText.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length > 0) {
     const firstLine = lines[0];
     return firstLine.length > 30 ? firstLine.substring(0, 30) + '...' : firstLine;
   }
-  return 'Başlıksız Not';
+  return dt.untitled_note;
 }
 
-function getNotePreview(note) {
+function getNotePreview(note, lang = 'tr') {
+  const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const firstPageText = note.pages?.[0]?.text || '';
   const lines = firstPageText.split('\n').map(l => l.trim()).filter(Boolean);
   const cleanText = firstPageText.replace(/\n/g, ' ').trim();
-  return cleanText.length > 60 ? cleanText.substring(0, 60) + '...' : cleanText || 'İçerik boş...';
+  return cleanText.length > 60 ? cleanText.substring(0, 60) + '...' : cleanText || dt.empty_content;
 }
 
 export default function NoteDashboard({
@@ -84,8 +199,12 @@ export default function NoteDashboard({
   onToggleConnectionVisibility,
   onAddConcept,
   onUpdateConcept,
-  onDeleteConcept
+  onDeleteConcept,
+  uiTheme,
+  lang = 'tr',
+  setLang
 }) {
+  const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
@@ -106,22 +225,22 @@ export default function NoteDashboard({
     const item = placedItems.find(i => i.id === id);
     if (item) {
       const defaultLabel = {
-        desk: 'Çalışma Masası',
-        chair: 'Ofis Sandalyesi',
-        shelf: 'Büyük Kitaplık',
-        wallshelf: 'Duvar Rafı',
-        plant: 'Saksı Bitkisi',
-        lamp: 'Ayaklı Lamba',
-        rug: 'Desenli Halı',
-        pc: 'Bilgisayar Seti',
-        box: 'Koli / Kutu',
-        board: 'Çalışma Panosu'
-      }[item.type] || 'Eşya';
+        desk: dt.item_desk,
+        chair: dt.item_chair,
+        shelf: dt.item_shelf,
+        wallshelf: dt.item_wallshelf,
+        plant: dt.item_plant,
+        lamp: dt.item_lamp,
+        rug: dt.item_rug,
+        pc: dt.item_pc,
+        box: dt.item_box,
+        board: dt.item_board
+      }[item.type] || dt.item_generic;
       
       return item.linkedNote?.title || `${defaultLabel} (${item.id.substring(0, 6)})`;
     }
 
-    return `Kayıp Nesne (${id.substring(0, 8)})`;
+    return `${dt.lost_object} (${id.substring(0, 8)})`;
   };
 
   const getObjectConnectionCount = (id) => {
@@ -134,13 +253,13 @@ export default function NoteDashboard({
   };
 
   const roomsFilter = useMemo(() => [
-    { id: 'all', name: 'Tümü' },
-    { id: 'hall', name: roomNames.hall || 'Giriş / Hol' },
-    { id: 'study', name: roomNames.study || 'Çalışma Odası' },
-    { id: 'living', name: roomNames.living || 'Salon' },
-    { id: 'kitchen', name: roomNames.kitchen || 'Mutfak' },
-    { id: 'bedroom', name: roomNames.bedroom || 'Yatak Odası' }
-  ], [roomNames]);
+    { id: 'all', name: dt.all },
+    { id: 'hall', name: roomNames.hall || dt.room_hall },
+    { id: 'study', name: roomNames.study || dt.room_study },
+    { id: 'living', name: roomNames.living || dt.room_living },
+    { id: 'kitchen', name: roomNames.kitchen || dt.room_kitchen },
+    { id: 'bedroom', name: roomNames.bedroom || dt.room_bedroom }
+  ], [roomNames, dt]);
 
   // Duvar notları ve eşya notlarını tek bir dizide birleştir
   const allNotes = useMemo(() => {
@@ -148,8 +267,8 @@ export default function NoteDashboard({
     const wallNotes = notes.map((n) => ({
       ...n,
       isWallNote: true,
-      displayTitle: getNoteTitle(n),
-      displayPreview: getNotePreview(n),
+      displayTitle: getNoteTitle(n, lang),
+      displayPreview: getNotePreview(n, lang),
       tags: n.tags || [],
       roomId: getRoomInfo(n, roomNames).roomId,
       roomName: getRoomInfo(n, roomNames).roomName,
@@ -160,17 +279,17 @@ export default function NoteDashboard({
       .filter((item) => item.linkedNote)
       .map((item) => {
         const defaultLabel = {
-          desk: 'Çalışma Masası',
-          chair: 'Ofis Sandalyesi',
-          shelf: 'Büyük Kitaplık',
-          wallshelf: 'Duvar Rafı',
-          plant: 'Saksı Bitkisi',
-          lamp: 'Ayaklı Lamba',
-          rug: 'Desenli Halı',
-          pc: 'Bilgisayar Seti',
-          box: 'Koli / Kutu',
-          board: 'Çalışma Panosu'
-        }[item.type] || 'Eşya';
+          desk: dt.item_desk,
+          chair: dt.item_chair,
+          shelf: dt.item_shelf,
+          wallshelf: dt.item_wallshelf,
+          plant: dt.item_plant,
+          lamp: dt.item_lamp,
+          rug: dt.item_rug,
+          pc: dt.item_pc,
+          box: dt.item_box,
+          board: dt.item_board
+        }[item.type] || dt.item_generic;
 
         return {
           id: item.id,
@@ -182,12 +301,12 @@ export default function NoteDashboard({
           currentPageIndex: item.linkedNote.currentPageIndex,
           tags: item.linkedNote.tags || [],
           updatedAt: item.linkedNote.updatedAt,
-          displayTitle: item.linkedNote.title || `${defaultLabel} Notu`,
+          displayTitle: item.linkedNote.title || `${defaultLabel} ${dt.note_suffix}`,
           displayPreview: item.linkedNote.pages?.[0]?.text
             ? (item.linkedNote.pages[0].text.length > 60 
                ? item.linkedNote.pages[0].text.substring(0, 60) + '...' 
                : item.linkedNote.pages[0].text)
-            : 'İçerik boş...',
+            : dt.empty_content,
           itemLabel: defaultLabel,
           itemType: item.type
         };
@@ -283,21 +402,21 @@ export default function NoteDashboard({
           <div className="dashboard-title-group">
             <Compass className="dashboard-icon" size={24} />
             <div>
-              <h2 className="dashboard-title">HOLOGRAFİK KONTROL PANELİ</h2>
-              <span className="dashboard-subtitle">ZİHİN HARİTASI EVİ NOT NAVİGATÖRÜ</span>
+              <h2 className="dashboard-title">{dt.title}</h2>
+              <span className="dashboard-subtitle">{dt.subtitle}</span>
             </div>
           </div>
-          <button className="dashboard-close-btn" onClick={onClose} title="Kapat (ESC)">
+          <button className="dashboard-close-btn" onClick={onClose} title={dt.close_esc}>
             <X size={20} />
           </button>
         </div>
 
         {/* Sekme Geçiş Menüsü */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(0, 240, 255, 0.15)', padding: '0 24px', background: 'rgba(0, 0, 0, 0.2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(0, 240, 255, 0.15)', padding: '0 24px', background: 'var(--panel-bg-soft)', flexShrink: 0 }}>
           {[
-            { id: 'notes', name: '📚 Notlar & Eşyalar' },
-            { id: 'connections', name: '🔗 3D İlişkiler' },
-            { id: 'concepts', name: '🎨 Kavram Yönetimi' }
+            { id: 'notes', name: dt.tab_notes },
+            { id: 'connections', name: dt.tab_connections },
+            { id: 'concepts', name: dt.tab_concepts }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -305,8 +424,8 @@ export default function NoteDashboard({
               style={{
                 background: 'none',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #00f0ff' : '2px solid transparent',
-                color: activeTab === tab.id ? '#00f0ff' : '#94a3b8',
+                borderBottom: activeTab === tab.id ? '2px solid var(--theme-cyan)' : '2px solid transparent',
+                color: activeTab === tab.id ? 'var(--theme-cyan)' : 'var(--text-muted)',
                 padding: '12px 16px',
                 fontSize: '0.85rem',
                 fontWeight: 'bold',
@@ -328,7 +447,7 @@ export default function NoteDashboard({
             <Search className="search-icon" size={16} />
             <input
               type="text"
-              placeholder="Not metni, başlık veya oda ara..."
+              placeholder={dt.search_placeholder}
               className="search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -353,7 +472,7 @@ export default function NoteDashboard({
           </div>
 
           <div className="room-filters" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginTop: '10px' }}>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', alignSelf: 'center', marginRight: '6px' }}>Etiket:</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', alignSelf: 'center', marginRight: '6px' }}>{dt.tag_label}</span>
             {allAvailableTags.map((tag) => (
               <button
                 key={tag}
@@ -366,7 +485,7 @@ export default function NoteDashboard({
                 }}
                 onClick={() => setSelectedTag(tag)}
               >
-                {tag === 'all' ? 'Tümü' : tag}
+                {tag === 'all' ? dt.all : tag}
               </button>
             ))}
           </div>
@@ -377,8 +496,8 @@ export default function NoteDashboard({
           {filteredNotes.length === 0 ? (
             <div className="empty-dashboard-state">
               <FileText size={48} className="empty-icon" />
-              <p>Aramanızla eşleşen not bulunamadı.</p>
-              <span>Filtreleri değiştirmeyi veya yeni not eklemeyi deneyin.</span>
+              <p>{dt.no_notes}</p>
+              <span>{dt.try_filter}</span>
             </div>
           ) : (
             <div className="notes-grid">
@@ -410,7 +529,7 @@ export default function NoteDashboard({
                           </span>
                           
                           {!note.isWallNote && (
-                            <span className="card-room-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                            <span className="card-room-badge" style={{ background: 'var(--theme-success-bg)', color: 'var(--theme-success)', borderColor: 'var(--theme-success)' }}>
                               {note.itemLabel}
                             </span>
                           )}
@@ -421,9 +540,9 @@ export default function NoteDashboard({
                               key={tag}
                               className="card-room-badge"
                               style={{
-                                background: 'rgba(99, 102, 241, 0.15)',
-                                color: '#a5b4fc',
-                                borderColor: 'rgba(99, 102, 241, 0.3)',
+                                background: 'var(--primary-glow)',
+                                color: 'var(--primary)',
+                                borderColor: 'var(--primary)',
                                 fontSize: '0.7rem'
                               }}
                             >
@@ -435,9 +554,9 @@ export default function NoteDashboard({
                             <span 
                               className="card-room-badge" 
                               style={{ 
-                                background: 'rgba(0, 240, 255, 0.1)', 
-                                color: '#00f0ff', 
-                                borderColor: 'rgba(0, 240, 255, 0.2)',
+                                background: 'var(--button-bg-secondary)', 
+                                color: 'var(--theme-cyan)', 
+                                borderColor: 'var(--theme-cyan)',
                                 fontSize: '0.7rem',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -451,7 +570,7 @@ export default function NoteDashboard({
                         
                         <div className="card-badge-group">
                           {hasImage && (
-                            <span className="card-badge-icon" title="Görsel İçeriyor">
+                            <span className="card-badge-icon" title={dt.has_image}>
                               <ImageIcon size={12} />
                             </span>
                           )}
@@ -468,7 +587,7 @@ export default function NoteDashboard({
                         {note.updatedAt ? (
                           <span className="card-date">
                             <Calendar size={10} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                            {formatDate(note.updatedAt)}
+                            {formatDate(note.updatedAt, lang)}
                           </span>
                         ) : (
                           <span className="card-date-placeholder" />
@@ -482,7 +601,7 @@ export default function NoteDashboard({
                               onSelectNote(note.id);
                             }}
                           >
-                            Seç
+                            {dt.select}
                           </button>
                           <button 
                             className="card-btn-goto btn-primary"
@@ -492,7 +611,7 @@ export default function NoteDashboard({
                             }}
                           >
                             <Eye size={12} style={{ marginRight: '4px' }} />
-                            Nota Git
+                            {dt.go_to_note}
                           </button>
                         </div>
                       </div>
@@ -506,8 +625,8 @@ export default function NoteDashboard({
 
         {/* Footer Stats */}
         <div className="dashboard-footer" style={{ flexShrink: 0 }}>
-          <span>Toplam: {notes.length} not</span>
-          <span>Listelenen: {filteredNotes.length} not</span>
+          <span>{dt.total}: {notes.length} {dt.note_singular}</span>
+          <span>{dt.listed}: {filteredNotes.length} {dt.note_singular}</span>
         </div>
       </>
     )}
@@ -516,21 +635,21 @@ export default function NoteDashboard({
     {activeTab === 'connections' && (
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', padding: '24px' }}>
         {/* Global Görünürlük Modları */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontFamily: 'sans-serif' }}>Görünürlük Modu:</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: 'var(--panel-bg-soft)', padding: '12px', borderRadius: '8px', border: '1px solid var(--panel-border)', flexShrink: 0 }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>{dt.visibility_mode}</span>
           <div style={{ display: 'flex', gap: '8px' }}>
             {[
-              { id: 'all', name: 'Tümünü Göster' },
-              { id: 'selected-only', name: 'Sadece Seçili Olanlar' },
-              { id: 'hidden', name: 'Tümünü Gizle' }
+              { id: 'all', name: dt.show_all },
+              { id: 'selected-only', name: dt.selected_only },
+              { id: 'hidden', name: dt.hide_all }
             ].map(mode => (
               <button
                 key={mode.id}
                 onClick={() => onChangeVisibilityMode(mode.id)}
                 style={{
-                  background: connectionVisibilityMode === mode.id ? 'rgba(0, 240, 255, 0.2)' : 'rgba(0,0,0,0.3)',
-                  border: connectionVisibilityMode === mode.id ? '1px solid #00f0ff' : '1px solid rgba(255,255,255,0.1)',
-                  color: connectionVisibilityMode === mode.id ? '#00f0ff' : '#94a3b8',
+                  background: connectionVisibilityMode === mode.id ? 'var(--theme-success-bg)' : 'var(--button-bg-secondary)',
+                  border: connectionVisibilityMode === mode.id ? '1px solid var(--theme-cyan)' : '1px solid var(--panel-border)',
+                  color: connectionVisibilityMode === mode.id ? 'var(--theme-cyan)' : 'var(--text-muted)',
                   padding: '6px 12px',
                   borderRadius: '6px',
                   fontSize: '0.8rem',
@@ -549,12 +668,12 @@ export default function NoteDashboard({
           {connections.length === 0 ? (
             <div className="empty-dashboard-state" style={{ padding: '40px 0' }}>
               <FileText size={48} className="empty-icon" />
-              <p style={{ fontFamily: 'sans-serif' }}>Henüz hiçbir 3D bağlantı oluşturulmadı.</p>
-              <span style={{ fontFamily: 'sans-serif' }}>Bir not veya eşya seçip "Bağlantı" butonunu kullanın.</span>
+              <p style={{ fontFamily: 'sans-serif' }}>{dt.no_connections}</p>
+              <span style={{ fontFamily: 'sans-serif' }}>{dt.use_connection_btn}</span>
             </div>
           ) : (
             connections.map(conn => {
-              const concept = connectionConcepts.find(cc => cc.id === conn.conceptId) || { name: 'Genel', color: '#00f0ff' };
+              const concept = connectionConcepts.find(cc => cc.id === conn.conceptId) || { name: dt.all, color: '#00f0ff' };
               return (
                 <div
                   key={conn.id}
@@ -563,28 +682,28 @@ export default function NoteDashboard({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '12px 16px',
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: 'var(--panel-bg-soft)',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--panel-border)',
                     gap: '12px'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 }}>
-                      <span style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: '500', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: '500', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {getObjectName(conn.fromId)}
                       </span>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontFamily: 'sans-serif' }}>
-                        {conn.fromType === 'note' ? 'Duvar Notu' : 'Eşya'}
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>
+                        {conn.fromType === 'note' ? dt.wall_note : dt.item}
                       </span>
                     </div>
-                    <span style={{ color: '#00f0ff', fontSize: '1rem', flexShrink: 0 }}>➡️</span>
+                    <span style={{ color: 'var(--theme-cyan)', fontSize: '1rem', flexShrink: 0 }}>➡️</span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 }}>
-                      <span style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: '500', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: '500', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {getObjectName(conn.toId)}
                       </span>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontFamily: 'sans-serif' }}>
-                        {conn.toType === 'note' ? 'Duvar Notu' : 'Eşya'}
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>
+                        {conn.toType === 'note' ? dt.wall_note : dt.item}
                       </span>
                     </div>
                   </div>
@@ -593,9 +712,12 @@ export default function NoteDashboard({
                     {/* Kavram Badgesi */}
                     <span
                       style={{
-                        background: `rgba(${parseInt(concept.color.slice(1,3),16) || 0}, ${parseInt(concept.color.slice(3,5),16) || 0}, ${parseInt(concept.color.slice(5,7),16) || 0}, 0.15)`,
-                        color: concept.color,
-                        border: `1px solid ${concept.color}35`,
+                        background: uiTheme === 'light' 
+                          ? concept.color 
+                          : `rgba(${parseInt(concept.color.slice(1,3),16) || 0}, ${parseInt(concept.color.slice(3,5),16) || 0}, ${parseInt(concept.color.slice(5,7),16) || 0}, 0.15)`,
+                        color: uiTheme === 'light' ? '#fff' : concept.color,
+                        border: uiTheme === 'light' ? `1px solid ${concept.color}` : `1px solid ${concept.color}35`,
+                        textShadow: uiTheme === 'light' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none',
                         fontSize: '0.75rem',
                         padding: '4px 8px',
                         borderRadius: '4px',
@@ -610,9 +732,9 @@ export default function NoteDashboard({
                     <button
                       onClick={() => onToggleConnectionVisibility(conn.id)}
                       style={{
-                        background: conn.isVisible ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                        border: conn.isVisible ? '1px solid #10b981' : '1px solid #ef4444',
-                        color: conn.isVisible ? '#34d399' : '#fca5a5',
+                        background: conn.isVisible ? 'var(--theme-success-bg)' : 'var(--theme-danger-bg)',
+                        border: conn.isVisible ? '1px solid var(--theme-success)' : '1px solid var(--theme-danger)',
+                        color: conn.isVisible ? 'var(--theme-success)' : 'var(--theme-danger)',
                         padding: '4px 8px',
                         borderRadius: '4px',
                         fontSize: '0.75rem',
@@ -620,16 +742,16 @@ export default function NoteDashboard({
                         fontFamily: 'sans-serif'
                       }}
                     >
-                      {conn.isVisible ? 'Görünür' : 'Gizli'}
+                      {conn.isVisible ? dt.visible : dt.hidden}
                     </button>
 
                     {/* Sil Butonu */}
                     <button
                       onClick={() => onDeleteConnection(conn.id)}
                       style={{
-                        background: 'rgba(239, 68, 68, 0.15)',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                        color: '#fca5a5',
+                        background: 'var(--theme-danger-bg)',
+                        border: '1px solid var(--theme-danger)',
+                        color: 'var(--theme-danger)',
                         padding: '4px 8px',
                         borderRadius: '4px',
                         fontSize: '0.75rem',
@@ -637,7 +759,7 @@ export default function NoteDashboard({
                         fontFamily: 'sans-serif'
                       }}
                     >
-                      Sil
+                      {dt.delete}
                     </button>
                   </div>
                 </div>
@@ -652,30 +774,30 @@ export default function NoteDashboard({
     {activeTab === 'concepts' && (
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', padding: '24px', gap: '20px' }}>
         {/* Yeni Kavram Ekleme Formu */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '12px', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.9rem', color: '#00f0ff', fontWeight: 'bold', fontFamily: 'sans-serif' }}>Yeni Kavram Tanımla</span>
+        <div style={{ background: 'var(--panel-bg-soft)', padding: '16px', borderRadius: '12px', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', gap: '12px', flexShrink: 0 }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--theme-cyan)', fontWeight: 'bold', fontFamily: 'sans-serif' }}>{dt.define_concept}</span>
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               type="text"
-              placeholder="Kavram adı yazın..."
+              placeholder={dt.concept_placeholder}
               value={newConceptName}
               onChange={(e) => setNewConceptName(e.target.value)}
               style={{
                 flex: 1,
                 minWidth: '150px',
-                background: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(0, 240, 255, 0.25)',
+                background: 'var(--input-bg)',
+                border: '1px solid var(--panel-border)',
                 padding: '8px 12px',
                 borderRadius: '8px',
-                color: '#fff',
+                color: 'var(--text-main)',
                 outline: 'none',
                 fontSize: '0.85rem'
               }}
             />
 
             {/* Renk Seçici */}
-            <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '6px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '4px', background: 'var(--input-bg)', padding: '6px', borderRadius: '8px', border: '1px solid var(--panel-border)', flexWrap: 'wrap' }}>
               {CONCEPT_COLORS.map(c => (
                 <div
                   key={c}
@@ -685,7 +807,7 @@ export default function NoteDashboard({
                     height: '18px',
                     borderRadius: '50%',
                     backgroundColor: c,
-                    border: newConceptColor === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                    border: newConceptColor === c ? '2px solid #fff' : '1px solid var(--panel-border)',
                     cursor: 'pointer',
                     transform: newConceptColor === c ? 'scale(1.15)' : 'none',
                     transition: 'transform 0.15s ease'
@@ -700,9 +822,9 @@ export default function NoteDashboard({
                 setNewConceptName('');
               }}
               style={{
-                background: 'rgba(16, 185, 129, 0.2)',
-                border: '1px solid #10b981',
-                color: '#34d399',
+                background: 'var(--theme-success-bg)',
+                border: '1px solid var(--theme-success)',
+                color: 'var(--theme-success)',
                 padding: '8px 16px',
                 borderRadius: '8px',
                 fontSize: '0.85rem',
@@ -711,7 +833,7 @@ export default function NoteDashboard({
                 fontFamily: 'sans-serif'
               }}
             >
-              Ekle
+              {dt.add}
             </button>
           </div>
         </div>
@@ -726,9 +848,9 @@ export default function NoteDashboard({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'var(--panel-bg-soft)',
                 borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.05)'
+                border: '1px solid var(--panel-border)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -738,7 +860,7 @@ export default function NoteDashboard({
                     const nextIdx = idx === -1 ? 0 : (idx + 1) % CONCEPT_COLORS.length;
                     onUpdateConcept(concept.id, { color: CONCEPT_COLORS[nextIdx] });
                   }}
-                  title="Rengi değiştirmek için tıklayın"
+                  title={dt.change_color}
                   style={{
                     width: '14px',
                     height: '14px',
@@ -746,7 +868,7 @@ export default function NoteDashboard({
                     backgroundColor: concept.color,
                     boxShadow: `0 0 8px ${concept.color}`,
                     cursor: 'pointer',
-                    border: '1px solid rgba(255,255,255,0.2)'
+                    border: '1px solid var(--panel-border)'
                   }}
                 />
                 
@@ -757,8 +879,8 @@ export default function NoteDashboard({
                   onChange={(e) => onUpdateConcept(concept.id, { name: e.target.value })}
                   style={{
                     background: 'none',
-                    border: concept.id === 'concept_general' ? 'none' : '1px dashed rgba(255,255,255,0.1)',
-                    color: '#f8fafc',
+                    border: concept.id === 'concept_general' ? 'none' : '1px dashed var(--panel-border)',
+                    color: 'var(--text-main)',
                     fontSize: '0.85rem',
                     fontWeight: '500',
                     padding: '4px 8px',
@@ -773,9 +895,9 @@ export default function NoteDashboard({
                 <button
                   onClick={() => onDeleteConcept(concept.id)}
                   style={{
-                    background: 'rgba(239, 68, 68, 0.15)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    color: '#fca5a5',
+                    background: 'var(--theme-danger-bg)',
+                    border: '1px solid var(--theme-danger)',
+                    color: 'var(--theme-danger)',
                     padding: '6px 12px',
                     borderRadius: '6px',
                     fontSize: '0.75rem',
@@ -783,7 +905,7 @@ export default function NoteDashboard({
                     fontFamily: 'sans-serif'
                   }}
                 >
-                  Sil
+                  {dt.delete}
                 </button>
               )}
             </div>

@@ -26,6 +26,18 @@
   --button-bg-secondary-hover: rgba(255, 255, 255, 0.08);
   --scrollbar-thumb: rgba(255, 255, 255, 0.2);
   --scrollbar-track: rgba(0, 0, 0, 0.1);
+  --panel-bg-soft: rgba(30, 41, 59, 0.4);
+
+  /* Tema Dinamik Renkleri (Koyu Tema) */
+  --theme-cyan: #00f0ff;
+  --theme-accent-muted: #a5b4fc;
+  --theme-success: #34d399;
+  --theme-success-bg: rgba(52, 211, 153, 0.15);
+  --theme-danger: #fca5a5;
+  --theme-danger-bg: rgba(239, 68, 68, 0.15);
+  --theme-warning: #fbbf24;
+  --brand-gradient-start: #ffffff;
+  --brand-gradient-end: var(--text-muted);
 }
 
 .light-theme {
@@ -42,6 +54,18 @@
   --scrollbar-thumb: rgba(15, 23, 42, 0.2);
   --scrollbar-track: rgba(15, 23, 42, 0.05);
   --primary-glow: rgba(99, 102, 241, 0.15);
+  --panel-bg-soft: rgba(226, 232, 240, 0.4);
+
+  /* Tema Dinamik Renkleri (Açık Tema) */
+  --theme-cyan: #0891b2; /* Koyu camgöbeği */
+  --theme-accent-muted: #4f46e5; /* Koyu indigo */
+  --theme-success: #059669; /* Koyu yeşil */
+  --theme-success-bg: rgba(5, 150, 105, 0.1);
+  --theme-danger: #dc2626; /* Koyu kırmızı */
+  --theme-danger-bg: rgba(220, 38, 38, 0.08);
+  --theme-warning: #d97706; /* Koyu sarı/amber */
+  --brand-gradient-start: var(--primary);
+  --brand-gradient-end: #0f172a;
 }
 
 * {
@@ -49,6 +73,11 @@
   margin: 0;
   padding: 0;
   user-select: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 html, body, #root {
@@ -110,7 +139,7 @@ html, body, #root {
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+  background: linear-gradient(135deg, var(--brand-gradient-start) 0%, var(--brand-gradient-end) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -239,9 +268,9 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--button-bg-secondary);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
   padding: 10px 18px;
   font-weight: 500;
@@ -251,8 +280,8 @@ html, body, #root {
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--button-bg-secondary-hover);
+  border-color: var(--panel-border);
 }
 
 .btn-secondary.active {
@@ -372,13 +401,17 @@ html, body, #root {
 .editor-textarea-wrapper {
   position: relative;
   width: 100%;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Large and Spacious Textarea for writing */
 .editor-textarea {
   width: 100%;
-  height: 320px;
+  flex: 1;
+  height: 100%;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
@@ -500,8 +533,8 @@ html, body, #root {
 
 /* Accordion Accordion styles for relationships */
 .accordion-section {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg-soft);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s ease;
@@ -524,7 +557,7 @@ html, body, #root {
 
 .accordion-content {
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--panel-border);
 }
 
 .editor-footer {
@@ -532,13 +565,17 @@ html, body, #root {
   justify-content: space-between;
   gap: 12px;
   padding: 16px 24px 20px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(10, 15, 30, 0.98);
+  border-top: 1px solid var(--panel-border);
+  background: var(--panel-bg-solid);
   flex-shrink: 0;
 }
 
-.editor-footer button {
-  flex: 1;
+.editor-footer .btn-danger {
+  flex: 0.6;
+}
+
+.editor-footer .btn-primary {
+  flex: 1.4;
 }
 
 .btn-danger {
@@ -546,19 +583,21 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: rgba(244, 63, 94, 0.15);
+  background: rgba(244, 63, 94, 0.05);
   color: var(--accent-rose);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.15);
   border-radius: 12px;
   padding: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition-smooth);
+  opacity: 0.85;
 }
 
 .btn-danger:hover {
-  background: rgba(244, 63, 94, 0.25);
-  border-color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  opacity: 1;
 }
 
 /* Color Picker in Note Editor */
@@ -1048,7 +1087,7 @@ canvas {
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
   line-height: 1.3;
 }
 
@@ -1068,7 +1107,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--panel-border);
   padding-top: 10px;
 }
 
@@ -1087,9 +1126,9 @@ canvas {
 }
 
 .card-btn-select {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: white;
+  background: var(--button-bg-secondary);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
   font-size: 0.75rem;
   padding: 4px 8px;
   border-radius: 6px;
@@ -1099,8 +1138,8 @@ canvas {
 }
 
 .card-btn-select:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--button-bg-secondary-hover);
+  border-color: var(--panel-border);
 }
 
 .card-btn-goto {
@@ -1127,7 +1166,7 @@ canvas {
 }
 
 .empty-dashboard-state p {
-  color: white;
+  color: var(--text-main);
   font-weight: 600;
   font-size: 1rem;
 }
@@ -1140,10 +1179,10 @@ canvas {
   display: flex;
   justify-content: space-between;
   padding: 12px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--panel-border);
   font-size: 0.75rem;
   color: var(--text-muted);
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--input-bg);
 }
 
 /* 3D Note scrollbar custom styles */
@@ -1191,9 +1230,9 @@ canvas {
 }
 
 .btn-theme {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--button-bg-secondary);
   color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
   border-radius: 10px;
   padding: 8px 14px;
   font-size: 0.85rem;
@@ -1206,16 +1245,16 @@ canvas {
 }
 
 .btn-theme:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--button-bg-secondary-hover);
   color: var(--text-main);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--panel-border);
 }
 
 .btn-theme.active {
-  background: rgba(99, 102, 241, 0.25);
-  color: #a5b4fc;
+  background: var(--primary-glow);
+  color: var(--theme-accent-muted);
   border-color: var(--primary);
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 15px var(--primary-glow);
 }
 
 /* Custom separator line */
@@ -1267,7 +1306,7 @@ canvas {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
   letter-spacing: -0.01em;
 }
 
@@ -1289,7 +1328,7 @@ canvas {
 }
 
 .settings-close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--button-bg-secondary-hover);
   color: var(--text-main);
 }
 
@@ -1322,8 +1361,8 @@ canvas {
 }
 
 .settings-room-row {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--button-bg-secondary);
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
   padding: 14px;
   display: flex;
@@ -1388,18 +1427,18 @@ canvas {
   height: 20px;
   border-radius: 50%;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--panel-border);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .color-dot:hover {
   transform: scale(1.15);
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: var(--text-main);
 }
 
 .color-dot.selected {
-  border-color: white;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  border-color: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
   transform: scale(1.1);
 }
 
@@ -1443,7 +1482,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--panel-border);
   padding-bottom: 12px;
 }
 
@@ -1451,7 +1490,7 @@ canvas {
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
 }
 
 .drawer-icon-glow {
@@ -1472,7 +1511,7 @@ canvas {
 }
 
 .drawer-close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--button-bg-secondary-hover);
   color: var(--text-main);
 }
 
@@ -1508,8 +1547,8 @@ canvas {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--button-bg-secondary);
+  border: 1px solid var(--panel-border);
   border-radius: 12px;
   padding: 12px 16px;
   cursor: pointer;
@@ -1532,7 +1571,7 @@ canvas {
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 500;
-  color: white;
+  color: var(--text-main);
 }
 
 /* --- Seçili Eşya Özellik Düzenleyici Barı Stilleri (Alt Ortada) --- */
@@ -1579,7 +1618,7 @@ canvas {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-main);
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
 }
 
@@ -1618,7 +1657,7 @@ canvas {
   height: 16px;
   border-radius: 50%;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--panel-border);
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1627,16 +1666,16 @@ canvas {
 }
 
 .color-option-dot.selected {
-  border-color: white;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  border-color: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
   transform: scale(1.1);
 }
 
 .btn-group {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 2px;
 }
@@ -1644,7 +1683,7 @@ canvas {
 .btn-control {
   background: transparent;
   border: none;
-  color: white;
+  color: var(--text-main);
   width: 24px;
   height: 24px;
   font-size: 0.9rem;

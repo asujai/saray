@@ -1,1884 +1,890 @@
-// Hologram dashboard integration active
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
-import * as THREE from 'three';
-import Room from './components/Room';
-import Player from './components/Player';
-import Note3D from './components/Note3D';
-import PlacedItem3D from './components/PlacedItem3D';
-import UIOverlay from './components/UIOverlay';
-import NoteDashboard from './components/NoteDashboard';
-import CrosshairRaycaster from './components/CrosshairRaycaster';
-import { getAllNotes, saveAllNotesToDB, initDB } from './utils/db';
-import MiniMapTracker from './components/MiniMapTracker';
-import { QuadraticBezierLine } from '@react-three/drei';
+import React, { useState, useEffect } from 'react';
+import SarayApp from './SarayApp';
+import { Compass, Sun, Moon } from 'lucide-react';
 
-const LOCAL_STORAGE_KEY = 'saray_3d_mindmap_notes';
-
-const PRESET_ITEMS = [
-  {
-    id: "preset_item_desk",
-    type: "desk",
-    source: "preset",
-    roomId: "study",
-    position: { x: 15, y: 0.005, z: 9 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#a1a1aa",
-    linkedNote: {
-      title: "Ana Çalışma Alanı",
-      pages: [{ text: "Bu masayı aktif çalıştığın konular için kullanabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-      currentPageIndex: 0,
-      iconType: "info",
-      tags: ["Çalışma"]
-    },
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+const TRANSLATIONS = {
+  tr: {
+    badge: "🚀 Erken Erişim / Beta Web Sürümü",
+    title: "Bilgilerini 3D bir odada düzenle",
+    desc: "Saray, notlarını, görsellerini ve bağlantılarını 3D bir çalışma odasında düzenlemeni sağlayan masaüstü odaklı bir zihin haritası uygulamasıdır.",
+    betaMsg: '"Saray şu anda beta web sürümündedir. İlk kullanıcıların geri bildirimleriyle nihai masaüstü uygulaması şekillendirilecektir."',
+    openButton: "Saray'ı Aç",
+    experienceWarning: "🖥️ En iyi deneyim bilgisayarda alınır. İsteğe bağlı mobil kontrol modu ve tablet desteği aktiftir.",
+    betaSectionTitle: "Beta Sürecinde Neler Var?",
+    betaSectionDesc: "Şu anki web sürümünde kullanabileceğiniz temel özellikler:",
+    card1Title: "2 Odalı Başlangıç Sistemi",
+    card1Desc: "Hazır döşenmiş Çalışma Odası ve tamamen kendi zevkinize göre özelleştirebileceğiniz boş Kişisel Oda ile başlayın.",
+    card2Title: "Duvara Not ve Görsel Ekleme",
+    card2Desc: "Fikirlerinizi, planlarınızı veya resimlerinizi odanın herhangi bir duvarına yapıştırın, serbestçe konumlandırın.",
+    card3Title: "Eşyalara Bilgi Bağlama",
+    card3Desc: "Çalışma odasındaki masalara, kitaplıklara ve dekoratif eşyalara zengin içerikli, çok sayfalı notlar entegre edin.",
+    card4Title: "3D Bağlantılar Kurma",
+    card4Desc: "Fikirler, notlar ve eşyalar arasına holografik 3D bağlantı çizgileri çizerek ilişkileri mekânsal olarak görselleştirin.",
+    futureTitle: "Gelecekte Neler Gelecek?",
+    futureDesc: "Nihai masaüstü ve cloud sürümünde yer alacak yol haritamız:",
+    future1Title: "Gelişmiş Özelleştirme",
+    future1Desc: "Daha fazla oda seçeneği, zengin mobilya ve dekorasyon kütüphanesi.",
+    future2Title: "Dış Çevre Etkenleri",
+    future2Desc: "İki odalı yapının ötesine geçerek; bahçeli, geniş dış alanlara sahip mekânsal çalışma ortamları.",
+    future3Title: "Bulut Senkronizasyonu",
+    future3Desc: "Bulut tabanlı senkronizasyon, hesap sistemi ve anlık yedekleme.",
+    future4Title: "Yapay Zeka Desteği",
+    future4Desc: "Notlarınızı analiz eden ve odanızı düzenlemenize yardım eden yapay zeka.",
+    future5Title: "Mobil & Masaüstü",
+    future5Desc: "Masaüstü (PC/Mac) uygulamalarının yanı sıra iOS ve Android mobil versiyonları.",
+    earlyUserTitle: "Erken Kullanıcı Avantajları",
+    earlyUserDesc: "Beta sürecinde geri bildirim veren kullanıcılar, final sürümde özel avantajlardan, indirimlerden ve kişiselleştirilmiş sürpriz içeriklerden (kişiye özel oda öğeleri, özel dekoratif eşyalar, özel tema veya duvar kaplamaları) yararlanabilir.",
+    supportTitle: "Saray'ı Destekleyin",
+    supportDesc: "Saray'ın tamamen bağımsız gelişmesini desteklemek ve projemize katkıda bulunmak isterseniz aşağıdaki destek seçeneklerini kullanabilirsiniz:",
+    support1Title: "Bir Kahve Ismarla",
+    support1Desc: "Geliştirici ekibe tek seferlik küçük bir kahve ısmarlayarak motivasyonumuza destek olabilirsiniz.",
+    support2Title: "Patreon Destekçisi Ol",
+    support2Desc: "Aylık düzenli katkı sağlayarak gelişim sürecini hızlandırabilir ve özel topluluk rollerine sahip olabilirsiniz.",
+    support3Title: "Doğrudan Fonlama",
+    support3Desc: "Kredi kartı veya diğer güvenli ödeme yöntemleriyle geliştirme bütçesine doğrudan katkı sunabilirsiniz.",
+    supportSoon: "Yakında Aktif",
+    feedbackPrompt: "Önerilerinizi ve fikirlerinizi buradan paylaşın:",
+    footerText: "Bu sürüm test/MVP sürümüdür. Geri bildirimlere göre masaüstü uygulaması olarak geliştirilecektir."
   },
-  {
-    id: "preset_item_chair",
-    type: "chair",
-    source: "preset",
-    roomId: "study",
-    position: { x: 15, y: 0.005, z: 10.2 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#3f3f46",
-    linkedNote: null,
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  en: {
+    badge: "🚀 Early Access / Beta Web Version",
+    title: "Organize your info in a 3D room",
+    desc: "Saray is a desktop-oriented mind mapping application that lets you organize your notes, images, and connections in a 3D study room.",
+    betaMsg: '"Saray is currently in beta web version. The final desktop app will be shaped by the feedback of the first users."',
+    openButton: "Open Saray",
+    experienceWarning: "🖥️ Best experience is on computer. Optional mobile control mode and tablet support are active.",
+    betaSectionTitle: "What's in the Beta?",
+    betaSectionDesc: "Core features available in the current web version:",
+    card1Title: "2-Room Starting System",
+    card1Desc: "Start with a pre-furnished Study Room and an empty Personal Room that you can customize to your liking.",
+    card2Title: "Add Notes & Images to Walls",
+    card2Desc: "Paste your ideas, plans, or images on any wall of the room, and position them freely.",
+    card3Title: "Link Info to Items",
+    card3Desc: "Integrate rich, multi-page notes into desks, bookshelves, and decorative items in the study room.",
+    card4Title: "Establish 3D Connections",
+    card4Desc: "Visualize relations by drawing holographic 3D connection lines between ideas, notes, and items.",
+    futureTitle: "What's Coming in the Future?",
+    futureDesc: "Our roadmap for the final desktop and cloud version:",
+    future1Title: "Advanced Customization",
+    future1Desc: "More room options, rich furniture, and decoration libraries.",
+    future2Title: "Environmental Factors",
+    future2Desc: "Moving beyond two rooms: spatial study environments with gardens and spacious outdoor areas.",
+    future3Title: "Cloud Synchronization",
+    future3Desc: "Cloud-based synchronization, account system, and instant backups.",
+    future4Title: "AI Support",
+    future4Desc: "AI that analyzes your notes and helps you organize your room.",
+    future5Title: "Mobile & Desktop",
+    future5Desc: "iOS and Android mobile versions alongside desktop (PC/Mac) applications.",
+    earlyUserTitle: "Early Adopter Benefits",
+    earlyUserDesc: "Users who provide feedback during the beta process can benefit from special advantages, discounts, and personalized surprise content (personalized room items, special decorative items, special themes or wall coverings) in the final version.",
+    supportTitle: "Support Saray",
+    supportDesc: "If you would like to support the completely independent development of Saray and contribute to our project, you can use the following support options:",
+    support1Title: "Buy a Coffee",
+    support1Desc: "You can support our motivation by buying the developer team a one-time small coffee.",
+    support2Title: "Become a Patreon Patron",
+    support2Desc: "You can speed up the development process by making monthly regular contributions and have special community roles.",
+    support3Title: "Direct Funding",
+    support3Desc: "You can contribute directly to the development budget via credit card or other secure payment methods.",
+    supportSoon: "Active Soon",
+    feedbackPrompt: "Share your suggestions and ideas here:",
+    footerText: "This version is a test/MVP version. It will be developed as a desktop application based on feedback."
   },
-  {
-    id: "preset_item_shelf",
-    type: "shelf",
-    source: "preset",
-    roomId: "study",
-    position: { x: 23.5, y: 0.005, z: 15 },
-    rotation: { x: 0, y: -Math.PI / 2, z: 0 },
-    scale: [1, 1, 1],
-    color: "#71717a",
-    linkedNote: {
-      title: "Kaynaklar",
-      pages: [{ text: "Kitap, makale, video ve araştırma kaynaklarını bu alana bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-      currentPageIndex: 0,
-      iconType: "info",
-      tags: ["Kaynak"]
-    },
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  de: {
+    badge: "🚀 Vorabzugang / Beta-Webversion",
+    title: "Organisieren Sie Ihre Infos in einem 3D-Raum",
+    desc: "Saray ist eine Desktop-orientierte Mind-Mapping-Anwendung, mit der Sie Ihre Notizen, Bilder und Verbindungen in einem 3D-Arbeitszimmer organisieren können.",
+    betaMsg: '"Saray befindet sich derzeit in der Beta-Webversion. Die endgültige Desktop-App wird durch das Feedback der ersten Benutzer gestaltet."',
+    openButton: "Saray öffnen",
+    experienceWarning: "🖥️ Das beste Erlebnis haben Sie auf dem Computer. Optionaler mobiler Steuerungsmodus und Tablet-Unterstützung sind aktiv.",
+    betaSectionTitle: "Was ist in der Beta enthalten?",
+    betaSectionDesc: "Kernfunktionen, die in der aktuellen Webversion verfügbar sind:",
+    card1Title: "2-Raum-Startsystem",
+    card1Desc: "Beginnen Sie mit einem fertig eingerichteten Arbeitszimmer und einem leeren persönlichen Raum, den Sie nach Belieben anpassen können.",
+    card2Title: "Notizen & Bilder an Wände hängen",
+    card2Desc: "Fügen Sie Ihre Ideen, Pläne oder Bilder an einer beliebigen Wand des Raums ein und positionieren Sie sie frei.",
+    card3Title: "Infos mit Gegenständen verknüpfen",
+    card3Desc: "Integrieren Sie reichhaltige, mehrseitige Notizen in Schreibtische, Bücherregale und Dekorationsartikel im Arbeitszimmer.",
+    card4Title: "3D-Verbindungen herstellen",
+    card4Desc: "Visualisieren Sie Beziehungen, indem Sie holografische 3D-Verbindungslinien zwischen Ideen, Notizen und Gegenständen zeichnen.",
+    futureTitle: "Was bringt die Zukunft?",
+    futureDesc: "Unsere Roadmap für die endgültige Desktop- und Cloud-Version:",
+    future1Title: "Erweiterte Anpassung",
+    future1Desc: "Mehr Raumoptionen, reichhaltige Möbel- und Dekorationsbibliotheken.",
+    future2Title: "Umweltfaktoren",
+    future2Desc: "Über zwei Räume hinausgehen: räumliche Lernumgebungen mit Gärten und weitläufigen Außenbereichen.",
+    future3Title: "Cloud-Synchronisation",
+    future3Desc: "Cloud-basierte Synchronisierung, Kontosystem und sofortige Backups.",
+    future4Title: "KI-Unterstützung",
+    future4Desc: "KI, die Ihre Notizen analysiert und Ihnen hilft, Ihren Raum zu organisieren.",
+    future5Title: "Mobil & Desktop",
+    future5Desc: "iOS- und Android-Mobilversionen neben Desktop-Anwendungen (PC/Mac).",
+    earlyUserTitle: "Vorteile für frühe Anwender",
+    earlyUserDesc: "Benutzer, die während der Beta-Phase Feedback geben, können in der endgültigen Version von besonderen Vorteilen, Rabatten und personalisierten Überraschungsinhalten (personalisierte Raumgegenstände, spezielle Dekoartikel, spezielle Themen oder Wandverkleidungen) profitieren.",
+    supportTitle: "Saray unterstützen",
+    supportDesc: "Wenn Sie die völlig unabhängige Entwicklung von Saray unterstützen und zu unserem Projekt beitragen möchten, können Sie die folgenden Support-Optionen nutzen:",
+    support1Title: "Einen Kaffee spendieren",
+    support1Desc: "Sie können unsere Motivation unterstützen, indem Sie dem Entwicklerteam einen einmaligen kleinen Kaffee spendieren.",
+    support2Title: "Patreon-Patron werden",
+    support2Desc: "Sie können den Entwicklungsprozess durch monatliche regelmäßige Beiträge beschleunigen und spezielle Community-Rollen erhalten.",
+    support3Title: "Direkte Finanzierung",
+    support3Desc: "Sie können über Kreditkarte oder andere sichere Zahlungsmethoden direkt zum Entwicklungsbudget beitragen.",
+    supportSoon: "Bald aktiv",
+    feedbackPrompt: "Teilen Sie Ihre Vorschläge und Ideen hier:",
+    footerText: "Diese Version ist eine Test-/MVP-Version. Sie wird basierend auf dem Feedback als Desktop-Anwendung weiterentwickelt."
   },
-  {
-    id: "preset_item_board",
-    type: "board",
-    source: "preset",
-    roomId: "study",
-    position: { x: 15, y: 1.5, z: 6.2 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#d97706",
-    linkedNote: {
-      title: "Başlangıç",
-      pages: [{ text: "Buraya ilk ana fikrini yaz. Sonra diğer notları bu fikirle ilişkilendir.", image: null, layout: 'image-top-text-bottom' }],
-      currentPageIndex: 0,
-      iconType: "info",
-      tags: ["Başlangıç"]
-    },
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  it: {
+    badge: "🚀 Accesso Anticipato / Versione Beta Web",
+    title: "Organizza le tue informazioni in una stanza 3D",
+    desc: "Saray è un'applicazione per mappe mentali orientata al desktop che ti consente di organizzare appunti, immagini e connessioni in uno studio 3D.",
+    betaMsg: '"Saray è attualmente in versione beta web. L\'app desktop finale sarà modellata sui feedback dei primi utenti."',
+    openButton: "Apri Saray",
+    experienceWarning: "🖥️ La migliore esperienza si ottiene su computer. La modalità di controllo mobile e il supporto per tablet opzionali sono attivi.",
+    betaSectionTitle: "Cosa c'è nella Beta?",
+    betaSectionDesc: "Funzionalità principali disponibili nell'attuale versione web:",
+    card1Title: "Sistema di partenza a 2 stanze",
+    card1Desc: "Inizia con uno studio pre-arredato e una stanza personale vuota che puoi personalizzare a tuo piacimento.",
+    card2Title: "Aggiungi note e immagini alle pareti",
+    card2Desc: "Incolla le tue idee, piani o immagini su qualsiasi parete della stanza e posizionali liberamente.",
+    card3Title: "Collega le info agli oggetti",
+    card3Desc: "Integra note ricche e multipagina in scrivanie, librerie e oggetti decorativi nella stanza dello studio.",
+    card4Title: "Crea connessioni 3D",
+    card4Desc: "Visualizza le relazioni disegnando linee di connessione 3D olografiche tra idee, note e oggetti.",
+    futureTitle: "Cosa riserva il futuro?",
+    futureDesc: "La nostra tabella di marcia per la versione desktop e cloud finale:",
+    future1Title: "Personalizzazione Avanzata",
+    future1Desc: "Ulteriori opzioni di stanze, ricchi cataloghi di mobili e decorazioni.",
+    future2Title: "Fattori Ambientali",
+    future2Desc: "Andando oltre le due stanze: ambienti di studio spaziali con giardini e ampi spazi esterni.",
+    future3Title: "Sincronizzazione Cloud",
+    future3Desc: "Sincronizzazione basata su cloud, sistema di account e backup istantanei.",
+    future4Title: "Supporto AI",
+    future4Desc: "AI che analizza le tue note e ti aiuta a organizzare la tua stanza.",
+    future5Title: "Mobile & Desktop",
+    future5Desc: "Versioni mobili iOS e Android insieme ad applicazioni desktop (PC/Mac).",
+    earlyUserTitle: "Vantaggi per i primi utenti",
+    earlyUserDesc: "Gli utenti che forniscono feedback durante il processo beta possono beneficiare di vantaggi speciali, sconti e contenuti a sorpresa personalizzati (oggetti per stanze personalizzati, oggetti decorativi speciali, temi o rivestimenti murali speciali) nella versione finale.",
+    supportTitle: "Supporta Saray",
+    supportDesc: "Se desideri supportare lo sviluppo completamente indipendente di Saray e contribuire al nostro progetto, puoi utilizzare le seguenti opzioni di supporto:",
+    support1Title: "Offri un caffè",
+    support1Desc: "Puoi sostenere la nostra motivazione offrendo al team di sviluppo un piccolo caffè una tantum.",
+    support2Title: "Diventa un patrono su Patreon",
+    support2Desc: "Puoi accelerare il processo di sviluppo apportando contributi regolari mensili e ottenere ruoli speciali nella community.",
+    support3Title: "Finanziamento Diretto",
+    support3Desc: "Puoi contribuire direttamente al budget di sviluppo tramite carta di credito o altri metodi di pagamento sicuri.",
+    supportSoon: "Attivo Presto",
+    feedbackPrompt: "Condividi i tuoi suggerimenti e idee qui:",
+    footerText: "Questa versione è una versione di test/MVP. Sarà sviluppata come applicazione desktop in base al feedback."
   },
-  {
-    id: "preset_item_plant",
-    type: "plant",
-    source: "preset",
-    roomId: "study",
-    position: { x: 23.2, y: 0.005, z: 7.5 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#22c55e",
-    linkedNote: null,
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "preset_item_lamp",
-    type: "lamp",
-    source: "preset",
-    roomId: "study",
-    position: { x: 7.5, y: 0.005, z: 7.5 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#eab308",
-    linkedNote: null,
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "preset_item_wallshelf",
-    type: "wallshelf",
-    source: "preset",
-    roomId: "study",
-    position: { x: 23.5, y: 1.5, z: 9 },
-    rotation: { x: 0, y: -Math.PI / 2, z: 0 },
-    scale: [1, 1, 1],
-    color: "#52525b",
-    linkedNote: {
-      title: "Kısa Fikirler",
-      pages: [{ text: "Henüz tam gelişmemiş fikirleri burada tutabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-      currentPageIndex: 0,
-      iconType: "info",
-      tags: ["Fikir"]
-    },
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "preset_item_rug",
-    type: "rug",
-    source: "preset",
-    roomId: "study",
-    position: { x: 15, y: 0.001, z: 13.5 },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: [1, 1, 1],
-    color: "#e4e4e7",
-    linkedNote: null,
-    isRemovable: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  fr: {
+    badge: "🚀 Accès Anticipé / Version Web Bêta",
+    title: "Organisez vos informations dans une pièce 3D",
+    desc: "Saray est une application de cartes mentales orientée bureau qui vous permet d'organiser vos notes, images et connexions dans un bureau d'étude 3D.",
+    betaMsg: '"Saray est actuellement en version bêta web. L\'application de bureau finale sera façonnée par les retours des premiers utilisateurs."',
+    openButton: "Ouvrir Saray",
+    experienceWarning: "🖥️ La meilleure expérience est sur ordinateur. Le mode de contrôle mobile et le support pour tablette en option sont actifs.",
+    betaSectionTitle: "Qu'y a-t-il dans la Bêta ?",
+    betaSectionDesc: "Fonctionnalités clés disponibles dans la version web actuelle :",
+    card1Title: "Système de départ à 2 pièces",
+    card1Desc: "Commencez avec une salle d'étude pré-meublée et une pièce personnelle vide que vous pouvez personnaliser à votre guise.",
+    card2Title: "Ajouter des notes et images aux murs",
+    card2Desc: "Collez vos idées, plans ou images sur n'importe quel mur de la pièce et positionnez-les librement.",
+    card3Title: "Lier des infos aux objets",
+    card3Desc: "Intégrez des notes riches de plusieurs pages dans les bureaux, les bibliothèques et les objets de décoration du bureau d'étude.",
+    card4Title: "Créer des connexions 3D",
+    card4Desc: "Visualisez les relations en traçant des lignes de connexion 3D holographiques entre les idées, les notes et les objets.",
+    futureTitle: "Que réserve l'avenir ?",
+    futureDesc: "Notre feuille de route pour la version finale de bureau et cloud :",
+    future1Title: "Personnalisation Avancée",
+    future1Desc: "Plus d'options de pièces, de riches bibliothèques de meubles et de décorations.",
+    future2Title: "Facteurs Environnementaux",
+    future2Desc: "Aller au-delà de deux pièces : environnements d'étude spatiaux avec jardins et grands espaces extérieurs.",
+    future3Title: "Synchronisation Cloud",
+    future3Desc: "Synchronisation basée sur le cloud, système de compte et sauvegardes instantanées.",
+    future4Title: "Support IA",
+    future4Desc: "Une IA qui analyse vos notes et vous aide à organiser votre pièce.",
+    future5Title: "Mobile & Bureau",
+    future5Desc: "Versions mobiles iOS et Android aux côtés d'applications de bureau (PC/Mac).",
+    earlyUserTitle: "Avantages pour les premiers utilisateurs",
+    earlyUserDesc: "Les utilisateurs qui fournissent des retours pendant le processus bêta peuvent bénéficier d'avantages spéciaux, de réductions et de contenus surprises personnalisés (objets de pièce personnalisés, objets décoratifs spéciaux, thèmes ou revêtements muraux spéciaux) dans la version finale.",
+    supportTitle: "Soutenir Saray",
+    supportDesc: "Si vous souhaitez soutenir le développement entièrement indépendant de Saray et contribuer à notre projet, vous pouvez utiliser les options de soutien suivantes :",
+    support1Title: "Offrir un café",
+    support1Desc: "Vous pouvez soutenir notre motivation en offrant à l'équipe de développement un petit café unique.",
+    support2Title: "Devenir parrain sur Patreon",
+    support2Desc: "Vous pouvez accélérer le processus de développement en apportant des contributions régulières mensuelles et obtenir des rôles communautaires spéciaux.",
+    support3Title: "Financement Direct",
+    support3Desc: "Vous pouvez contribuer directement au budget de développement via carte de crédit ou d'autres méthodes de paiement sécurisées.",
+    supportSoon: "Actif Bientôt",
+    feedbackPrompt: "Partagez vos suggestions et idées ici :",
+    footerText: "Cette version est une version de test/MVP. Elle sera développée sous forme d'application de bureau en fonction des retours."
   }
-];
+};
 
 export default function App() {
-  const [notes, setNotes] = useState([]);
-  const [crosshairHovered, setCrosshairHovered] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: '' });
-  const toastTimeoutRef = useRef(null);
+  const [path, setPath] = useState(window.location.pathname);
+  const [theme, setTheme] = useState(() => localStorage.getItem('ui_theme') || 'dark');
+  const [lang, setLang] = useState(() => localStorage.getItem('saray_lang') || 'tr');
 
-  const showSavedToast = (message = '✓ Kaydedildi') => {
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToast({ show: true, message });
-    toastTimeoutRef.current = setTimeout(() => {
-      setToast({ show: false, message: '' });
-    }, 1000);
-  };
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [cameraMode, setCameraMode] = useState('third-person'); // 'free' or 'third-person'
-  const [isAddMode, setIsAddMode] = useState(false);
-  const [activeNoteId, setActiveNoteId] = useState(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false); // New state to control large editor modal visibility
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [isItemDrawerOpen, setIsItemDrawerOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [cameraFocusRequest, setCameraFocusRequest] = useState(null);
-  const [flashedNoteId, setFlashedNoteId] = useState(null);
-  const [flashedItemId, setFlashedItemId] = useState(null);
-  const [hoveredNoteId, setHoveredNoteId] = useState(null);
-  const [editorMode, setEditorMode] = useState('note'); // 'note' or 'item'
-  const [allowQuickTravel, setAllowQuickTravel] = useState(() => localStorage.getItem('saray_allow_quick_travel') === 'true');
-  const [freeFlightEnabled, setFreeFlightEnabled] = useState(() => localStorage.getItem('saray_free_flight_enabled') === 'true');
-  const [devMode, setDevMode] = useState(() => localStorage.getItem('saray_dev_mode_enabled') === 'true');
-  const [highlightedRoomId, setHighlightedRoomId] = useState(null);
-  const highlightTimeoutRef = useRef(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem('saray_mindmap_theme') || 'minimal');
-  const [uiTheme, setUiTheme] = useState(() => localStorage.getItem('saray_ui_theme') || 'dark');
-
+  // Synchronize path state with browser history (back/forward buttons)
   useEffect(() => {
-    document.body.classList.remove('light-theme', 'dark-theme');
-    document.body.classList.add(`${uiTheme}-theme`);
-    localStorage.setItem('saray_ui_theme', uiTheme);
-  }, [uiTheme]);
-
-  // Eşya yerleştirme sistemi state'leri
-  const [placedItems, setPlacedItems] = useState(() => {
-    const saved = localStorage.getItem('saray_placed_items');
-    const presetInitialized = localStorage.getItem('saray_preset_rooms_initialized');
-    if (!saved) {
-      if (!presetInitialized) {
-        return PRESET_ITEMS;
-      }
-      return [];
-    }
-    try {
-      const items = JSON.parse(saved);
-      return items.map(item => {
-        let pos = item.position;
-        if (Array.isArray(pos)) {
-          pos = { x: pos[0] ?? 0, y: pos[1] ?? 0, z: pos[2] ?? 0 };
-        } else if (!pos) {
-          pos = { x: 0, y: 0, z: 0 };
-        }
-        let rot = item.rotation;
-        if (Array.isArray(rot)) {
-          rot = { x: rot[0] ?? 0, y: rot[1] ?? 0, z: rot[2] ?? 0 };
-        } else if (!rot) {
-          rot = { x: 0, y: 0, z: 0 };
-        }
-        return { ...item, position: pos, rotation: rot };
-      });
-    } catch {
-      return [];
-    }
-  });
-  const [activeItemId, setActiveItemId] = useState(null);
-  const [isItemEditingActive, setIsItemEditingActive] = useState(false);
-  const [editingItemBackup, setEditingItemBackup] = useState(null);
-  const playerPositionRef = useRef([0, 1.6, 5]);
-  const playerDirectionRef = useRef([0, 0, -1]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_placed_items', JSON.stringify(placedItems));
-  }, [placedItems]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_mindmap_theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_allow_quick_travel', allowQuickTravel);
-  }, [allowQuickTravel]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_free_flight_enabled', freeFlightEnabled);
-  }, [freeFlightEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_dev_mode_enabled', devMode);
-  }, [devMode]);
-
-  useEffect(() => {
-    if (!devMode) {
-      setFreeFlightEnabled(false);
-      if (cameraMode === 'free') {
-        setCameraMode('third-person');
-      }
-    }
-  }, [devMode, cameraMode]);
-
-  const triggerHighlight = (roomId) => {
-    if (!roomId || roomId === 'unknown') return;
-    setHighlightedRoomId(roomId);
-    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
-    highlightTimeoutRef.current = setTimeout(() => {
-      setHighlightedRoomId(null);
-    }, 8000);
-  };
-
-  const envConfig = useMemo(() => {
-    switch (theme) {
-      case 'library':
-        return {
-          bgColor: '#ebd9c0', // Sıcak krem tonu
-          fogNear: 35,
-          fogFar: 95,
-          outerFloorColor: '#c2b3a1', // Kütüphane bahçesi / toprak tonu
-          leafColor: '#854d0e', // Sonbahar tonlarında yaprak rengi
-        };
-      case 'sci-fi':
-        return {
-          bgColor: '#060810', // Karanlık neon atmosfer
-          fogNear: 35,
-          fogFar: 95,
-          outerFloorColor: '#0c101d', // Koyu metalik mavi/mor
-          leafColor: '#00f0ff', // Hologram cyan çalı rengi
-        };
-      case 'minimal':
-      default:
-        return {
-          bgColor: '#e2e8f0', // Pastel tatlı gri-mavi
-          fogNear: 35,
-          fogFar: 95,
-          outerFloorColor: '#cbd5e1', // Temiz minimalist gri zemin
-          leafColor: '#10b981', // Canlı minimalist yeşil çalı
-        };
-    }
-  }, [theme]);
-
-  // Oda isimleri ve renk özelleştirme state'leri
-  const [roomNames, setRoomNames] = useState(() => {
-    const saved = localStorage.getItem('saray_room_names');
-    return saved ? JSON.parse(saved) : {
-      hall: 'Giriş / Hol',
-      bedroom: 'Yatak Odası',
-      kitchen: 'Mutfak',
-      study: 'Çalışma Odası',
-      living: 'Salon'
+    const handlePopState = () => {
+      setPath(window.location.pathname);
     };
-  });
-
-  const [roomFloorColors, setRoomFloorColors] = useState(() => {
-    const saved = localStorage.getItem('saray_room_floor_colors');
-    return saved ? JSON.parse(saved) : {
-      hall: null,
-      bedroom: null,
-      kitchen: null,
-      study: null,
-      living: null
-    };
-  });
-
-  const [roomWallColors, setRoomWallColors] = useState(() => {
-    const saved = localStorage.getItem('saray_room_wall_colors');
-    return saved ? JSON.parse(saved) : {
-      hall: null,
-      bedroom: null,
-      kitchen: null,
-      study: null,
-      living: null
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem('saray_room_names', JSON.stringify(roomNames));
-  }, [roomNames]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_room_floor_colors', JSON.stringify(roomFloorColors));
-  }, [roomFloorColors]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_room_wall_colors', JSON.stringify(roomWallColors));
-  }, [roomWallColors]);
-
-  // --- 3D Bağlantı (İlişki) ve Kavram Yönetim State'leri ---
-  const [connections, setConnections] = useState(() => {
-    const saved = localStorage.getItem('saray_connections');
-    if (!saved) return [];
-    try {
-      const parsed = JSON.parse(saved);
-      return parsed.map(c => ({
-        ...c,
-        isVisible: c.isVisible ?? true,
-        conceptId: c.conceptId || 'concept_general',
-        label: c.label || '',
-        fromType: c.fromType || (c.fromId?.startsWith('note_') ? 'note' : 'item'),
-        toType: c.toType || (c.toId?.startsWith('note_') ? 'note' : 'item')
-      }));
-    } catch {
-      return [];
-    }
-  });
-
-  const [connectionConcepts, setConnectionConcepts] = useState(() => {
-    const saved = localStorage.getItem('saray_connection_concepts');
-    if (!saved) return [
-      { id: "concept_general", name: "Genel", color: "#00f0ff" },
-      { id: "concept_idea", name: "Fikir", color: "#a78bfa" },
-      { id: "concept_source", name: "Kaynak", color: "#60a5fa" },
-      { id: "concept_task", name: "Görev", color: "#facc15" },
-      { id: "concept_cause", name: "Sebep-Sonuç", color: "#fb923c" },
-      { id: "concept_continue", name: "Devamı", color: "#4ade80" },
-      { id: "concept_compare", name: "Karşılaştırma", color: "#f472b6" }
-    ];
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return [];
-    }
-  });
-
-  const [pendingConnectionSource, setPendingConnectionSource] = useState(null);
-  const [pendingConnectionTarget, setPendingConnectionTarget] = useState(null);
-  const [isConceptSelectOpen, setIsConceptSelectOpen] = useState(false);
-  const [connectionVisibilityMode, setConnectionVisibilityMode] = useState(() => {
-    return localStorage.getItem('saray_connection_visibility_mode') || 'selected-only';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('saray_connections', JSON.stringify(connections));
-  }, [connections]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_connection_concepts', JSON.stringify(connectionConcepts));
-  }, [connectionConcepts]);
-
-  useEffect(() => {
-    localStorage.setItem('saray_connection_visibility_mode', connectionVisibilityMode);
-  }, [connectionVisibilityMode]);
-
-  const handleSetIsAddMode = (val) => {
-    if (val && pendingConnectionSource) {
-      handleCancelConnection();
-    }
-    setIsAddMode(val);
-  };
-
-  const handleUpdateRoomName = (roomId, newName) => {
-    setRoomNames((prev) => ({ ...prev, [roomId]: newName }));
-    showSavedToast('✓ Oda adı kaydedildi');
-  };
-
-  const handleUpdateRoomFloorColor = (roomId, color) => {
-    setRoomFloorColors((prev) => ({ ...prev, [roomId]: color }));
-    showSavedToast('✓ Oda rengi kaydedildi');
-  };
-
-  const handleUpdateRoomWallColor = (roomId, color) => {
-    setRoomWallColors((prev) => ({ ...prev, [roomId]: color }));
-    showSavedToast('✓ Oda rengi kaydedildi');
-  };
-
-  const handleResetColors = () => {
-    setRoomFloorColors({
-      hall: null,
-      bedroom: null,
-      kitchen: null,
-      study: null,
-      living: null
-    });
-    setRoomWallColors({
-      hall: null,
-      bedroom: null,
-      kitchen: null,
-      study: null,
-      living: null
-    });
-    showSavedToast('✓ Özelleştirmeler sıfırlandı');
-  };
-
-  const handleLoadPresetTemplate = async () => {
-    setPlacedItems((prev) => {
-      const filtered = prev.filter(item => item.roomId !== 'study');
-      const updated = [...filtered, ...PRESET_ITEMS];
-      localStorage.setItem('saray_placed_items', JSON.stringify(updated));
-      return updated;
-    });
-
-    const studyWalls = ['wall_front_study', 'wall_right_study', 'wall_inner_right_division'];
-    try {
-      let dbNotes = await getAllNotes();
-      dbNotes = dbNotes.filter(n => !studyWalls.includes(n.wallId));
-
-      const defaultColor = theme === 'library' ? '#fef9c3' : theme === 'sci-fi' ? '#00f0ff' : '#fef08a';
-      const presetNotes = [
-        {
-          id: 'note_preset_1',
-          wallId: 'wall_inner_right_division',
-          position: [15, 1.8, 0.02],
-          rotation: [0, 0, 0],
-          width: 0.7,
-          height: 0.7,
-          title: "Bugünkü Odak",
-          pages: [{ text: "Bugün çalışacağın ana konuyu buraya yaz. Büyük konuları küçük notlara böl.", image: null, layout: 'image-top-text-bottom' }],
-          currentPageIndex: 0,
-          color: defaultColor,
-          tags: ["Görev"]
-        },
-        {
-          id: 'note_preset_2',
-          wallId: 'wall_right_study',
-          position: [24.98, 1.8, 11],
-          rotation: [0, -Math.PI / 2, 0],
-          width: 0.7,
-          height: 0.7,
-          title: "Kaynak Listesi",
-          pages: [{ text: "Okuduğun kitapları, izlediğin videoları veya araştırma linklerini burada toplayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-          currentPageIndex: 0,
-          color: defaultColor,
-          tags: ["Kaynak"]
-        },
-        {
-          id: 'note_preset_3',
-          wallId: 'wall_front_study',
-          position: [10, 1.8, 24.98],
-          rotation: [0, Math.PI, 0],
-          width: 0.7,
-          height: 0.7,
-          title: "Fikir Alanı",
-          pages: [{ text: "Aklına gelen fikirleri hızlıca buraya ekle. Daha sonra bağlantılarla diğer notlara bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-          currentPageIndex: 0,
-          color: defaultColor,
-          tags: ["Fikir"]
-        }
-      ];
-
-      const existingIds = new Set(dbNotes.map(n => n.id));
-      const notesToAppend = presetNotes.filter(n => !existingIds.has(n.id));
-      const finalNotes = [...dbNotes, ...notesToAppend];
-      
-      await saveAllNotesToDB(finalNotes);
-      setNotes(finalNotes);
-    } catch (err) {
-      console.error('Şablon notları yüklenirken hata:', err);
-    }
-
-    localStorage.setItem('saray_preset_rooms_initialized', 'true');
-    showSavedToast('✓ Hazır Oda Tasarımı Yüklendi');
-  };
-
-  const handleClearRoomTemplate = async () => {
-    setPlacedItems((prev) => {
-      const filtered = prev.filter(item => item.roomId !== 'study');
-      localStorage.setItem('saray_placed_items', JSON.stringify(filtered));
-      return filtered;
-    });
-
-    const studyWalls = ['wall_front_study', 'wall_right_study', 'wall_inner_right_division'];
-    try {
-      let dbNotes = await getAllNotes();
-      const filteredNotes = dbNotes.filter(n => !studyWalls.includes(n.wallId));
-      await saveAllNotesToDB(filteredNotes);
-      setNotes(filteredNotes);
-    } catch (err) {
-      console.error('Oda temizlenirken hata:', err);
-    }
-
-    showSavedToast('✓ Çalışma Odası Boşaltıldı');
-  };
-
-  const getRoomIdFromPosition = (x, z) => {
-    if (x >= -5 && x <= 5) return 'hall';
-    if (x < -5 && z > 0) return 'bedroom';
-    if (x < -5 && z <= 0) return 'kitchen';
-    if (x > 5 && z > 0) return 'study';
-    if (x > 5 && z <= 0) return 'living';
-    return 'unknown';
-  };
-
-  const handleAddPlacedItem = (type) => {
-    const [px, , pz] = playerPositionRef.current || [0, 1.6, 5];
-    const [dx, , dz] = playerDirectionRef.current || [0, 0, -1];
-    
-    // Yön vektörünü normalize et
-    const len = Math.sqrt(dx * dx + dz * dz);
-    const nx = len > 0.001 ? dx / len : 0;
-    const nz = len > 0.001 ? dz / len : -1;
-    
-    // Eşyayı oyuncunun 2.5 metre önünde oluştur
-    const spawnX = px + nx * 2.5;
-    const spawnZ = pz + nz * 2.5;
-    
-    // Eşyanın oluştuğu yerdeki odayı bul
-    const roomId = getRoomIdFromPosition(spawnX, spawnZ);
-    
-    // Halı zemin hizasında, raflar ve panolar havada, masa lambası masaüstü seviyesinde, diğerleri zeminde
-    const yPos = (type === 'wallshelf' || type === 'small_wallshelf' || type === 'large_board') 
-      ? 1.4 
-      : type === 'desk_lamp' 
-        ? 0.72 
-        : type === 'rug' 
-          ? 0.001 
-          : 0.005;
-
-    const limits = {
-      hall: { minX: -4.5, maxX: 4.5, minZ: -24.5, maxZ: 24.5 },
-      bedroom: { minX: -24.5, maxX: -5.5, minZ: 0.5, maxZ: 24.5 },
-      kitchen: { minX: -24.5, maxX: -5.5, minZ: -24.5, maxZ: -0.5 },
-      study: { minX: 5.5, maxX: 24.5, minZ: 0.5, maxZ: 24.5 },
-      living: { minX: 5.5, maxX: 24.5, minZ: -24.5, maxZ: -0.5 },
-      unknown: { minX: -24.5, maxX: 24.5, minZ: -24.5, maxZ: 24.5 }
-    };
-
-    const roomLimit = limits[roomId] || limits.unknown;
-    
-    const clampedX = Math.max(roomLimit.minX, Math.min(roomLimit.maxX, spawnX));
-    const clampedZ = Math.max(roomLimit.minZ, Math.min(roomLimit.maxZ, spawnZ));
-
-    const newItem = {
-      id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      type,
-      roomId,
-      position: { x: clampedX, y: yPos, z: clampedZ },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: [1, 1, 1],
-      color: '#818cf8', // Varsayılan indigo
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    setPlacedItems((prev) => [...prev, newItem]);
-    setActiveItemId(newItem.id);
-    setIsItemEditingActive(false);
-    setEditingItemBackup(null);
-    
-    // Not veya dashboard açık ise kapat, çakışmayı önle
-    setActiveNoteId(null);
-    setIsAddMode(false);
-    setIsDashboardOpen(false);
-  };
-
-  const handleUpdatePlacedItem = (id, fields) => {
-    setPlacedItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, ...fields, updatedAt: new Date().toISOString() } : item
-      )
-    );
-  };
-
-  const handleDeletePlacedItem = (id) => {
-    setPlacedItems((prev) => prev.filter((item) => item.id !== id));
-    if (activeItemId === id) {
-      setActiveItemId(null);
-    }
-    showSavedToast('✓ Eşya silindi');
-  };
-
-  const handleStartEdit = (itemId) => {
-    if (pendingConnectionSource) {
-      showSavedToast('⚠️ Bağlantı modu aktifken eşya düzenlenemez');
-      return;
-    }
-    const item = placedItems.find(i => i.id === itemId);
-    if (item) {
-      setEditingItemBackup(JSON.parse(JSON.stringify(item)));
-      setIsItemEditingActive(true);
-      setActiveItemId(itemId);
-    }
-  };
-
-  const handleSaveEdit = () => {
-    setIsItemEditingActive(false);
-    setActiveItemId(null);
-    setEditingItemBackup(null);
-    showSavedToast('✓ Eşya düzenlemesi kaydedildi');
-  };
-
-  const handleCancelEdit = () => {
-    if (editingItemBackup) {
-      setPlacedItems(prev => prev.map(i => i.id === editingItemBackup.id ? editingItemBackup : i));
-    }
-    setIsItemEditingActive(false);
-    setActiveItemId(null);
-    setEditingItemBackup(null);
-    showSavedToast('✓ Değişiklikler iptal edildi');
-  };
-
-  const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info', tags = []) => {
-    setPlacedItems((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          return {
-            ...item,
-            linkedNote: {
-              title: title || 'Eşya Notu',
-              pages,
-              currentPageIndex,
-              iconType,
-              tags,
-              updatedAt: new Date().toISOString()
-            },
-            updatedAt: new Date().toISOString()
-          };
-        }
-        return item;
-      })
-    );
-    setIsEditorOpen(false);
-    showSavedToast('✓ Not kaydedildi');
-  };
-
-  const handleDeleteItemNote = (itemId) => {
-    setPlacedItems((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId) {
-          const { linkedNote: _deletedNote, ...rest } = item;
-          return rest;
-        }
-        return item;
-      })
-    );
-    setIsEditorOpen(false);
-    showSavedToast('✓ Not silindi');
-  };
-
-  const handleGoToItem = (item) => {
-    setIsDashboardOpen(false);
-    setEditorMode('item');
-    setActiveItemId(item.id);
-    setActiveNoteId(null);
-    setIsAddMode(false);
-    
-    // Trigger flash effect for 8 seconds
-    setFlashedItemId(item.id);
-    setTimeout(() => {
-      setFlashedItemId(null);
-    }, 8000);
-
-    // Oda vurgulamasını tetikle
-    const itemRoomId = item.roomId || getRoomIdFromPosition(item.position.x, item.position.z);
-    triggerHighlight(itemRoomId);
-
-    // Eşyaya gitmek için kamera odağı ayarla (Sadece hızlı ışınlanma açıksa)
-    if (allowQuickTravel) {
-      try {
-        const itemPos = new THREE.Vector3(item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0);
-        const camPos = itemPos.clone().add(new THREE.Vector3(0, 1.4, 1.8));
-        const lookDir = itemPos.clone().sub(camPos).normalize();
-        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
-        const pitchVal = Math.asin(lookDir.y);
-        
-        setCameraFocusRequest({
-          position: [camPos.x, camPos.y, camPos.z],
-          pitch: pitchVal,
-          yaw: yawVal,
-          time: Date.now()
-        });
-      } catch (err) {
-        console.error('Teleport to item error:', err);
-      }
-    } else {
-      showSavedToast(`📍 Eşya ${roomNames[itemRoomId] || itemRoomId} odasında parlıyor!`);
-    }
-  };
-  
-  // State to track current drawing coordinates on wall
-  const [drawing, setDrawing] = useState(null);
-
-  // Load notes from IndexedDB and migrate legacy localStorage data if it exists.
-  // Performs one-time reset to clear bugged/old data structure completely.
-  useEffect(() => {
-    const loadAndMigrateData = async () => {
-      try {
-        const resetKey = 'saray_mindmap_v3_reset';
-        if (!localStorage.getItem(resetKey)) {
-          try {
-            const db = await initDB();
-            const transaction = db.transaction('notes', 'readwrite');
-            const store = transaction.objectStore('notes');
-            await new Promise((resolve, reject) => {
-              const req = store.clear();
-              req.onsuccess = resolve;
-              req.onerror = () => reject(req.error);
-            });
-          } catch (dbClearErr) {
-            console.error('Database clear failed:', dbClearErr);
-          }
-          localStorage.removeItem(LOCAL_STORAGE_KEY);
-          localStorage.setItem(resetKey, 'true');
-          setNotes([]);
-          setIsLoaded(true);
-          return;
-        }
-
-        let dbNotes = await getAllNotes();
-        const savedLegacy = localStorage.getItem(LOCAL_STORAGE_KEY);
-        
-        if (savedLegacy) {
-          try {
-            const parsedLegacy = JSON.parse(savedLegacy);
-            if (parsedLegacy && parsedLegacy.length > 0) {
-              const migrated = parsedLegacy.map((note) => {
-                let updatedNote = { ...note };
-
-                // 1. If note doesn't have 'pages' structure, migrate it
-                if (!updatedNote.pages) {
-                  updatedNote.pages = [{ text: updatedNote.text || '', image: null, layout: 'image-top-text-bottom' }];
-                  updatedNote.currentPageIndex = 0;
-                } else {
-                  // Migrate pages array if items are string, or if image/layout field is missing
-                  updatedNote.pages = updatedNote.pages.map((page) => {
-                    if (typeof page === 'string') {
-                      return { text: page, image: null, layout: 'image-top-text-bottom' };
-                    }
-                    return {
-                      text: page.text !== undefined ? page.text : '',
-                      image: page.image !== undefined ? page.image : null,
-                      layout: page.layout || 'image-top-text-bottom'
-                    };
-                  });
-                }
-                
-                // 2. Migrate width and height
-                if (updatedNote.width === undefined) updatedNote.width = 0.7;
-                if (updatedNote.height === undefined) updatedNote.height = 0.7;
-                
-                // 3. Migrate position and rotation if they don't exist
-                if (!updatedNote.position || !updatedNote.rotation) {
-                  const pointVec = new THREE.Vector3(...(updatedNote.point || [0, 1.6, 0]));
-                  const normalVec = new THREE.Vector3(...(updatedNote.normal || [0, 0, 1]));
-                  const offsetPos = pointVec.clone().addScaledVector(normalVec, 0.02);
-                  
-                  const quaternion = new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 0, 1),
-                    normalVec
-                  );
-                  const euler = new THREE.Euler().setFromQuaternion(quaternion);
-                  
-                  updatedNote.position = [offsetPos.x, offsetPos.y, offsetPos.z];
-                  updatedNote.rotation = [euler.x, euler.y, euler.z];
-                }
-                
-                return updatedNote;
-              });
-
-              dbNotes = [...dbNotes, ...migrated];
-              await saveAllNotesToDB(dbNotes);
-            }
-            // Remove legacy storage after successful migration
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-          } catch (migrateErr) {
-            console.error('Legacy data migration error:', migrateErr);
-          }
-        }
-
-        const presetInitialized = localStorage.getItem('saray_preset_rooms_initialized');
-        if (!presetInitialized) {
-          const defaultColor = theme === 'library' ? '#fef9c3' : theme === 'sci-fi' ? '#00f0ff' : '#fef08a';
-          const presetNotes = [
-            {
-              id: 'note_preset_1',
-              wallId: 'wall_inner_right_division',
-              position: [15, 1.8, 0.02],
-              rotation: [0, 0, 0],
-              width: 0.7,
-              height: 0.7,
-              title: "Bugünkü Odak",
-              pages: [{ text: "Bugün çalışacağın ana konuyu buraya yaz. Büyük konuları küçük notlara böl.", image: null, layout: 'image-top-text-bottom' }],
-              currentPageIndex: 0,
-              color: defaultColor,
-              tags: ["Görev"]
-            },
-            {
-              id: 'note_preset_2',
-              wallId: 'wall_right_study',
-              position: [24.98, 1.8, 11],
-              rotation: [0, -Math.PI / 2, 0],
-              width: 0.7,
-              height: 0.7,
-              title: "Kaynak Listesi",
-              pages: [{ text: "Okuduğun kitapları, izlediğin videoları veya araştırma linklerini burada toplayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-              currentPageIndex: 0,
-              color: defaultColor,
-              tags: ["Kaynak"]
-            },
-            {
-              id: 'note_preset_3',
-              wallId: 'wall_front_study',
-              position: [10, 1.8, 24.98],
-              rotation: [0, Math.PI, 0],
-              width: 0.7,
-              height: 0.7,
-              title: "Fikir Alanı",
-              pages: [{ text: "Aklına gelen fikirleri hızlıca buraya ekle. Daha sonra bağlantılarla diğer notlara bağlayabilirsin.", image: null, layout: 'image-top-text-bottom' }],
-              currentPageIndex: 0,
-              color: defaultColor,
-              tags: ["Fikir"]
-            }
-          ];
-
-          const existingIds = new Set(dbNotes.map(n => n.id));
-          const notesToAppend = presetNotes.filter(n => !existingIds.has(n.id));
-          if (notesToAppend.length > 0) {
-            dbNotes = [...dbNotes, ...notesToAppend];
-            await saveAllNotesToDB(dbNotes);
-          }
-          localStorage.setItem('saray_preset_rooms_initialized', 'true');
-        }
-        
-        setNotes(dbNotes);
-      } catch (dbErr) {
-        console.error('Failed to load notes from IndexedDB:', dbErr);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-
-    loadAndMigrateData();
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Sync notes to IndexedDB only after notes are loaded
+  // Save language to localStorage
   useEffect(() => {
-    if (!isLoaded) return;
+    localStorage.setItem('saray_lang', lang);
+  }, [lang]);
 
-    const saveData = async () => {
-      try {
-        await saveAllNotesToDB(notes);
-      } catch (err) {
-        console.error('IndexedDB kayıt hatası:', err);
-        alert('⚠️ Veritabanı kayıt hatası! Tarayıcı depolama alanınız dolmuş veya kısıtlanmış olabilir.');
-      }
-    };
-
-    saveData();
-  }, [notes, isLoaded]);
-
-  // Global Keyboard Shortcuts (C: Camera, E: Add Mode, H: Dashboard, Q/E/PageUp/PageDown/Scale/Delete for Items)
+  // Theme synchronization with document body class
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Geliştirici Modu Kısayolu: Ctrl + Shift + F
-      if (e.ctrlKey && e.shiftKey && e.code === 'KeyF') {
-        setDevMode((prev) => {
-          const next = !prev;
-          if (next) {
-            setFreeFlightEnabled(true);
-            setCameraMode('free');
-            showSavedToast('✓ Geliştirici Modu & Uçuş Aktif');
-          } else {
-            setFreeFlightEnabled(false);
-            setCameraMode('third-person');
-            showSavedToast('✓ Geliştirici Modu Kapatıldı');
-          }
-          return next;
-        });
-        e.preventDefault();
-        return;
-      }
-
-      // Prevent shortcut trigger when user is typing in form inputs/textarea
-      if (
-        document.activeElement.tagName === 'TEXTAREA' || 
-        document.activeElement.tagName === 'INPUT' ||
-        document.activeElement.closest('.settings-modal')
-      ) {
-        return;
-      }
-
-      // Eşya düzenleme kontrolleri (yalnızca düzenleme modu AKTİFKEN çalışır)
-      if (activeItemId && isItemEditingActive) {
-        const item = placedItems.find((i) => i.id === activeItemId);
-        if (item) {
-          const ROTATION_SNAP = Math.PI / 12;
-          if (e.code === 'KeyQ') {
-            const currentRot = item.rotation || { x: 0, y: 0, z: 0 };
-            const ry = (currentRot.y || 0) + ROTATION_SNAP;
-            const snappedRy = Math.round(ry / ROTATION_SNAP) * ROTATION_SNAP;
-            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: snappedRy } });
-            e.preventDefault();
-            return;
-          }
-          if (e.code === 'KeyE') {
-            const currentRot = item.rotation || { x: 0, y: 0, z: 0 };
-            const ry = (currentRot.y || 0) - ROTATION_SNAP;
-            const snappedRy = Math.round(ry / ROTATION_SNAP) * ROTATION_SNAP;
-            handleUpdatePlacedItem(activeItemId, { rotation: { ...currentRot, y: snappedRy } });
-            e.preventDefault();
-            return;
-          }
-          if (e.code === 'PageUp') {
-            const currentPos = item.position || { x: 0, y: 0, z: 0 };
-            const newY = (currentPos.y || 0) + 0.1;
-            handleUpdatePlacedItem(activeItemId, { position: { ...currentPos, y: newY } });
-            e.preventDefault();
-            return;
-          }
-          if (e.code === 'PageDown') {
-            const currentPos = item.position || { x: 0, y: 0, z: 0 };
-            const newY = Math.max(0.001, (currentPos.y || 0) - 0.1);
-            handleUpdatePlacedItem(activeItemId, { position: { ...currentPos, y: newY } });
-            e.preventDefault();
-            return;
-          }
-          if (e.key === '+' || e.key === '=') {
-            const currentScale = item.scale?.[0] || 1;
-            const newScale = Math.min(2.5, currentScale + 0.1);
-            handleUpdatePlacedItem(activeItemId, { scale: [newScale, newScale, newScale] });
-            e.preventDefault();
-            return;
-          }
-          if (e.key === '-' || e.key === '_') {
-            const currentScale = item.scale?.[0] || 1;
-            const newScale = Math.max(0.4, currentScale - 0.1);
-            handleUpdatePlacedItem(activeItemId, { scale: [newScale, newScale, newScale] });
-            e.preventDefault();
-            return;
-          }
-          if (e.code === 'Delete' || e.code === 'Backspace') {
-            handleDeletePlacedItem(activeItemId);
-            setIsItemEditingActive(false);
-            setEditingItemBackup(null);
-            e.preventDefault();
-            return;
-          }
-        }
-      }
-
-      if (e.code === 'KeyN') {
-        const isBlocked = isEditorOpen || isDashboardOpen || isItemEditingActive;
-        if (cameraMode !== 'birds-eye' && !isBlocked) {
-          if (crosshairHovered && crosshairHovered.type === 'wall') {
-            const bounds = calculateNoteBounds({
-              wallId: crosshairHovered.id,
-              startPoint: crosshairHovered.point,
-              normal: crosshairHovered.normal,
-              currentPoint: crosshairHovered.point
-            });
-
-            if (bounds) {
-              let defaultColor = '#fef08a';
-              if (theme === 'library') defaultColor = '#fef9c3';
-              else if (theme === 'sci-fi') defaultColor = '#00f0ff';
-
-              const newNote = {
-                id: 'note_' + Date.now(),
-                wallId: crosshairHovered.id,
-                position: bounds.position,
-                rotation: bounds.rotation,
-                width: 2.0, // 2x2 boyut
-                height: 2.0,
-                pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
-                currentPageIndex: 0,
-                color: defaultColor
-              };
-
-              setNotes((prev) => [...prev, newNote]);
-              setEditorMode('note');
-              setActiveNoteId(newNote.id);
-              setActiveItemId(null);
-              setIsEditorOpen(true);
-              setIsAddMode(false);
-              showSavedToast('✓ Hızlı not oluşturuldu');
-            }
-          } else {
-            showSavedToast('⚠️ Hızlı not için duvara bakın');
-          }
-          e.preventDefault();
-          return;
-        }
-      }
-
-      if (e.code === 'KeyC') {
-        setCameraMode((prev) => {
-          if (prev === 'third-person') return 'birds-eye';
-          if (prev === 'birds-eye') return freeFlightEnabled ? 'free' : 'third-person';
-          return 'third-person'; // free → third-person
-        });
-      }
-      
-      if (e.code === 'KeyE') {
-        if (!isDashboardOpen && cameraMode !== 'birds-eye') {
-          setIsAddMode((prev) => !prev);
-        }
-      }
-
-      if (e.code === 'KeyH') {
-        setIsDashboardOpen((prev) => !prev);
-      }
-
-      if (e.code === 'Escape') {
-        if (pendingConnectionSource) {
-          handleCancelConnection();
-          e.preventDefault();
-          return;
-        }
-        if (isItemEditingActive) {
-          handleCancelEdit();
-        } else {
-          setActiveItemId(null); // Eşya seçimini kaldır
-        }
-        setIsDashboardOpen(false);
-        setIsEditorOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, cameraMode, isEditorOpen, pendingConnectionSource, freeFlightEnabled]);
-
-  // Context Menu (Right Click) global listener to close editor and deselect active note / cancel item edit
-  useEffect(() => {
-    const handleContextMenu = (e) => {
-      // Allow native browser context menu (copy/paste) for form controls and modal containers
-      if (
-        e.target.tagName === 'INPUT' || 
-        e.target.tagName === 'TEXTAREA' || 
-        e.target.isContentEditable ||
-        e.target.closest('.editor-modal') ||
-        e.target.closest('.dashboard-window') ||
-        e.target.closest('.settings-modal') ||
-        e.target.closest('.item-drawer') ||
-        e.target.closest('.item-editor-bar')
-      ) {
-        return;
-      }
-
-      e.preventDefault(); // Prevent standard browser context menu on 3D scene
-      if (pendingConnectionSource) {
-        handleCancelConnection();
-        return;
-      }
-      if (isItemEditingActive) {
-        handleCancelEdit();
-      } else {
-        setActiveItemId(null); // Eşya seçimini kaldır
-      }
-      setIsEditorOpen(false);
-      setActiveNoteId(null);
-    };
-
-    window.addEventListener('contextmenu', handleContextMenu);
-    return () => {
-      window.removeEventListener('contextmenu', handleContextMenu);
-    };
-  }, [isItemEditingActive, editingItemBackup, pendingConnectionSource]);
-
-  // Keyboard navigation for active note pages (using ArrowLeft and ArrowRight)
-  useEffect(() => {
-    const handleArrowNav = (e) => {
-      // If user is typing in a textarea or input, preserve normal cursor behavior
-      if (
-        document.activeElement.tagName === 'TEXTAREA' || 
-        document.activeElement.tagName === 'INPUT'
-      ) {
-        return;
-      }
-
-      if (activeNoteId) {
-        const activeNote = notes.find((n) => n.id === activeNoteId);
-        if (activeNote) {
-          const currentIndex = activeNote.currentPageIndex || 0;
-          const pageCount = (activeNote.pages && activeNote.pages.length) || 1;
-
-          if (e.code === 'ArrowLeft') {
-            if (currentIndex > 0) {
-              handleSetNotePageIndex(activeNoteId, currentIndex - 1);
-            }
-            e.preventDefault(); // Prevent camera turning or page scroll
-          } else if (e.code === 'ArrowRight') {
-            if (currentIndex < pageCount - 1) {
-              handleSetNotePageIndex(activeNoteId, currentIndex + 1);
-            }
-            e.preventDefault(); // Prevent camera turning or page scroll
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleArrowNav);
-    return () => {
-      window.removeEventListener('keydown', handleArrowNav);
-    };
-  }, [activeNoteId, notes]);
-
-  // Helper to calculate note bounds in 3D space during drag-to-draw
-  const calculateNoteBounds = (drawState) => {
-    if (!drawState) return null;
-    const { startPoint, currentPoint, normal } = drawState;
-    const nx = normal[0];
-    const ny = normal[1];
-    const nz = normal[2];
-
-    let w = 0.7;
-    let h = 0.7;
-    let center = [...startPoint];
-
-    if (Math.abs(nz) > 0.9) {
-      // Back or Front wall (parallel to X-Y plane)
-      w = Math.abs(currentPoint[0] - startPoint[0]);
-      h = Math.abs(currentPoint[1] - startPoint[1]);
-      center = [
-        (startPoint[0] + currentPoint[0]) / 2,
-        (startPoint[1] + currentPoint[1]) / 2,
-        startPoint[2]
-      ];
-    } else if (Math.abs(nx) > 0.9) {
-      // Left or Right wall (parallel to Z-Y plane)
-      w = Math.abs(currentPoint[2] - startPoint[2]);
-      h = Math.abs(currentPoint[1] - startPoint[1]);
-      center = [
-        startPoint[0],
-        (startPoint[1] + currentPoint[1]) / 2,
-        (startPoint[2] + currentPoint[2]) / 2
-      ];
-    }
-
-    // Default to 0.7 x 0.7 if drawing area is too small (e.g. simple click)
-    const isTiny = w < 0.2 || h < 0.2;
-    if (isTiny) {
-      w = 0.7;
-      h = 0.7;
-      center = [...startPoint];
-    }
-
-    // Offset slightly along normal to prevent z-fighting
-    const position = [
-      center[0] + nx * 0.02,
-      center[1] + ny * 0.02,
-      center[2] + nz * 0.02
-    ];
-
-    // Compute rotation quaternion matching normal
-    const normalVec = new THREE.Vector3(...normal);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(
-      new THREE.Vector3(0, 0, 1),
-      normalVec
-    );
-    const euler = new THREE.Euler().setFromQuaternion(quaternion);
-    const rotation = [euler.x, euler.y, euler.z];
-
-    return { position, rotation, width: w, height: h };
-  };
-
-  const handleDrawingStart = (data) => {
-    if (!isAddMode) return;
-    setDrawing({
-      wallId: data.wallId,
-      startPoint: data.point,
-      normal: data.normal,
-      currentPoint: data.point
-    });
-  };
-
-  const handleDrawingMove = (data) => {
-    if (!isAddMode) return;
-    setDrawing((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        currentPoint: data.point
-      };
-    });
-  };
-
-  const handleDrawingEnd = () => {
-    if (!drawing) return;
-
-    const bounds = calculateNoteBounds(drawing);
-    if (!bounds) return;
-
-    // Get default color based on current theme
-    let defaultColor = '#fef08a';
-    if (theme === 'library') {
-      defaultColor = '#fef9c3'; // warm book paper
-    } else if (theme === 'sci-fi') {
-      defaultColor = '#00f0ff'; // cyan hologram
-    }
-
-    const newNote = {
-      id: 'note_' + Date.now(),
-      wallId: drawing.wallId,
-      position: bounds.position,
-      rotation: bounds.rotation,
-      width: bounds.width,
-      height: bounds.height,
-      pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
-      currentPageIndex: 0,
-      color: defaultColor
-    };
-
-    setNotes((prev) => [...prev, newNote]);
-    setEditorMode('note');
-    setActiveNoteId(newNote.id);
-    setActiveItemId(null); // Eşya seçimini kaldır
-    setIsEditorOpen(true); // Open the editor immediately for newly drawn notes
-    setIsAddMode(false);
-    setDrawing(null);
-  };
-
-  // Open note details (Select only, does not open modal editor)
-  const handleNoteClick = (id) => {
-    if (pendingConnectionSource) {
-      if (isEditorOpen || isDashboardOpen) return;
-      if (pendingConnectionSource.id === id) {
-        showSavedToast('⚠️ Aynı öğeler bağlanamaz');
-        return;
-      }
-      setPendingConnectionTarget({ id, type: 'note' });
-      setIsConceptSelectOpen(true);
-      return;
-    }
-    setEditorMode('note');
-    setActiveNoteId(id);
-    setActiveItemId(null); // Eşya seçimini kaldır
-    setIsEditorOpen(false); // Ensure editor is closed when a new note is selected
-  };
-
-  // Deselect currently active note or item when clicking empty wall or floor
-  const handleDeselect = () => {
-    setActiveNoteId(null);
-    setActiveItemId(null);
-    setIsItemEditingActive(false);
-    setIsEditorOpen(false); // Close editor when deselecting
-  };
-
-  // Directly sets a note's page index from 3D controls
-  const handleSetNotePageIndex = (id, index) => {
-    setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, currentPageIndex: index } : n))
-    );
-  };
-
-  // Save changes to note
-  const handleSaveNote = (id, pages, currentPageIndex, color, tags = []) => {
-    setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, tags, updatedAt: new Date().toISOString() } : n))
-    );
-    setIsEditorOpen(false);
-    showSavedToast('✓ Not kaydedildi');
-  };
-
-  // Delete note
-  const handleDeleteNote = (id) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-    setIsEditorOpen(false);
-    setActiveNoteId(null);
-    showSavedToast('✓ Not silindi');
-  };
-
-  // Handle focusing/teleporting camera to note and flashing it
-  const handleGoToNote = (note) => {
-    setIsDashboardOpen(false);
-    setEditorMode('note');
-    setActiveNoteId(note.id);
-    setActiveItemId(null); // Eşya seçimini kaldır
-    setIsAddMode(false);
-    
-    // Trigger flash effect for 8 seconds
-    setFlashedNoteId(note.id);
-    setTimeout(() => {
-      setFlashedNoteId(null);
-    }, 8000);
-
-    // Oda vurgulamasını tetikle
-    const noteRoomId = note.roomId || getRoomIdFromPosition(note.position[0], note.position[2]);
-    triggerHighlight(noteRoomId);
-
-    // Sadece hızlı ışınlanma açıksa kamerayı taşı
-    if (allowQuickTravel) {
-      try {
-        const euler = new THREE.Euler(...note.rotation);
-        const normal = new THREE.Vector3(0, 0, 1).applyEuler(euler).normalize();
-        
-        const notePos = new THREE.Vector3(...note.position);
-        // Position camera 1.6 meters in front of the note
-        const camPos = notePos.clone().addScaledVector(normal, 1.6);
-        
-        // Let it look at the note
-        const lookDir = notePos.clone().sub(camPos).normalize();
-        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
-        const pitchVal = Math.asin(lookDir.y);
-        
-        setCameraFocusRequest({
-          position: [camPos.x, camPos.y, camPos.z],
-          pitch: pitchVal,
-          yaw: yawVal,
-          time: Date.now()
-        });
-      } catch (err) {
-        console.error('Teleport error:', err);
-      }
+    if (theme === 'light') {
+      document.body.classList.add('light-theme');
     } else {
-      showSavedToast(`📍 Not ${roomNames[noteRoomId] || noteRoomId} odasında parlıyor!`);
+      document.body.classList.remove('light-theme');
     }
+    localStorage.setItem('ui_theme', theme);
+  }, [theme]);
+
+  // Navigate function that pushes history state
+  const navigate = (toPath) => {
+    window.history.pushState({}, '', toPath);
+    setPath(toPath);
   };
 
-  // Target navigation logic (called from link clicking)
-  const handleNavigateToTarget = (targetId, isWallNote) => {
-    setIsEditorOpen(false);
-    setIsDashboardOpen(false);
-    if (isWallNote) {
-      const note = notes.find(n => n.id === targetId);
-      if (note) {
-        handleGoToNote(note);
-      }
-    } else {
-      const item = placedItems.find(i => i.id === targetId);
-      if (item) {
-        handleGoToItem(item);
-      }
-    }
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  // --- 3D Bağlantı ve Kavram Yardımcı İş Mantığı ---
-  const getObjectPosition = (id, type) => {
-    if (type === 'note') {
-      const note = notes.find(n => n.id === id);
-      if (note && note.position) return note.position;
-    } else if (type === 'item') {
-      const item = placedItems.find(i => i.id === id);
-      if (item && item.position) {
-        return [item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0];
-      }
-    }
-    return null;
-  };
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
 
-  const handleStartConnection = (id, type) => {
-    setPendingConnectionSource({ id, type });
-    setPendingConnectionTarget(null);
-    setIsConceptSelectOpen(false);
-    setIsAddMode(false);
-    if (isItemEditingActive) {
-      handleCancelEdit();
-    }
-  };
+  // Route: /app
+  if (path === '/app') {
+    return <SarayApp />;
+  }
 
-  const handleCompleteConnection = (conceptId) => {
-    if (!pendingConnectionSource || !pendingConnectionTarget) return;
-
-    // Aynı nesneleri birbirine bağlama engeli
-    if (pendingConnectionSource.id === pendingConnectionTarget.id) {
-      showSavedToast('⚠️ Aynı öğeler bağlanamaz');
-      setPendingConnectionSource(null);
-      setPendingConnectionTarget(null);
-      setIsConceptSelectOpen(false);
-      return;
-    }
-
-    // Zaten varsa tekrar oluşturmama
-    const exists = connections.some(c => 
-      c.fromId === pendingConnectionSource.id && 
-      c.toId === pendingConnectionTarget.id && 
-      c.conceptId === conceptId
-    );
-
-    if (exists) {
-      showSavedToast('⚠️ Bu bağlantı zaten mevcut');
-      setPendingConnectionSource(null);
-      setPendingConnectionTarget(null);
-      setIsConceptSelectOpen(false);
-      return;
-    }
-
-    const concept = connectionConcepts.find(cc => cc.id === conceptId) || { color: '#00f0ff' };
-
-    const newConnection = {
-      id: 'connection_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      fromId: pendingConnectionSource.id,
-      toId: pendingConnectionTarget.id,
-      fromType: pendingConnectionSource.type,
-      toType: pendingConnectionTarget.type,
-      conceptId,
-      color: concept.color,
-      isVisible: true,
-      label: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    setConnections(prev => [...prev, newConnection]);
-    setPendingConnectionSource(null);
-    setPendingConnectionTarget(null);
-    setIsConceptSelectOpen(false);
-    showSavedToast('✓ Bağlantı oluşturuldu');
-  };
-
-  const handleCancelConnection = () => {
-    setPendingConnectionSource(null);
-    setPendingConnectionTarget(null);
-    setIsConceptSelectOpen(false);
-    showSavedToast('✓ Bağlantı modu iptal edildi');
-  };
-
-  const handleDeleteConnection = (id) => {
-    setConnections(prev => prev.filter(c => c.id !== id));
-    showSavedToast('✓ Bağlantı silindi');
-  };
-
-  const handleToggleConnectionVisibility = (id) => {
-    setConnections(prev => prev.map(c => c.id === id ? { ...c, isVisible: !c.isVisible } : c));
-  };
-
-  const handleAddConcept = (name, color) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-
-    const exists = connectionConcepts.some(c => c.name.toLowerCase() === trimmed.toLowerCase());
-    if (exists) {
-      showSavedToast('⚠️ Aynı isimde bir kavram zaten var');
-      return;
-    }
-
-    const newConcept = {
-      id: 'concept_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      name: trimmed,
-      color
-    };
-
-    setConnectionConcepts(prev => [...prev, newConcept]);
-    showSavedToast('✓ Yeni kavram eklendi');
-  };
-
-  const handleUpdateConcept = (id, fields) => {
-    setConnectionConcepts(prev => prev.map(c => c.id === id ? { ...c, ...fields } : c));
-    if (fields.color) {
-      setConnections(prev => prev.map(c => c.conceptId === id ? { ...c, color: fields.color } : c));
-    }
-    showSavedToast('✓ Kavram güncellendi');
-  };
-
-  const handleDeleteConcept = (id) => {
-    if (id === 'concept_general') {
-      showSavedToast('⚠️ Genel kavramı silinemez');
-      return;
-    }
-    setConnectionConcepts(prev => prev.filter(c => c.id !== id));
-    setConnections(prev => prev.map(c => {
-      if (c.conceptId === id) {
-        return { ...c, conceptId: 'concept_general', color: '#00f0ff' };
-      }
-      return c;
-    }));
-    showSavedToast('✓ Kavram silindi ve bağlantıları Genel\'e taşındı');
-  };
-
-  const visibleConnections = React.useMemo(() => {
-    if (connectionVisibilityMode === 'hidden') return [];
-
-    const objectExists = (id, type) => {
-      if (type === 'note') return notes.some(n => n.id === id);
-      if (type === 'item') return placedItems.some(i => i.id === id);
-      return false;
-    };
-
-    return connections.filter(c => {
-      if (!c.isVisible) return false;
-      if (!objectExists(c.fromId, c.fromType) || !objectExists(c.toId, c.toType)) return false;
-
-      if (connectionVisibilityMode === 'selected-only') {
-        const selectedId = activeNoteId || activeItemId;
-        if (!selectedId) return false;
-        return c.fromId === selectedId || c.toId === selectedId;
-      }
-      return true;
-    });
-  }, [connections, connectionVisibilityMode, notes, placedItems, activeNoteId, activeItemId]);
-
-  // Close Editor Panel only, keeps note selected
-  const handleCloseEditor = () => {
-    setIsEditorOpen(false);
-  };
-
-  const handleSetTheme = (newTheme) => {
-    setTheme(newTheme);
-    showSavedToast('✓ Konsept değiştirildi');
-  };
-
-  const activeNote = React.useMemo(() => {
-    if (editorMode === 'note') {
-      const foundNote = notes.find((n) => n.id === activeNoteId);
-      if (foundNote) {
-        return {
-          ...foundNote,
-          tags: foundNote.tags || []
-        };
-      }
-      return null;
-    } else {
-      const item = placedItems.find((i) => i.id === activeItemId);
-      if (item && item.linkedNote) {
-        return {
-          id: item.id,
-          pages: item.linkedNote.pages,
-          currentPageIndex: item.linkedNote.currentPageIndex,
-          color: item.color,
-          title: item.linkedNote.title || 'Eşya Notu',
-          iconType: item.linkedNote.iconType || 'info',
-          tags: item.linkedNote.tags || [],
-          width: 0.7,
-          height: 0.7
-        };
-      } else {
-        return {
-          id: activeItemId,
-          pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
-          currentPageIndex: 0,
-          color: (item && item.color) || '#818cf8',
-          title: 'Eşya Notu',
-          iconType: 'info',
-          tags: [],
-          width: 0.7,
-          height: 0.7
-        };
-      }
-    }
-  }, [editorMode, notes, activeNoteId, placedItems, activeItemId]);
-
-  const isAnyPanelOpen = isEditorOpen || isDashboardOpen || isItemDrawerOpen || isSettingsOpen || isConceptSelectOpen;
-
+  // Route: / (Landing Page)
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* 3D Canvas rendering */}
-      <Canvas 
-        style={{ pointerEvents: isAnyPanelOpen ? 'none' : 'auto' }}
-        shadows 
-        camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.6, 5] }}
-        onCreated={({ gl }) => {
-          gl.shadowMap.type = THREE.PCFShadowMap;
-        }}
-      >
-        {/* Sis ve Yumuşak Gökyüzü Atmosferi */}
-        <color attach="background" args={[envConfig.bgColor]} />
-        <fog attach="fog" args={[envConfig.bgColor, envConfig.fogNear, envConfig.fogFar]} />
-
-        {/* Ekran merkezinden nesne tespiti yapan raycaster */}
-        <CrosshairRaycaster
-          cameraMode={cameraMode}
-          isBlocked={isEditorOpen || isDashboardOpen || isItemEditingActive}
-          onHoverChange={setCrosshairHovered}
-        />
-
-        {/* 2D MiniMap için pozisyon takibi yapan bileşen */}
-        <MiniMapTracker />
-
-        {/* 3D Room Environment */}
-        <Room 
-          currentTheme={theme}
-          envConfig={envConfig}
-          roomNames={roomNames}
-          roomFloorColors={roomFloorColors}
-          roomWallColors={roomWallColors}
-          isAddMode={isAddMode && !activeItemId} 
-          isItemEditingActive={isItemEditingActive}
-          isItemDrawerOpen={isItemDrawerOpen}
-          highlightedRoomId={highlightedRoomId}
-          onDrawingStart={handleDrawingStart}
-          onDrawingMove={handleDrawingMove}
-          onDrawingEnd={handleDrawingEnd}
-          onDeselect={handleDeselect}
-        />
-
-        {/* 3D Sticky Notes */}
-        {notes.map((note) => (
-          <Note3D
-            key={note.id}
-            note={note}
-            onClick={handleNoteClick}
-            isAddMode={isAddMode}
-            activeNoteId={activeNoteId}
-            onEditClick={() => setIsEditorOpen(true)}
-            onSetPageIndex={handleSetNotePageIndex}
-            isFlashed={flashedNoteId === note.id}
-            onHoverChange={setHoveredNoteId}
-            isCrosshairHovered={crosshairHovered?.type === 'note' && crosshairHovered?.id === note.id}
-            notes={notes}
-            placedItems={placedItems}
-            onNavigateToTarget={handleNavigateToTarget}
-            pendingConnectionSource={pendingConnectionSource}
-            onStartConnection={handleStartConnection}
-            onCancelConnection={handleCancelConnection}
-            hideControls={isAnyPanelOpen}
-          />
-        ))}
-
-        {/* Sahneye Yerleştirilmiş Eşyalar */}
-        {placedItems.map((item) => (
-          <PlacedItem3D
-            key={item.id}
-            item={item}
-            isSelected={activeItemId === item.id}
-            isFlashed={flashedItemId === item.id}
-            isAddMode={isAddMode}
-            isItemEditingActive={isItemEditingActive && activeItemId === item.id}
-            onSelect={(id) => {
-              if (pendingConnectionSource) {
-                if (isEditorOpen || isDashboardOpen) return;
-                if (pendingConnectionSource.id === id) {
-                  showSavedToast('⚠️ Aynı öğeler bağlanamaz');
-                  return;
-                }
-                setPendingConnectionTarget({ id, type: 'item' });
-                setIsConceptSelectOpen(true);
-                return;
-              }
-              if (isItemEditingActive && activeItemId !== id) {
-                handleCancelEdit();
-              }
-              setActiveItemId(id);
-              setActiveNoteId(null); // Eşya seçildiğinde not seçimini kaldır
-            }}
-            onStartEdit={handleStartEdit}
-            onUpdate={handleUpdatePlacedItem}
-            onOpenNote={() => {
-              setEditorMode('item');
-              setActiveItemId(item.id);
-              setActiveNoteId(null);
-              setIsEditorOpen(true);
-            }}
-            isCrosshairHovered={crosshairHovered?.type === 'item' && crosshairHovered?.id === item.id}
-          />
-        ))}
-
-        {/* 3D Görsel Bağlantı Çizgileri */}
-        {visibleConnections.map((conn) => {
-          const fromPos = getObjectPosition(conn.fromId, conn.fromType);
-          const toPos = getObjectPosition(conn.toId, conn.toType);
-          if (!fromPos || !toPos) return null;
-
-          const midPos = [
-            (fromPos[0] + toPos[0]) / 2,
-            ((fromPos[1] + toPos[1]) / 2) + 1.2,
-            (fromPos[2] + toPos[2]) / 2
-          ];
-
-          // Temaya göre opaklık ayarı
-          const opacity = theme === 'minimal' ? 0.35 : theme === 'library' ? 0.45 : 0.65;
-
-          return (
-            <QuadraticBezierLine
-              key={conn.id}
-              start={fromPos}
-              end={toPos}
-              mid={midPos}
-              color={conn.color || '#00f0ff'}
-              lineWidth={1.5}
-              transparent
-              opacity={opacity}
-            />
-          );
-        })}
-
-        {/* Drawing Preview */}
-        {drawing && (() => {
-          const bounds = calculateNoteBounds(drawing);
-          if (!bounds) return null;
-          return (
-            <Note3D
-              note={{
-                id: 'preview',
-                ...bounds,
-                color: '#fef08a',
-                pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
-                currentPageIndex: 0
-              }}
-              isPreview={true}
-              hideControls={isAnyPanelOpen}
-            />
-          );
-        })()}
-
-        {/* Character & movement logic */}
-        <Player 
-          cameraMode={cameraMode} 
-          activeNoteId={activeNoteId}
-          activeItemId={activeItemId}
-          isItemEditingActive={isItemEditingActive}
-          isAddMode={isAddMode}
-          isDrawing={!!drawing}
-          isEditorOpen={isEditorOpen}
-          isDashboardOpen={isDashboardOpen}
-          isItemDrawerOpen={isItemDrawerOpen}
-          cameraFocusRequest={cameraFocusRequest}
-          hoveredNoteId={hoveredNoteId}
-          playerPositionRef={playerPositionRef}
-          playerDirectionRef={playerDirectionRef}
-        />
-      </Canvas>
-
-      {/* HTML overlay UI */}
-      <UIOverlay
-        isSettingsOpen={isSettingsOpen}
-        setIsSettingsOpen={setIsSettingsOpen}
-        uiTheme={uiTheme}
-        setUiTheme={setUiTheme}
-        theme={theme}
-        setTheme={handleSetTheme}
-        roomNames={roomNames}
-        roomFloorColors={roomFloorColors}
-        roomWallColors={roomWallColors}
-        onUpdateRoomName={handleUpdateRoomName}
-        onUpdateRoomFloorColor={handleUpdateRoomFloorColor}
-        onUpdateRoomWallColor={handleUpdateRoomWallColor}
-        onResetColors={handleResetColors}
-        onLoadPresetTemplate={handleLoadPresetTemplate}
-        onClearRoomTemplate={handleClearRoomTemplate}
-        cameraMode={cameraMode}
-        setCameraMode={setCameraMode}
-        isAddMode={isAddMode}
-        setIsAddMode={handleSetIsAddMode}
-        activeNote={activeNote}
-        isEditorOpen={isEditorOpen}
-        onSaveNote={editorMode === 'note' ? handleSaveNote : handleSaveItemNote}
-        onDeleteNote={editorMode === 'note' ? handleDeleteNote : handleDeleteItemNote}
-        onCloseEditor={handleCloseEditor}
-        isDashboardOpen={isDashboardOpen}
-        setIsDashboardOpen={setIsDashboardOpen}
-        isItemDrawerOpen={isItemDrawerOpen}
-        setIsItemDrawerOpen={setIsItemDrawerOpen}
-        placedItems={placedItems}
-        activeItemId={activeItemId}
-        setActiveItemId={setActiveItemId}
-        onAddPlacedItem={handleAddPlacedItem}
-        onUpdatePlacedItem={handleUpdatePlacedItem}
-        onDeletePlacedItem={handleDeletePlacedItem}
-        editorMode={editorMode}
-        setEditorMode={setEditorMode}
-        setIsEditorOpen={setIsEditorOpen}
-        isItemEditingActive={isItemEditingActive}
-        onStartEdit={handleStartEdit}
-        onSaveEdit={handleSaveEdit}
-        onCancelEdit={handleCancelEdit}
-        toast={toast}
-        notes={notes}
-        onNavigateToTarget={handleNavigateToTarget}
-        connections={connections}
-        connectionConcepts={connectionConcepts}
-        pendingConnectionSource={pendingConnectionSource}
-        pendingConnectionTarget={pendingConnectionTarget}
-        isConceptSelectOpen={isConceptSelectOpen}
-        setIsConceptSelectOpen={setIsConceptSelectOpen}
-        onStartConnection={handleStartConnection}
-        onCompleteConnection={handleCompleteConnection}
-        onCancelConnection={handleCancelConnection}
-        onDeleteConnection={handleDeleteConnection}
-        onToggleConnectionVisibility={handleToggleConnectionVisibility}
-        connectionVisibilityMode={connectionVisibilityMode}
-        onChangeVisibilityMode={setConnectionVisibilityMode}
-        setConnections={setConnections}
-        allowQuickTravel={allowQuickTravel}
-        setAllowQuickTravel={setAllowQuickTravel}
-        freeFlightEnabled={freeFlightEnabled}
-        setFreeFlightEnabled={setFreeFlightEnabled}
-        devMode={devMode}
-      />
-
-      {/* Dev Mode Göstergesi */}
-      {devMode && (
-        <div style={{
-          position: 'fixed',
-          bottom: '16px',
-          left: '16px',
-          background: 'rgba(99, 102, 241, 0.15)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          color: '#a5b4fc',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          fontSize: '10px',
-          fontFamily: 'monospace',
-          zIndex: 9999,
-          pointerEvents: 'none',
-          letterSpacing: '1px',
-          backdropFilter: 'blur(4px)',
-        }}>
-          [DEV MODE]
+    <div className="landing-container" style={{
+      width: '100vw',
+      height: '100vh',
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--bg-color)',
+      color: 'var(--text-main)',
+      transition: 'background-color 0.3s ease, color 0.3s ease',
+      fontFamily: 'var(--font-body)'
+    }}>
+      {/* Header */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '24px 40px',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Compass style={{ color: 'var(--primary)', width: '28px', height: '28px' }} />
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.5rem',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--theme-cyan) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            SARAY
+          </span>
         </div>
-      )}
 
-      {/* Not Kontrol Paneli */}
-      <NoteDashboard
-        isOpen={isDashboardOpen}
-        onClose={() => setIsDashboardOpen(false)}
-        notes={notes}
-        placedItems={placedItems}
-        activeNoteId={activeNoteId}
-        roomNames={roomNames}
-        onSelectNote={(id) => {
-          if (id && id.startsWith('item_')) {
-            setEditorMode('item');
-            setActiveItemId(id);
-            setActiveNoteId(null);
-            setIsEditorOpen(true);
-          } else {
-            setEditorMode('note');
-            setActiveNoteId(id);
-            setActiveItemId(null);
-            setIsEditorOpen(false);
-          }
-        }}
-        onGoToNote={(note) => {
-          if (note.isWallNote) {
-            handleGoToNote(note);
-          } else {
-            const item = placedItems.find(i => i.id === note.id);
-            if (item) handleGoToItem(item);
-          }
-        }}
-        connections={connections}
-        connectionConcepts={connectionConcepts}
-        connectionVisibilityMode={connectionVisibilityMode}
-        onChangeVisibilityMode={setConnectionVisibilityMode}
-        onDeleteConnection={handleDeleteConnection}
-        onToggleConnectionVisibility={handleToggleConnectionVisibility}
-        onAddConcept={handleAddConcept}
-        onUpdateConcept={handleUpdateConcept}
-        onDeleteConcept={handleDeleteConcept}
-      />
+        {/* Language Selector */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          marginLeft: 'auto',
+          marginRight: '12px',
+          background: 'var(--button-bg-secondary)',
+          border: '1px solid var(--panel-border)',
+          borderRadius: '20px',
+          padding: '2px 4px',
+          height: '36px'
+        }}>
+          {['tr', 'en', 'de', 'it', 'fr'].map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              style={{
+                background: lang === l ? 'var(--primary)' : 'transparent',
+                color: lang === l ? '#ffffff' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '4px 8px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '28px'
+              }}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
+        <button 
+          onClick={toggleTheme}
+          style={{
+            background: 'var(--button-bg-secondary)',
+            border: '1px solid var(--panel-border)',
+            color: 'var(--text-main)',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'var(--transition-smooth)'
+          }}
+          title={theme === 'light' ? 'Koyu Temaya Geç' : 'Açık Temaya Geç'}
+        >
+          {theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </header>
+
+      {/* Hero Section */}
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px 24px',
+        maxWidth: '1000px',
+        margin: '0 auto',
+        textAlign: 'center',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{
+          background: 'rgba(99, 102, 241, 0.1)',
+          color: 'var(--primary)',
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          padding: '8px 20px',
+          borderRadius: '20px',
+          marginBottom: '28px',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          display: 'inline-block'
+        }}>
+          {t.badge}
+        </div>
+
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '3.5rem',
+          fontWeight: 800,
+          lineHeight: 1.1,
+          letterSpacing: '-0.03em',
+          marginBottom: '20px',
+          background: 'linear-gradient(135deg, var(--text-main) 30%, var(--theme-accent-muted) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          {t.title}
+        </h1>
+
+        <p style={{
+          fontSize: '1.25rem',
+          lineHeight: 1.6,
+          color: 'var(--text-muted)',
+          marginBottom: '20px',
+          maxWidth: '700px'
+        }}>
+          {t.desc}
+        </p>
+
+        <p style={{
+          fontSize: '1rem',
+          lineHeight: 1.5,
+          color: 'var(--theme-accent-muted)',
+          marginBottom: '36px',
+          maxWidth: '640px',
+          fontStyle: 'italic'
+        }}>
+          {t.betaMsg}
+        </p>
+
+        {/* Call to Action */}
+        <div style={{ marginBottom: '60px' }}>
+          <button 
+            onClick={() => navigate('/app')}
+            style={{
+              background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '18px 44px',
+              fontSize: '1.15rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 8px 30px var(--primary-glow)',
+              transition: 'var(--transition-smooth)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              margin: '0 auto'
+            }}
+          >
+            {t.openButton} <Compass size={18} />
+          </button>
+          <span style={{
+            display: 'block',
+            fontSize: '0.85rem',
+            color: 'var(--text-muted)',
+            marginTop: '14px',
+            fontWeight: 500
+          }}>
+            {t.experienceWarning}
+          </span>
+        </div>
+
+        {/* Beta Sürecinde Neler Var? */}
+        <div style={{ width: '100%', marginBottom: '60px' }}>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '2rem',
+            fontWeight: 800,
+            marginBottom: '12px',
+            color: 'var(--text-main)'
+          }}>
+            {t.betaSectionTitle}
+          </h2>
+          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '32px' }}>
+            {t.betaSectionDesc}
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '20px',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            {/* Card 1 */}
+            <div className="glass-panel" style={{
+              padding: '24px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)'
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: 'var(--text-main)',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span>🏠</span> {t.card1Title}
+              </h3>
+              <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-muted)', margin: 0 }}>
+                {t.card1Desc}
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="glass-panel" style={{
+              padding: '24px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)'
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: 'var(--text-main)',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span>📝</span> {t.card2Title}
+              </h3>
+              <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-muted)', margin: 0 }}>
+                {t.card2Desc}
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="glass-panel" style={{
+              padding: '24px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)'
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: 'var(--text-main)',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span>📦</span> {t.card3Title}
+              </h3>
+              <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-muted)', margin: 0 }}>
+                {t.card3Desc}
+              </p>
+            </div>
+
+            {/* Card 4 */}
+            <div className="glass-panel" style={{
+              padding: '24px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)'
+            }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: 'var(--text-main)',
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span>🔗</span> {t.card4Title}
+              </h3>
+              <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-muted)', margin: 0 }}>
+                {t.card4Desc}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Gelecekte Neler Gelecek? */}
+        <div style={{ width: '100%', marginBottom: '60px' }}>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '2rem',
+            fontWeight: 800,
+            marginBottom: '12px',
+            color: 'var(--text-main)'
+          }}>
+            {t.futureTitle}
+          </h2>
+          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '32px' }}>
+            {t.futureDesc}
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            {/* Future Item 1 */}
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🎨</div>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontWeight: 700 }}>{t.future1Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t.future1Desc}</p>
+            </div>
+
+            {/* Future Item 2 */}
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🌿</div>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontWeight: 700 }}>{t.future2Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t.future2Desc}</p>
+            </div>
+
+            {/* Future Item 3 */}
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>☁️</div>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontWeight: 700 }}>{t.future3Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t.future3Desc}</p>
+            </div>
+
+            {/* Future Item 4 */}
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🤖</div>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontWeight: 700 }}>{t.future4Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t.future4Desc}</p>
+            </div>
+
+            {/* Future Item 5 */}
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📱</div>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontWeight: 700 }}>{t.future5Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t.future5Desc}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Erken Kullanıcı Avantajları */}
+        <div style={{
+          width: '100%',
+          padding: '32px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(79, 70, 229, 0.05) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          borderRadius: '16px',
+          textAlign: 'center',
+          boxSizing: 'border-box'
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.5rem',
+            fontWeight: 800,
+            color: 'var(--text-main)',
+            margin: '0 0 12px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            🌟 {t.earlyUserTitle}
+          </h3>
+          <p style={{
+            fontSize: '0.95rem',
+            lineHeight: 1.6,
+            color: 'var(--text-main)',
+            margin: 0,
+            maxWidth: '800px'
+          }}>
+            {t.earlyUserDesc}
+          </p>
+        </div>
+
+        {/* Destek Bölümü */}
+        <div style={{
+          width: '100%',
+          marginTop: '40px',
+          boxSizing: 'border-box'
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.8rem',
+            fontWeight: 800,
+            marginBottom: '12px',
+            color: 'var(--text-main)'
+          }}>
+            💖 {t.supportTitle}
+          </h3>
+          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '28px', maxWidth: '640px', margin: '0 auto 28px auto' }}>
+            {t.supportDesc}
+          </p>
+
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '20px',
+            width: '100%'
+          }}>
+            {/* Destek Seçeneği 1 */}
+            <div style={{
+              flex: '1 1 280px',
+              maxWidth: '320px',
+              padding: '24px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              opacity: 0.85
+            }}>
+              <div style={{ fontSize: '1.8rem' }}>☕</div>
+              <h4 style={{ margin: 0, color: 'var(--text-main)', fontWeight: 700 }}>{t.support1Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                {t.support1Desc}
+              </p>
+              <button disabled style={{
+                marginTop: 'auto',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--panel-border)',
+                background: 'rgba(255,255,255,0.02)',
+                color: 'var(--text-muted)',
+                fontSize: '0.8rem',
+                cursor: 'not-allowed'
+              }}>
+                {t.supportSoon}
+              </button>
+            </div>
+
+            {/* Destek Seçeneği 2 */}
+            <div style={{
+              flex: '1 1 280px',
+              maxWidth: '320px',
+              padding: '24px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              opacity: 0.85
+            }}>
+              <div style={{ fontSize: '1.8rem' }}>🌟</div>
+              <h4 style={{ margin: 0, color: 'var(--text-main)', fontWeight: 700 }}>{t.support2Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                {t.support2Desc}
+              </p>
+              <button disabled style={{
+                marginTop: 'auto',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--panel-border)',
+                background: 'rgba(255,255,255,0.02)',
+                color: 'var(--text-muted)',
+                fontSize: '0.8rem',
+                cursor: 'not-allowed'
+              }}>
+                {t.supportSoon}
+              </button>
+            </div>
+
+            {/* Destek Seçeneği 3 */}
+            <div style={{
+              flex: '1 1 280px',
+              maxWidth: '320px',
+              padding: '24px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--panel-border)',
+              borderRadius: '12px',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              opacity: 0.85
+            }}>
+              <div style={{ fontSize: '1.8rem' }}>💳</div>
+              <h4 style={{ margin: 0, color: 'var(--text-main)', fontWeight: 700 }}>{t.support3Title}</h4>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                {t.support3Desc}
+              </p>
+              <button disabled style={{
+                marginTop: 'auto',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--panel-border)',
+                background: 'rgba(255,255,255,0.02)',
+                color: 'var(--text-muted)',
+                fontSize: '0.8rem',
+                cursor: 'not-allowed'
+              }}>
+                {t.supportSoon}
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        padding: '40px 24px',
+        textAlign: 'center',
+        fontSize: '0.8rem',
+        color: 'var(--text-muted)',
+        borderTop: '1px solid var(--panel-border)',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '60px auto 0 auto',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <div>
+          <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600 }}>
+            {t.feedbackPrompt}
+          </p>
+          <a 
+            href="mailto:asujai964@gmail.com" 
+            style={{ 
+              color: 'var(--primary)', 
+              textDecoration: 'none', 
+              fontSize: '1rem', 
+              fontWeight: 700,
+              letterSpacing: '0.5px',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseOver={(e) => e.target.style.color = '#4f46e5'}
+            onMouseOut={(e) => e.target.style.color = 'var(--primary)'}
+          >
+            ✉️ asujai964@gmail.com
+          </a>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', opacity: 0.8, lineHeight: 1.5 }}>
+          {t.footerText}
+        </p>
+      </footer>
     </div>
   );
 }

@@ -7,7 +7,52 @@ const ROOM_LIMIT = 24.5; // (50 / 2) - 0.5 boundary margin
 const MIN_HEIGHT = 0.5;
 const MAX_HEIGHT = 22.5; // Raised boundary to allow full overhead view of the roofless house
 
-export default function Player({ cameraMode, activeNoteId, activeItemId, isItemEditingActive, isAddMode, isDrawing, isEditorOpen, isDashboardOpen, isItemDrawerOpen, cameraFocusRequest, hoveredNoteId, playerPositionRef, playerDirectionRef }) {
+const checkCollision = (oldX, oldZ, newX, newZ, radius = 0.4) => {
+  const walls = [
+    // Sol dikey bölmeler (Hol - Mutfak/Yatak odası arası)
+    { minX: -5.1, maxX: -4.9, minZ: -25.0, maxZ: -14.0 },
+    { minX: -5.1, maxX: -4.9, minZ: -11.0, maxZ: 11.0 },
+    { minX: -5.1, maxX: -4.9, minZ: 14.0, maxZ: 25.0 },
+    
+    // Sağ dikey bölmeler (Hol - Salon/Çalışma odası arası)
+    { minX: 4.9, maxX: 5.1, minZ: -25.0, maxZ: -14.0 },
+    { minX: 4.9, maxX: 5.1, minZ: -11.0, maxZ: 11.0 },
+    { minX: 4.9, maxX: 5.1, minZ: 14.0, maxZ: 25.0 },
+    
+    // Yatay bölmeler
+    { minX: -25.0, maxX: -5.0, minZ: -0.1, maxZ: 0.1 },
+    { minX: 5.0, maxX: 25.0, minZ: -0.1, maxZ: 0.1 }
+  ];
+
+  let resX = newX;
+  let resZ = newZ;
+
+  for (const wall of walls) {
+    const wMinX = wall.minX - radius;
+    const wMaxX = wall.maxX + radius;
+    const wMinZ = wall.minZ - radius;
+    const wMaxZ = wall.maxZ + radius;
+
+    if (resX > wMinX && resX < wMaxX && resZ > wMinZ && resZ < wMaxZ) {
+      const hitX = resX > wMinX && resX < wMaxX && oldZ > wMinZ && oldZ < wMaxZ;
+      const hitZ = oldX > wMinX && oldX < wMaxX && resZ > wMinZ && resZ < wMaxZ;
+
+      if (hitX) {
+        resX = oldX;
+      }
+      if (hitZ) {
+        resZ = oldZ;
+      }
+      if (!hitX && !hitZ) {
+        resX = oldX;
+        resZ = oldZ;
+      }
+    }
+  }
+  return { x: resX, z: resZ };
+};
+
+export default function Player({ cameraMode, devMode, mobileControlsEnabled, activeNoteId, activeItemId, isItemEditingActive, isAddMode, isDrawing, isEditorOpen, isDashboardOpen, isItemDrawerOpen, cameraFocusRequest, hoveredNoteId, playerPositionRef, playerDirectionRef }) {
   const { camera, gl } = useThree();
   const avatarRef = useRef();
 
@@ -29,6 +74,7 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
   const isDashboardOpenRef = useRef(isDashboardOpen);
   const isItemDrawerOpenRef = useRef(isItemDrawerOpen);
   const hoveredNoteIdRef = useRef(hoveredNoteId);
+  const devModeRef = useRef(devMode);
 
   useEffect(() => {
     isAddModeRef.current = isAddMode;
@@ -41,6 +87,7 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
     isDashboardOpenRef.current = isDashboardOpen;
     isItemDrawerOpenRef.current = isItemDrawerOpen;
     hoveredNoteIdRef.current = hoveredNoteId;
+    devModeRef.current = devMode;
   });
 
   // Track last processed focus request time to avoid looping
@@ -55,6 +102,21 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       yaw.current = cameraFocusRequest.yaw;
     }
   }, [cameraFocusRequest]);
+
+  useEffect(() => {
+    const handleCameraRotate = (e) => {
+      if (e.detail) {
+        const sensitivity = 0.0025;
+        yaw.current -= e.detail.x * sensitivity;
+        pitch.current -= e.detail.y * sensitivity;
+        pitch.current = THREE.MathUtils.clamp(pitch.current, -Math.PI / 2.5, Math.PI / 2.5);
+      }
+    };
+    window.addEventListener('saray-camera-rotate', handleCameraRotate);
+    return () => {
+      window.removeEventListener('saray-camera-rotate', handleCameraRotate);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isItemDrawerOpen) {
@@ -198,7 +260,17 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       // Calculate zoom velocity based on wheel delta
       const zoomStep = -e.deltaY * 0.004; // Positive: scroll up (forward), Negative: scroll down (back)
       
+      const oldX = targetPosition.current.x;
+      const oldZ = targetPosition.current.z;
+
       targetPosition.current.addScaledVector(cameraDirection, zoomStep);
+
+      // Çarpışma algılama ve engelleme (sliding collision)
+      if (!devModeRef.current && cameraModeRef.current !== 'free') {
+        const corrected = checkCollision(oldX, oldZ, targetPosition.current.x, targetPosition.current.z, 0.4);
+        targetPosition.current.x = corrected.x;
+        targetPosition.current.z = corrected.z;
+      }
 
       // Clamp target position to boundaries immediately
       targetPosition.current.x = THREE.MathUtils.clamp(targetPosition.current.x, -ROOM_LIMIT, ROOM_LIMIT);
@@ -210,18 +282,18 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
     window.addEventListener('keydown', handleKeyDown, { passive: false });
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('blur', handleBlur);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerdown', handleMouseDown);
+    window.addEventListener('pointermove', handleMouseMove);
+    window.addEventListener('pointerup', handleMouseUp);
     window.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointerdown', handleMouseDown);
+      window.removeEventListener('pointermove', handleMouseMove);
+      window.removeEventListener('pointerup', handleMouseUp);
       window.removeEventListener('wheel', handleWheel);
       document.body.style.cursor = 'default';
     };
@@ -232,8 +304,8 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
 
     // Kuş bakışı modda kamerayı sabit tepeden konumla ve tüm hareketi atla
     if (cameraMode === 'birds-eye') {
-      // Sabit tepeden bakış: evin merkezinin üstünden, düz aşağıya bak
-      const birdsEyeTarget = new THREE.Vector3(0, 42, 0);
+      // Sabit tepeden bakış: oyuncunun o anki X-Z konumunun üstünden, düz aşağıya bak
+      const birdsEyeTarget = new THREE.Vector3(currentPosition.current.x, 42, currentPosition.current.z);
       camera.position.lerp(birdsEyeTarget, 0.08);
       
       // Kamerayı tam aşağı baktır (-Y yönü)
@@ -284,9 +356,19 @@ export default function Player({ cameraMode, activeNoteId, activeItemId, isItemE
       if (moveLeft) moveVector.addScaledVector(cameraRight, -1);
       if (moveRight) moveVector.add(cameraRight);
 
+      const oldX = targetPosition.current.x;
+      const oldZ = targetPosition.current.z;
+
       if (moveVector.lengthSq() > 0) {
         moveVector.normalize().multiplyScalar(SPEED * dt);
         targetPosition.current.add(moveVector);
+      }
+
+      // Çarpışma algılama ve engelleme (sliding collision)
+      if (!devMode && cameraMode !== 'free') {
+        const corrected = checkCollision(oldX, oldZ, targetPosition.current.x, targetPosition.current.z, 0.4);
+        targetPosition.current.x = corrected.x;
+        targetPosition.current.z = corrected.z;
       }
 
       if (cameraMode === 'free') {

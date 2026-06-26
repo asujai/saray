@@ -431,6 +431,263 @@ function LargeBookshelfModel({ color }) {
   );
 }
 
+function LibraryShelfModel({ color, books = [], onOpenBookNote }) {
+  const shelfColor = color || '#78350f';
+  return (
+    <group>
+      {/* Yan Dikmeler */}
+      <mesh castShadow position={[-1.07, 1.1, 0]}>
+        <boxGeometry args={[0.06, 2.2, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      <mesh castShadow position={[1.07, 1.1, 0]}>
+        <boxGeometry args={[0.06, 2.2, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      {/* Alt ve Üst Tablalar */}
+      <mesh castShadow receiveShadow position={[0, 0.02, 0]}>
+        <boxGeometry args={[2.2, 0.04, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0, 2.18, 0]}>
+        <boxGeometry args={[2.2, 0.04, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      {/* Arka Kapak */}
+      <mesh receiveShadow position={[0, 1.1, -0.17]}>
+        <boxGeometry args={[2.08, 2.12, 0.02]} />
+        <meshStandardMaterial color="#451a03" roughness={0.9} />
+      </mesh>
+      {/* İç Dikey Dikmeler */}
+      <mesh castShadow position={[-0.35, 1.1, 0.005]}>
+        <boxGeometry args={[0.04, 2.12, 0.33]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.35, 1.1, 0.005]}>
+        <boxGeometry args={[0.04, 2.12, 0.33]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.8} />
+      </mesh>
+      {/* İç Yatay Raflar */}
+      {/* Raf 1 (y=0.5) */}
+      <mesh position={[-0.71, 0.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0, 0.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0.71, 0.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      {/* Raf 2 (y=1.0) */}
+      <mesh position={[-0.71, 1.0, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0, 1.0, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0.71, 1.0, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      {/* Raf 3 (y=1.5) */}
+      <mesh position={[-0.71, 1.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0, 1.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+      <mesh position={[0.71, 1.5, 0.005]} castShadow>
+        <boxGeometry args={[0.66, 0.03, 0.33]} />
+        <meshStandardMaterial color={shelfColor} />
+      </mesh>
+
+      {/* Kitaplar */}
+      {books.map((book) => {
+        const slot = book.slotIndex;
+        const row = Math.floor(slot / 6);
+        const col = slot % 6;
+        let x = 0;
+        if (col === 0) x = -0.85;
+        else if (col === 1) x = -0.55;
+        else if (col === 2) x = -0.15;
+        else if (col === 3) x = 0.15;
+        else if (col === 4) x = 0.55;
+        else if (col === 5) x = 0.85;
+
+        let y = 0.2;
+        if (row === 1) y = 0.7;
+        else if (row === 2) y = 1.2;
+        else if (row === 3) y = 1.7;
+
+        const z = 0.065;
+
+        return (
+          <group key={book.bookId} position={[x, y, z]}>
+            <mesh 
+              castShadow 
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenBookNote(book.bookId);
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = 'default';
+              }}
+            >
+              <boxGeometry args={[0.06, 0.32, 0.22]} />
+              <meshStandardMaterial color={book.color || '#ef4444'} roughness={0.6} />
+            </mesh>
+            <Text
+              position={[0, 0, 0.111]}
+              rotation={[0, 0, -Math.PI / 2]}
+              fontSize={0.035}
+              color="#ffffff"
+              maxWidth={0.28}
+              anchorX="center"
+              anchorY="middle"
+              depthOffset={-1}
+              toneMapped={false}
+            >
+              {book.spineLabel}
+            </Text>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+function LargeLibraryShelfModel({ color, books = [], onOpenBookNote }) {
+  const shelfColor = color || '#78350f';
+  return (
+    <group>
+      {/* Yan Dikmeler */}
+      <mesh castShadow position={[-2.17, 1.1, 0]}>
+        <boxGeometry args={[0.06, 2.2, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      <mesh castShadow position={[2.17, 1.1, 0]}>
+        <boxGeometry args={[0.06, 2.2, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      {/* Alt ve Üst Tablalar */}
+      <mesh castShadow receiveShadow position={[0, 0.02, 0]}>
+        <boxGeometry args={[4.4, 0.04, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0, 2.18, 0]}>
+        <boxGeometry args={[4.4, 0.04, 0.35]} />
+        <meshStandardMaterial color={shelfColor} roughness={0.7} />
+      </mesh>
+      {/* Arka Kapak */}
+      <mesh receiveShadow position={[0, 1.1, -0.17]}>
+        <boxGeometry args={[4.28, 2.12, 0.02]} />
+        <meshStandardMaterial color="#451a03" roughness={0.9} />
+      </mesh>
+      {/* İç Dikey Dikmeler */}
+      {[-1.4, -0.7, 0, 0.7, 1.4].map((x, idx) => (
+        <mesh key={idx} castShadow position={[x, 1.1, 0.005]}>
+          <boxGeometry args={[0.04, 2.12, 0.33]} />
+          <meshStandardMaterial color={shelfColor} roughness={0.8} />
+        </mesh>
+      ))}
+      {/* İç Yatay Raflar (Katlar) */}
+      {[0.5, 1.0, 1.5].map((y, idx) => (
+        <group key={idx}>
+          <mesh position={[-1.785, y, 0.005]} castShadow>
+            <boxGeometry args={[0.71, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+          <mesh position={[-1.05, y, 0.005]} castShadow>
+            <boxGeometry args={[0.66, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+          <mesh position={[-0.35, y, 0.005]} castShadow>
+            <boxGeometry args={[0.66, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+          <mesh position={[0.35, y, 0.005]} castShadow>
+            <boxGeometry args={[0.66, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+          <mesh position={[1.05, y, 0.005]} castShadow>
+            <boxGeometry args={[0.66, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+          <mesh position={[1.785, y, 0.005]} castShadow>
+            <boxGeometry args={[0.71, 0.03, 0.33]} />
+            <meshStandardMaterial color={shelfColor} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Kitaplar */}
+      {books.map((book) => {
+        const slot = book.slotIndex;
+        const row = Math.floor(slot / 12);
+        const col = slot % 12;
+        
+        const xCoords = [-1.92, -1.57, -1.22, -0.87, -0.52, -0.17, 0.17, 0.52, 0.87, 1.22, 1.57, 1.92];
+        const x = xCoords[col] ?? 0;
+
+        let y = 0.2;
+        if (row === 1) y = 0.7;
+        else if (row === 2) y = 1.2;
+        else if (row === 3) y = 1.7;
+
+        const z = 0.065;
+
+        return (
+          <group key={book.bookId} position={[x, y, z]}>
+            <mesh 
+              castShadow 
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenBookNote(book.bookId);
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = 'default';
+              }}
+            >
+              <boxGeometry args={[0.06, 0.32, 0.22]} />
+              <meshStandardMaterial color={book.color || '#ef4444'} roughness={0.6} />
+            </mesh>
+            <Text
+              position={[0, 0, 0.111]}
+              rotation={[0, 0, -Math.PI / 2]}
+              fontSize={0.035}
+              color="#ffffff"
+              maxWidth={0.28}
+              anchorX="center"
+              anchorY="middle"
+              depthOffset={-1}
+              toneMapped={false}
+            >
+              {book.spineLabel}
+            </Text>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 function LowBookshelfModel({ color }) {
   return (
     <group>
@@ -934,7 +1191,8 @@ export default function PlacedItem3D({
   onStartEdit,
   onUpdate,
   onOpenNote,
-  isCrosshairHovered = false
+  isCrosshairHovered = false,
+  onOpenBookNote
 }) {
   const dragRef = useRef({ isDragging: false, pointerId: null, startPosition: [0, 0, 0], dragged: false, timer: null, progressInterval: null });
   const helperMeshRef = useRef();
@@ -1098,6 +1356,26 @@ export default function PlacedItem3D({
         return <RoundTableModel color={item.color} />;
       case 'large_bookshelf':
         return <LargeBookshelfModel color={item.color} />;
+      case 'libraryShelf':
+        return (
+          <LibraryShelfModel
+            color={item.color}
+            books={item.books}
+            onOpenBookNote={(bookId) => {
+              if (onOpenBookNote) onOpenBookNote(item.id, bookId);
+            }}
+          />
+        );
+      case 'largeLibraryShelf':
+        return (
+          <LargeLibraryShelfModel
+            color={item.color}
+            books={item.books}
+            onOpenBookNote={(bookId) => {
+              if (onOpenBookNote) onOpenBookNote(item.id, bookId);
+            }}
+          />
+        );
       case 'low_bookshelf':
         return <LowBookshelfModel color={item.color} />;
       case 'file_cabinet':
@@ -1166,6 +1444,10 @@ export default function PlacedItem3D({
         return [1.5, 0.8, 1.5];
       case 'large_bookshelf':
         return [1.9, 2.1, 0.45];
+      case 'libraryShelf':
+        return [2.2, 2.2, 0.38];
+      case 'largeLibraryShelf':
+        return [4.4, 2.2, 0.38];
       case 'low_bookshelf':
         return [1.7, 1.0, 0.5];
       case 'file_cabinet':

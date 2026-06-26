@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -8,9 +8,40 @@ export default function CrosshairRaycaster({ cameraMode, isBlocked, onHoverChang
   // Merkez koordinatı {x: 0, y: 0}
   const centerCoords = useMemo(() => new THREE.Vector2(0, 0), []);
 
+  // Bir önceki hover edilen nesneyi saklamak için ref
+  const lastFoundRef = useRef(null);
+
+  // İki hover nesnesini karşılaştıran helper fonksiyon
+  const isSameHover = (a, b) => {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    if (a.type !== b.type || a.id !== b.id) return false;
+    
+    // Eğer wall ise, koordinatları belirli bir tolerans sınırında karşılaştırarak re-render yükünü azalt
+    if (a.type === 'wall' && b.type === 'wall') {
+      const dx = Math.abs(a.point[0] - b.point[0]);
+      const dy = Math.abs(a.point[1] - b.point[1]);
+      const dz = Math.abs(a.point[2] - b.point[2]);
+      
+      const ndx = Math.abs(a.normal[0] - b.normal[0]);
+      const ndy = Math.abs(a.normal[1] - b.normal[1]);
+      const ndz = Math.abs(a.normal[2] - b.normal[2]);
+
+      // Epsilon toleransı: koordinatlar için 0.05m (5 cm), normaller için 0.02
+      if (dx < 0.05 && dy < 0.05 && dz < 0.05 && ndx < 0.02 && ndy < 0.02 && ndz < 0.02) {
+        return true;
+      }
+      return false;
+    }
+    return true;
+  };
+
   useFrame(() => {
     if (cameraMode !== 'free' || isBlocked) {
-      onHoverChange(null);
+      if (lastFoundRef.current !== null) {
+        lastFoundRef.current = null;
+        onHoverChange(null);
+      }
       return;
     }
 
@@ -71,7 +102,11 @@ export default function CrosshairRaycaster({ cameraMode, isBlocked, onHoverChang
       }
     }
 
-    onHoverChange(found);
+    // Sadece nesne değiştiğinde veya pozisyon belirgin şekilde oynadığında state'i güncelle
+    if (!isSameHover(found, lastFoundRef.current)) {
+      lastFoundRef.current = found;
+      onHoverChange(found);
+    }
   });
 
   return null;
