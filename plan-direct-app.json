@@ -1,0 +1,25 @@
+{
+  "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
+  "type": "frontend",
+  "name": "Direct App Route Verification",
+  "description": "Directly open /app URL, verify WebGL 3D Canvas, mini-map, and main HUD control panels render successfully.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/app"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the 3D WebGL canvas element is loaded and visible on the page"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the 2D MiniMap tracker showing the current room name is displayed"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the floating HUD control panel button or bar is visible on the screen"
+    }
+  ]
+}

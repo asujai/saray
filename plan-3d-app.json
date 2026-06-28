@@ -1,0 +1,61 @@
+{
+  "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
+  "type": "frontend",
+  "name": "Deep 3D App Flow Verification",
+  "description": "Start from landing page, click open button, verify route changes to /app, check WebGL canvas, mini-map, 3D player camera view, room labels, test back button, and verify page refresh works without 404.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the landing page with 'Saray' title and 'Saray'ı Aç' or 'Open Saray' button is loaded"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'Saray'ı Aç' or 'Open Saray' button to open the 3D application"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the browser URL path is changed to '/app'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the 3D WebGL canvas element is successfully loaded and rendered on the page"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the 2D MiniMap tracker showing current room info is visible on the screen"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the HUD displays the current room label like 'Çalışma Odası' or 'Study Room'"
+    },
+    {
+      "type": "action",
+      "description": "Click the Settings button on the floating control panel"
+    },
+    {
+      "type": "action",
+      "description": "Click the Return to Home button or option to go back to the landing page"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the browser URL is back to the main landing page"
+    },
+    {
+      "type": "action",
+      "description": "Navigate directly to https://atrium3d.netlify.app/app"
+    },
+    {
+      "type": "action",
+      "description": "Reload the browser page"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the 3D application loads correctly after reload and does not show a 404 error page"
+    }
+  ]
+}
