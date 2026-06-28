@@ -2628,6 +2628,7 @@ export default function SarayApp() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
+              data-testid="study-hud-prev-button"
               onClick={() => {
                 const nextIdx = (currentStudyIndex - 1 + selectedStudyNotes.length) % selectedStudyNotes.length;
                 setCurrentStudyIndex(nextIdx);
@@ -2640,6 +2641,7 @@ export default function SarayApp() {
               ⬅️ {lang === 'en' ? 'Prev' : 'Önceki'}
             </button>
             <button
+              data-testid="study-hud-next-button"
               onClick={() => {
                 const nextIdx = (currentStudyIndex + 1) % selectedStudyNotes.length;
                 setCurrentStudyIndex(nextIdx);
@@ -2663,6 +2665,7 @@ export default function SarayApp() {
               {lang === 'en' ? 'Next' : 'Sonraki'} ➡️
             </button>
             <button
+              data-testid="study-hud-exit-button"
               onClick={() => {
                 setCurrentStudyIndex(-1);
                 setSelectedStudyNotes([]);
@@ -2683,6 +2686,72 @@ export default function SarayApp() {
               ❌
             </button>
           </div>
+        </div>
+      )}
+      {window.location.search.includes('testMode') && (
+        <div style={{ display: 'none' }}>
+          <button 
+            data-testid="test-add-note-helper"
+            onClick={() => {
+              let defaultColor = '#fef08a';
+              if (theme === 'library') {
+                defaultColor = '#fef9c3';
+              } else if (theme === 'sci-fi') {
+                defaultColor = '#00f0ff';
+              }
+              const newNote = {
+                id: 'note_test_' + Date.now(),
+                wallId: 'wall_inner_right_division',
+                position: [15, 1.8, 0.02],
+                rotation: [0, 0, 0],
+                width: 0.7,
+                height: 0.7,
+                pages: [{ text: '', image: null, layout: 'image-top-text-bottom' }],
+                currentPageIndex: 0,
+                color: defaultColor
+              };
+              setNotes((prev) => [...prev, newNote]);
+              setEditorMode('note');
+              setActiveNoteId(newNote.id);
+              setActiveItemId(null);
+              setIsEditorOpen(true);
+              setIsAddMode(false);
+            }}
+          >
+            Test Add Note
+          </button>
+          <button 
+            data-testid="test-create-link-helper"
+            onClick={() => {
+              if (placedItems.length > 0 && notes.length > 0) {
+                const fromId = placedItems[0].id;
+                const toId = notes[notes.length - 1].id;
+                const exists = connections.some(c => 
+                  (c.fromId === fromId && c.toId === toId) ||
+                  (c.fromId === toId && c.toId === fromId)
+                );
+                if (!exists) {
+                  const newConnection = {
+                    id: 'connection_test_' + Date.now(),
+                    fromId,
+                    toId,
+                    fromType: 'item',
+                    toType: 'note',
+                    conceptId: 'concept_general',
+                    color: '#00f0ff',
+                    isVisible: true,
+                    label: 'Test Bağlantısı',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                  };
+                  setConnections(prev => [...prev, newConnection]);
+                  showSavedToast('✓ Bağlantı oluşturuldu');
+                }
+              }
+            }}
+          >
+            Test Create Link
+          </button>
         </div>
       )}
     </div>

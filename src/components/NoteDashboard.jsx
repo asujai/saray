@@ -454,6 +454,7 @@ export default function NoteDashboard({
             { id: 'concepts', name: dt.tab_concepts }
           ].map((tab) => (
             <button
+              data-testid={"dash-tab-" + tab.id}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
@@ -481,6 +482,7 @@ export default function NoteDashboard({
           <div className="search-box-wrapper">
             <Search className="search-icon" size={16} />
             <input
+              data-testid="dashboard-search-input"
               type="text"
               placeholder={dt.search_placeholder}
               className="search-input"
@@ -639,6 +641,7 @@ export default function NoteDashboard({
                             {dt.select}
                           </button>
                           <button 
+                            data-testid="note-goto-button"
                             className="card-btn-goto btn-primary"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -689,6 +692,7 @@ export default function NoteDashboard({
         {/* Actions Bar */}
         <div style={{ padding: '12px 24px', background: 'var(--panel-bg-hard)', display: 'flex', gap: '8px', flexWrap: 'wrap', borderBottom: '1px solid rgba(0, 240, 255, 0.08)' }}>
           <button
+            data-testid="study-select-all-button"
             onClick={toggleSelectAll}
             className="btn-secondary"
             style={{ fontSize: '0.75rem', padding: '6px 12px' }}
@@ -753,6 +757,7 @@ export default function NoteDashboard({
           </button>
 
           <button
+            data-testid="study-start-session-button"
             disabled={checkedNoteIds.length === 0}
             onClick={() => {
               const orderedNoteList = checkedNoteIds.map(id => currentRoomNotes.find(n => n.id === id)).filter(Boolean);
@@ -798,6 +803,7 @@ export default function NoteDashboard({
                 
                 return (
                   <div
+                    data-testid="study-note-checkbox"
                     key={note.id}
                     onClick={() => toggleCheckedNote(note.id)}
                     style={{

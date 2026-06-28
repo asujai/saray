@@ -432,6 +432,7 @@ export default function App() {
         {/* Call to Action */}
         <div style={{ marginBottom: '60px' }}>
           <button 
+            data-testid="open-saray-button"
             onClick={() => navigate('/app')}
             style={{
               background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',

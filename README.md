@@ -6,29 +6,57 @@ Klasik iki boyutlu zihin haritalarının aksine Saray, bilgiyi fiziksel bir mima
 
 ---
 
-## 🌟 Öne Çıkan Özellikler
+## 🔗 Live Demo URL
+**Canlı Demo:** [https://atrium3d.netlify.app/](https://atrium3d.netlify.app/)
 
-- 🚶‍♂️ **3D Gezinti ve Kontroller**: Serbest uçuş (Fly) ve fizik tabanlı yürüyüş (Walk) modları ile akıcı 3D oda navigasyonu.
-- 📌 **Dinamik Not Panelleri**: Duvarlara tıklayıp sürükleyerek istenen boyutta 3D not kartları oluşturma.
-- 📄 **Çok Sayfalı Notlar**: Her not kartı içinde birden fazla sayfa oluşturma, düzenleme ve yönetme.
-- 🖼️ **Görsel Bellek Desteği**: Not sayfalarına yerel cihazınızdan görseller yükleme ve ekleme.
-- 🛋️ **Etkileşimli Eşya & Mobilyalar**: Masa, kitaplık, bitki ve halı gibi çeşitli 3D objeleri odaya yerleştirip düzenleme.
-- 🔍 **Eşyaya Not Gizleme**: Yerleştirilen mobilyaların içine notlar saklama ve üzerlerindeki billboard ikonlarıyla etkileşime girme.
-- 📚 **Gelişmiş Kitaplık Sistemleri**:
-  - **Kütüphane Rafı**: 24 slot kapasiteli, sırt yazılı dikey kitap dizilimi.
-  - **Büyük Kitaplık**: 48 slot kapasiteli gelişmiş ünite. Kitaplara tıklandığında bağlı notlar anında açılır.
-- 🔗 **3D Kavramsal Bağlantılar**: Notlar ve eşyalar arasında 3D çizgiler çizerek fikirler arası ilişkileri görselleştirme.
-- ⚡ **Holografik Kontrol Paneli**: Notlar arasında arama yapma, oda/etiket filtreleme ve tıklanan nota otomatik ışınlanma (teleport).
-- 🌓 **Açık/Koyu Tema Desteği**: Göz yormayan koyu tema ile ferah açık tema arasında tek tıkla geçiş.
+---
+
+## 🌟 What I Built / Ne İnşa Ettim
+Saray, bilgileri 2D listeler yerine 3D uzamsal ortamlarda görselleştirerek hatırlamayı kolaylaştıran bir **3D Zihin Sarayı (Mind Palace)** uygulamasıdır. Kullanıcılar:
+*   **3D Gezinti ve Kontroller**: Yürüyüş (Walk) ve serbest uçuş (Fly) modları ile 3D oda navigasyonu yapabilirler.
+*   **Dinamik Not Panelleri**: Duvarlara tıklayıp sürükleyerek 3D not kartları oluşturabilirler.
+*   **Çok Sayfalı Notlar**: Her not içinde sayfalar oluşturup yerel görseller yükleyebilirler.
+*   **Etkileşimli Eşyalar & Kitaplıklar**: Sahneye mobilyalar yerleştirebilir, kitaplıklara not bağlı kitaplar ekleyebilirler.
+*   **3D Kavramsal Bağlantılar**: Notlar ve nesneler arasında bezier eğrileri çizerek ilişkileri görselleştirebilirler.
+*   **Holografik Kontrol Paneli**: Tüm notlarda arama yapıp ilgili nota anında ışınlanabilirler (Teleport).
+*   **Çulışma Oturumu (Study Mode)**: Seçtikleri notlar arasında sıralı zihin sarayı turları yapabilirler.
+
+---
+
+## 🛠️ Tech Stack / Teknolojik Altyapı
+*   **Frontend Library:** React 19 (Modern hooks ve state yönetimi)
+*   **Build Tool:** Vite 8 (Ultra hızlı HMR ve esbuild)
+*   **3D Render Engine:** Three.js & `@react-three/fiber` (R3F) & `@react-three/drei`
+*   **Styling & Icons:** Custom CSS (Glassmorphism, Neon Hologram UI) & Lucide React
+*   **Database:** Local-First Architecture (IndexedDB & LocalStorage)
+*   **Linting:** Oxlint (Rust-based ultra-fast linter)
+
+---
+
+## 🤖 TestSprite Hackathon Verification
+Bu proje, **TestSprite Hackathon Season 3** kapsamında TestSprite platformu ve CLI araçları ile otomatik olarak doğrulanmıştır.
+*   Tüm kritik kullanıcı akışları TestSprite’ın yapay zeka tabanlı test ajanları tarafından canlı Netlify URL'i üzerinden test edilmiştir.
+*   Her kod değişikliği sonrasında otomatik doğrulama döngüsü (Verification Loop) çalıştırılmış ve test sonuçları `LOOP.md` dosyasına kaydedilmiştir.
+
+### TestSprite Proje Konfigürasyonu
+*   **Project ID:** `d591bb97-f4bd-4700-bc64-28efa2e4cff0`
+*   **Type:** Frontend E2E / AI-driven Plan Testing
+
+---
+
+## 📊 Loop Coverage / Test Kapsamı
+TestSprite E2E test planları kapsamında doğrulanan ana senaryolar:
+1.  **Scene & HUD Verification:** Canlı URL'in başarıyla açılması, 3D Canvas elementlerinin render edilmesi ve yüzen kontrol panelinin ekranda görünürlüğü.
+2.  **Settings & UI Customization:** Ayarlar modalının açılması, dil seçeneklerinin (TR/EN) değiştirilmesi ve arayüz teması (Açık/Koyu) geçişlerinin stabil çalışması.
+3.  **Holographic Navigator & Study Mode:** Holografik kontrol panelinin açılması, not arama motorunun çalışması ve Çalışma Odası (Study Mode) sekmelerinin erişilebilirliği.
 
 ---
 
 ## 📂 Proje Yapısı
 
-Projenin temel klasör ve dosya organizasyonu aşağıdaki şekildedir:
-
 ```text
 saray/
+├── .testsprite/         # TestSprite konfigürasyonu
 ├── public/              # Statik varlıklar ve 3D modeller
 ├── src/
 │   ├── assets/          # Uygulama içi görseller ve stiller
@@ -48,7 +76,6 @@ saray/
 │   ├── SarayApp.jsx     # Uygulama durum yönetimi ve ana mantık
 │   ├── index.css        # Küresel CSS ve tasarım sistemi kuralları
 │   └── main.jsx         # React başlangıç noktası
-├── .oxlintrc.json       # Linter yapılandırması
 ├── index.html           # Giriş HTML şablonu
 ├── package.json         # Bağımlılıklar ve komutlar
 └── vite.config.js       # Vite yapılandırması
@@ -56,31 +83,7 @@ saray/
 
 ---
 
-## 💾 Veri Güvenliği ve Depolama
-
-> [!IMPORTANT]  
-> **Yerel Odaklı (Local-First) Yaklaşım:**  
-> Saray'da oluşturduğunuz tüm notlar, yüklediğiniz görseller, yerleştirdiğiniz eşyalar ve özelleştirdiğiniz oda ayarları **tamamen sizin cihazınızda (tarayıcınızda)** saklanır. Verileriniz hiçbir harici sunucuya gönderilmez.
-
-- **IndexedDB**: Görseller ve büyük not metinleri tarayıcının IndexedDB veritabanında yüksek performansla saklanır.
-- **LocalStorage**: Oda yapılandırmaları, eşya koordinatları ve kullanıcı tercihleri (tema vb.) LocalStorage üzerinde tutulur.
-- *Gelecek Planı:* Çoklu cihaz senkronizasyonu ve isteğe bağlı bulut yedekleme özellikleri sonraki sürümlerde planlanmaktadır.
-
----
-
-## 🛠️ Teknolojik Altyapı
-
-Uygulamanın performanslı ve modern çalışmasını sağlayan ana teknolojiler:
-
-- **Çekirdek**: [React 19](https://react.dev/) & [Vite 8](https://vite.dev/)
-- **3D Grafik Motoru**: [Three.js](https://threejs.org/)
-- **React-3D Entegrasyonu**: [React Three Fiber (R3F)](https://r3f.docs.pmnd.rs/) & [Drei](https://github.com/pmndrs/drei)
-- **Tasarım & İkonlar**: [Lucide React](https://lucide.dev/)
-- **Linter**: [Oxlint](https://github.com/oxc-project/oxc) (Ultra hızlı JS/TS linter)
-
----
-
-## 🚀 Geliştirme ve Çalıştırma
+## 🚀 How to Run Locally / Yerel Çalıştırma
 
 Projeyi yerel ortamınızda ayağa kaldırmak ve geliştirmek için aşağıdaki adımları izleyebilirsiniz:
 
@@ -108,3 +111,5 @@ Projeyi yerel ortamınızda ayağa kaldırmak ve geliştirmek için aşağıdaki
    ```bash
    npm run lint
    ```
+
+

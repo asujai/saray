@@ -1101,6 +1101,7 @@ export default function UIOverlay({
         </button>
 
         <button 
+          data-testid="dashboard-button"
           className={`btn-secondary ${isDashboardOpen ? 'active' : ''}`}
           onClick={() => { setIsDashboardOpen(!isDashboardOpen); setIsSettingsOpen(false); setIsItemDrawerOpen(false); }}
           title={lang === 'en' ? "Open/close control panel (H)" : "Not kontrol panelini aç/kapat (H)"}
@@ -1111,6 +1112,7 @@ export default function UIOverlay({
         </button>
 
         <button 
+          data-testid="add-note-button"
           className={`btn-secondary ${isAddMode ? 'active' : ''}`}
           onClick={() => { setIsAddMode(!isAddMode); setIsSettingsOpen(false); setIsItemDrawerOpen(false); }}
           disabled={isDashboardOpen}
@@ -1146,6 +1148,7 @@ export default function UIOverlay({
         </button>
 
         <button 
+          data-testid="add-item-button"
           className={`btn-secondary ${isItemDrawerOpen ? 'active' : ''}`}
           onClick={(e) => { setIsItemDrawerOpen(!isItemDrawerOpen); setIsSettingsOpen(false); setIsDashboardOpen(false); e.currentTarget.blur(); }}
           title={lang === 'en' ? "Open/close item library (I)" : "Eşya kütüphanesini aç/kapat (I)"}
@@ -1160,6 +1163,7 @@ export default function UIOverlay({
         </button>
 
         <button 
+          data-testid="settings-button"
           className={`btn-secondary ${isSettingsOpen ? 'active' : ''}`}
           onClick={(e) => { setIsSettingsOpen(!isSettingsOpen); setIsDashboardOpen(false); setIsItemDrawerOpen(false); e.currentTarget.blur(); }}
           title={lang === 'en' ? "Customize house settings and room colors (O)" : "Ev ayarlarını ve oda renklerini özelleştirin (O)"}
@@ -1234,18 +1238,21 @@ export default function UIOverlay({
           {/* Sol Sekme Menüsü */}
           <div className="settings-sidebar">
             <button 
+              data-testid="tab-appearance"
               className={`settings-tab-btn ${activeSettingsTab === 'appearance' ? 'active' : ''}`}
               onClick={() => setActiveSettingsTab('appearance')}
             >
               🖼️ {t.tab_appearance}
             </button>
             <button 
+              data-testid="tab-room-colors"
               className={`settings-tab-btn ${activeSettingsTab === 'roomColors' ? 'active' : ''}`}
               onClick={() => setActiveSettingsTab('roomColors')}
             >
               🎨 {t.tab_room_colors}
             </button>
             <button 
+              data-testid="tab-wall-covering"
               className={`settings-tab-btn ${activeSettingsTab === 'wallCovering' ? 'active' : ''}`}
               onClick={() => setActiveSettingsTab('wallCovering')}
             >
@@ -1258,12 +1265,14 @@ export default function UIOverlay({
               🗑️ {t.tab_cleanup}
             </button>
             <button 
+              data-testid="tab-backup"
               className={`settings-tab-btn ${activeSettingsTab === 'backup' ? 'active' : ''}`}
               onClick={() => setActiveSettingsTab('backup')}
             >
               💾 {t.tab_backup}
             </button>
             <button 
+              data-testid="tab-language"
               className={`settings-tab-btn ${activeSettingsTab === 'language' ? 'active' : ''}`}
               onClick={() => setActiveSettingsTab('language')}
             >
@@ -1308,6 +1317,7 @@ export default function UIOverlay({
                   <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🎨 {t.ui_theme}</h4>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
+                      data-testid="ui-theme-dark-button"
                       type="button"
                       onClick={() => setUiTheme('dark')}
                       style={{
@@ -1320,6 +1330,7 @@ export default function UIOverlay({
                       🌙 {t.dark_theme}
                     </button>
                     <button
+                      data-testid="ui-theme-light-button"
                       type="button"
                       onClick={() => setUiTheme('light')}
                       style={{
@@ -1430,6 +1441,7 @@ export default function UIOverlay({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_room}</label>
                       <select 
+                        data-testid="room-color-select"
                         value={colorSelectedRoom} 
                         onChange={(e) => setColorSelectedRoom(e.target.value)}
                         style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)', color: 'var(--text-main)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
@@ -1445,6 +1457,7 @@ export default function UIOverlay({
                       <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_target}</label>
                       <div style={{ display: 'flex', gap: '4px', background: 'var(--panel-bg-sub)', padding: '3px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
                         <button
+                          data-testid="color-target-floor"
                           type="button"
                           onClick={() => setColorSelectedTarget('floor')}
                           style={{
@@ -1480,6 +1493,7 @@ export default function UIOverlay({
                           : ['#f8fafc', '#ebd9c0', '#1e293b', '#fafafa', '#cbd5e1', '#0f172a', '#022c22', '#1e1b4b']
                         ).map((c) => (
                           <div
+                            data-testid="color-dot-preset"
                             key={c}
                             className={`color-dot ${colorSelectedColor === c ? 'selected' : ''}`}
                             style={{ backgroundColor: c, width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', border: colorSelectedColor === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)', transition: 'all 0.1s' }}
@@ -1502,6 +1516,7 @@ export default function UIOverlay({
 
                     {/* Uygulama Butonu */}
                     <button
+                      data-testid="apply-room-color-button"
                       type="button"
                       onClick={() => {
                         if (colorSelectedTarget === 'floor') {
@@ -1857,6 +1872,7 @@ export default function UIOverlay({
                   
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
+                      data-testid="export-backup-button"
                       type="button"
                       onClick={onExportBackup}
                       className="btn-primary"
@@ -1891,6 +1907,7 @@ export default function UIOverlay({
                   <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🌐 {t.language}</h4>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
+                      data-testid="lang-tr-button"
                       type="button"
                       onClick={() => setLang && setLang('tr')}
                       style={{
@@ -1903,6 +1920,7 @@ export default function UIOverlay({
                       🇹🇷 Türkçe
                     </button>
                     <button
+                      data-testid="lang-en-button"
                       type="button"
                       onClick={() => setLang && setLang('en')}
                       style={{
@@ -2045,6 +2063,7 @@ export default function UIOverlay({
               <div className="item-types-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                 {category.items.map((type) => (
                   <button
+                    data-testid={"item-card-" + type.id}
                     key={type.id}
                     className="item-type-card"
                     onClick={(e) => {
@@ -2335,6 +2354,7 @@ export default function UIOverlay({
 
                 {/* Not Bağlama */}
                 <button
+                  data-testid="item-add-note-button"
                   className="btn-primary-item"
                   style={{
                     background: 'var(--button-bg-secondary)',
@@ -2692,6 +2712,19 @@ export default function UIOverlay({
               </label>
             )}
 
+            {window.location.search.includes('testMode') && !currentPage.image && (
+              <button
+                data-testid="test-upload-image-helper"
+                type="button"
+                onClick={() => {
+                  setPages(prev => prev.map((p, idx) => idx === pageIndex ? { ...normalizePage(p), image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' } : p));
+                }}
+                style={{ display: 'none' }}
+              >
+                Test Upload Image
+              </button>
+            )}
+
             {/* Renk Seçici */}
             <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
               <button 
@@ -2996,7 +3029,7 @@ export default function UIOverlay({
             {editorMode === 'book' ? (lang === 'en' ? "Delete Book" : "Kitabı Sil") : t.delete_note}
           </button>
           
-          <button className="btn-primary" onClick={handleSave}>
+          <button data-testid="save-note-button" className="btn-primary" onClick={handleSave}>
             <Save size={16} />
             {t.save}
           </button>
