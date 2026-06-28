@@ -1,0 +1,265 @@
+{
+  "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
+  "type": "frontend",
+  "name": "Atrium 3D Real Features Verification V2",
+  "description": "Start from landing page, click Open button, verify /app path, verify 3D Canvas rendering status, check HUD elements and testMode debug panel. Change settings (language, theme, room colors) to verify visual style changes. Create wall note, upload test image, place study desk, link them using test-helper, and verify notes/items counts in debug panel. Open search dashboard, find notes, start study mode, verify HUD buttons. Finally, reload page to verify data persistence in debug panel.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/?testMode=true"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the landing page has logo 'ATRIUM 3D' and 'data-testid=open-saray-button' is visible"
+    },
+    {
+      "type": "action",
+      "description": "Click the button 'data-testid=open-saray-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify browser URL path changes to '/app' and 'data-testid=debug-app-loaded' has text 'true'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-canvas-mounted' has text 'true' to ensure WebGL canvas is mounted"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-minimap-visible' has text 'true' to ensure minimap container is active"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify HUD floating buttons 'data-testid=settings-button', 'data-testid=dashboard-button' and 'data-testid=add-item-button' are visible"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=settings-button' to open settings modal"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=tab-language'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=lang-en-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify UI labels change to English"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=lang-tr-button'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=tab-appearance'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=ui-theme-light-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify document body has class 'light-theme' as visual/state DOM evidence"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=ui-theme-dark-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify document body has class 'dark-theme'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=tab-room-colors'"
+    },
+    {
+      "type": "action",
+      "description": "Select 'study' in 'data-testid=room-color-select' dropdown"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=color-target-floor'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=color-dot-preset'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=apply-room-color-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify toast message 'kaydedildi' or 'saved' appears"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=settings-button' to close settings modal"
+    },
+    {
+      "type": "action",
+      "description": "Click hidden test helper button 'data-testid=test-add-note-helper' to create a test wall note"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify note editor modal '.editor-modal.open' is open"
+    },
+    {
+      "type": "action",
+      "description": "Fill '.editor-textarea' with 'Bu bir test duvar notudur. Detaylı açıklama buraya yazılıyor.'"
+    },
+    {
+      "type": "action",
+      "description": "Click hidden test helper button 'data-testid=test-upload-image-helper' to attach base64 test image to the note"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify image preview 'img[alt=Önizleme]' exists in editor modal"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=save-note-button' to save the wall note"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-notes-count' has text '1' and 'data-testid=debug-last-action' has text 'note-created' as real state evidence"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=add-item-button' to open item drawer"
+    },
+    {
+      "type": "action",
+      "description": "Click desk card 'data-testid=item-card-desk' to place a study desk in the room"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify selected item editor bar '.item-editor-bar' is visible at the bottom"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-items-count' has text '1' and 'data-testid=debug-last-action' has text 'item-added'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=item-add-note-button' in item editor bar"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify note editor modal is open"
+    },
+    {
+      "type": "action",
+      "description": "Fill note title input with 'Test Çalışma Masası Notu'"
+    },
+    {
+      "type": "action",
+      "description": "Fill note text area '.editor-textarea' with 'Bu çalışma masasına bağlı bir test açıklamasıdır.'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=save-note-button' to save item note"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-notes-count' has text '2' and 'data-testid=debug-last-action' has text 'note-created'"
+    },
+    {
+      "type": "action",
+      "description": "Click hidden test helper button 'data-testid=test-create-link-helper' to establish 3D connection between the desk and the wall note"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-links-count' has text '1' and 'data-testid=debug-last-action' has text 'link-created'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=dashboard-button' to open holographic control panel"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify holographic control panel '.dashboard-window' is open"
+    },
+    {
+      "type": "action",
+      "description": "Fill search input 'data-testid=dashboard-search-input' with 'Test'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify search results list contains 'Test Çalışma Masası Notu' and 'Bu bir test duvar notudur'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=note-goto-button' of the wall note to teleport to it"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify control panel is closed after teleportation"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=dashboard-button' to open control panel again"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=dash-tab-study' to switch to Study Mode tab"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=study-select-all-button' to select all notes in current room"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=study-start-session-button' to start study session"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify Visual Study Mode HUD is visible at the bottom and 'data-testid=debug-study-mode-active' has text 'true'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=study-hud-next-button' to go to next note in study session"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=study-hud-exit-button' to close study session"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-study-mode-active' has text 'false'"
+    },
+    {
+      "type": "action",
+      "description": "Reload browser page to verify data persistence"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-app-loaded' has text 'true' and no 404 error is shown"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-notes-count' still has text '2' and 'data-testid=debug-items-count' still has text '1' after reload"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=settings-button' to open settings modal"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=tab-backup'"
+    },
+    {
+      "type": "action",
+      "description": "Click 'data-testid=export-backup-button'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-last-action' has text 'backup-exported'"
+    }
+  ]
+}

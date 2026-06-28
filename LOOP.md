@@ -25,6 +25,6 @@
 ### [LOOP-04] — Visual Evidence & Real Interaction Verification
 * **Maker action:** Suspected that previous test runs recorded mostly black screens in TestSprite's execution videos due to headless browser WebGL limitations (lack of hardware GPU acceleration in CI environments). To honestly verify real 3D application status and state changes without relying solely on canvas video capture, we implemented a dedicated **TestMode Debug/Status Panel** in `src/SarayApp.jsx` visible only when `?testMode=true` is present. This panel exposes genuine, read-only application state metrics (notes-count, items-count, links-count, study-mode status, canvas-mounted status, minimap-visible status, and last-action tracking) as DOM text. Created a new verification plan `plan-visual-evidence.json` to explicitly verify these real state updates and UI panel changes.
 * **Checker/TestSprite run:** Running `testsprite test create --plan-from plan-visual-evidence.json --run --wait --target-url https://atrium3d.netlify.app/`.
-* **Result:** PENDING
-* **Failure summary:** N/A
-* **Fix summary:** N/A
+* **Result:** PASSED (Run ID: `1d64ffb8-a229-4db7-b4d2-80a195360688`)
+* **Failure summary:** None.
+* **Fix summary:** Implemented a dedicated testMode debug panel in the application DOM that exposes genuine React state metrics (notes-count, items-count, links-count, study-mode status, canvas-mounted status, minimap-visible status, and last-action tracking) when `?testMode=true` is appended to the URL. This allows Playwright/TestSprite to reliably verify real 3D state updates and UI interactions even when the canvas video recording is blank due to headless browser WebGL hardware acceleration limits in the CI runner. All 14/14 aggregated steps passed successfully.
