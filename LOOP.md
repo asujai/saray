@@ -1,4 +1,4 @@
-# Saray — TestSprite Verification Loop Log
+# Atrium 3D TestSprite Verification Loop Log
 
 ### [LOOP-01]
 * **Maker action:** Created TestSprite project, configured `.testsprite/config.json`, and drafted E2E frontend verification plan `plan.json` for core MVP user flows (UI loads, settings modal open, language/theme changes, and Holographic control panel visibility).
@@ -21,3 +21,10 @@
 * **Result:** PASSED (Run ID: `61a84091-e51b-44f9-b064-4edd9e60b986`)
 * **Failure summary:** None.
 * **Fix summary:** Added dynamic data-testids for item cards, HUD, search dashboard, study tabs, and save/upload buttons. Implemented invisible test-helper buttons triggered via `?testMode=true` to programmatically add wall notes and create 3D connections, bypassing flaky WebGL canvas clicks. Committed and pushed changes to GitHub to trigger Netlify deployment prior to test run. All 22/22 steps passed successfully.
+
+### [LOOP-04] — Visual Evidence & Real Interaction Verification
+* **Maker action:** Suspected that previous test runs recorded mostly black screens in TestSprite's execution videos due to headless browser WebGL limitations (lack of hardware GPU acceleration in CI environments). To honestly verify real 3D application status and state changes without relying solely on canvas video capture, we implemented a dedicated **TestMode Debug/Status Panel** in `src/SarayApp.jsx` visible only when `?testMode=true` is present. This panel exposes genuine, read-only application state metrics (notes-count, items-count, links-count, study-mode status, canvas-mounted status, minimap-visible status, and last-action tracking) as DOM text. Created a new verification plan `plan-visual-evidence.json` to explicitly verify these real state updates and UI panel changes.
+* **Checker/TestSprite run:** Running `testsprite test create --plan-from plan-visual-evidence.json --run --wait --target-url https://atrium3d.netlify.app/`.
+* **Result:** PENDING
+* **Failure summary:** N/A
+* **Fix summary:** N/A

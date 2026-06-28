@@ -1,7 +1,7 @@
 {
   "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
   "type": "frontend",
-  "name": "Saray Core Flows Verification",
+  "name": "Atrium 3D Mind Palace MVP",
   "description": "Verify that the live URL opens, showing the 3D scene, floating HUD panel, language/theme settings modals, and holographic search navigator.",
   "priority": "p0",
   "planSteps": [

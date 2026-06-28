@@ -6,9 +6,9 @@ const TRANSLATIONS = {
   tr: {
     badge: "🚀 Erken Erişim / Beta Web Sürümü",
     title: "Bilgilerini 3D bir odada düzenle",
-    desc: "Saray, notlarını, görsellerini ve bağlantılarını 3D bir çalışma odasında düzenlemeni sağlayan masaüstü odaklı bir zihin haritası uygulamasıdır.",
-    betaMsg: '"Saray şu anda beta web sürümündedir. İlk kullanıcıların geri bildirimleriyle nihai masaüstü uygulaması şekillendirilecektir."',
-    openButton: "Saray'ı Aç",
+    desc: "Atrium 3D, notlarını, görsellerini ve bağlantılarını 3D bir çalışma odasında düzenlemeni sağlayan masaüstü odaklı bir zihin haritası uygulamasıdır.",
+    betaMsg: '"Atrium 3D şu anda beta web sürümündedir. İlk kullanıcıların geri bildirimleriyle nihai masaüstü uygulaması şekillendirilecektir."',
+    openButton: "Atrium 3D'yi Aç",
     experienceWarning: "🖥️ En iyi deneyim bilgisayarda alınır. İsteğe bağlı mobil kontrol modu ve tablet desteği aktiftir.",
     betaSectionTitle: "Beta Sürecinde Neler Var?",
     betaSectionDesc: "Şu anki web sürümünde kullanabileceğiniz temel özellikler:",
@@ -34,8 +34,8 @@ const TRANSLATIONS = {
     future5Desc: "Masaüstü (PC/Mac) uygulamalarının yanı sıra iOS ve Android mobil versiyonları.",
     earlyUserTitle: "Erken Kullanıcı Avantajları",
     earlyUserDesc: "Beta sürecinde geri bildirim veren kullanıcılar, final sürümde özel avantajlardan, indirimlerden ve kişiselleştirilmiş sürpriz içeriklerden (kişiye özel oda öğeleri, özel dekoratif eşyalar, özel tema veya duvar kaplamaları) yararlanabilir.",
-    supportTitle: "Saray'ı Destekleyin",
-    supportDesc: "Saray'ın tamamen bağımsız gelişmesini desteklemek ve projemize katkıda bulunmak isterseniz aşağıdaki destek seçeneklerini kullanabilirsiniz:",
+    supportTitle: "Atrium 3D'yi Destekleyin",
+    supportDesc: "Atrium 3D'nin tamamen bağımsız gelişmesini desteklemek ve projemize katkıda bulunmak isterseniz aşağıdaki destek seçeneklerini kullanabilirsiniz:",
     support1Title: "Bir Kahve Ismarla",
     support1Desc: "Geliştirici ekibe tek seferlik küçük bir kahve ısmarlayarak motivasyonumuza destek olabilirsiniz.",
     support2Title: "Patreon Destekçisi Ol",
@@ -49,9 +49,9 @@ const TRANSLATIONS = {
   en: {
     badge: "🚀 Early Access / Beta Web Version",
     title: "Organize your info in a 3D room",
-    desc: "Saray is a desktop-oriented mind mapping application that lets you organize your notes, images, and connections in a 3D study room.",
-    betaMsg: '"Saray is currently in beta web version. The final desktop app will be shaped by the feedback of the first users."',
-    openButton: "Open Saray",
+    desc: "Atrium 3D is a desktop-oriented mind mapping application that lets you organize your notes, images, and connections in a 3D study room.",
+    betaMsg: '"Atrium 3D is currently in beta web version. The final desktop app will be shaped by the feedback of the first users."',
+    openButton: "Open Atrium 3D",
     experienceWarning: "🖥️ Best experience is on computer. Optional mobile control mode and tablet support are active.",
     betaSectionTitle: "What's in the Beta?",
     betaSectionDesc: "Core features available in the current web version:",
@@ -77,8 +77,8 @@ const TRANSLATIONS = {
     future5Desc: "iOS and Android mobile versions alongside desktop (PC/Mac) applications.",
     earlyUserTitle: "Early Adopter Benefits",
     earlyUserDesc: "Users who provide feedback during the beta process can benefit from special advantages, discounts, and personalized surprise content (personalized room items, special decorative items, special themes or wall coverings) in the final version.",
-    supportTitle: "Support Saray",
-    supportDesc: "If you would like to support the completely independent development of Saray and contribute to our project, you can use the following support options:",
+    supportTitle: "Support Atrium 3D",
+    supportDesc: "If you would like to support the completely independent development of Atrium 3D and contribute to our project, you can use the following support options:",
     support1Title: "Buy a Coffee",
     support1Desc: "You can support our motivation by buying the developer team a one-time small coffee.",
     support2Title: "Become a Patreon Patron",
@@ -301,7 +301,7 @@ export default function App() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            SARAY
+            ATRIUM 3D
           </span>
         </div>
 

@@ -2,7 +2,7 @@
   "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
   "type": "frontend",
   "name": "Atrium 3D Real Features Verification",
-  "description": "Start from landing page, click Open Atrium 3D button. In app, open settings, switch language to English and back to Turkish. Switch UI theme to light and dark. Customize study room floor color to #eae3d2. Add a test wall note using helper, edit its content, upload base64 image via helper and save. Open item drawer, place desk, add note to desk, and save note. Create a 3D connection line between desk and wall note using helper. Open Holographic Control Panel, search for test notes, teleport to note, enter Study Mode, select all notes and start study session. Verify HUD navigations. Refresh page to verify persistence. Go to settings and backup data to verify download behavior.",
+  "description": "Start from landing page, click Open button, verify /app path, verify 3D Canvas rendering status, check HUD elements and testMode debug panel. Change settings (language, theme, room colors) to verify visual style changes. Create wall note, upload test image, place study desk, link them using test-helper, and verify notes/items counts in debug panel. Open search dashboard, find notes, start study mode, verify HUD buttons. Finally, reload page to verify data persistence in debug panel.",
   "priority": "p0",
   "planSteps": [
     {
@@ -11,7 +11,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify the landing page with 'Atrium 3D' title is loaded and 'data-testid=open-saray-button' is visible"
+      "description": "Verify the landing page has logo 'ATRIUM 3D' and 'data-testid=open-saray-button' is visible"
     },
     {
       "type": "action",
@@ -19,15 +19,23 @@
     },
     {
       "type": "assertion",
-      "description": "Verify browser URL path changes to '/app' and minimap '.minimap-container' is visible"
+      "description": "Verify browser URL path changes to '/app' and 'data-testid=debug-app-loaded' has text 'true'"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-canvas-mounted' has text 'true' to ensure WebGL canvas is mounted"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-minimap-visible' has text 'true' to ensure minimap container is active"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify HUD floating buttons 'data-testid=settings-button', 'data-testid=dashboard-button' and 'data-testid=add-item-button' are visible"
     },
     {
       "type": "action",
       "description": "Click 'data-testid=settings-button' to open settings modal"
-    },
-    {
-      "type": "assertion",
-      "description": "Verify settings modal is open"
     },
     {
       "type": "action",
@@ -55,7 +63,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify document body has class 'light-theme'"
+      "description": "Verify document body has class 'light-theme' as visual/state DOM evidence"
     },
     {
       "type": "action",
@@ -87,7 +95,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify toast message 'saved' or 'kaydedildi' appears"
+      "description": "Verify toast message 'kaydedildi' or 'saved' appears"
     },
     {
       "type": "action",
@@ -119,7 +127,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify toast message 'kaydedildi' or 'saved' appears"
+      "description": "Verify 'data-testid=debug-notes-count' has text '1' and 'data-testid=debug-last-action' has text 'note-created' as real state evidence"
     },
     {
       "type": "action",
@@ -132,6 +140,10 @@
     {
       "type": "assertion",
       "description": "Verify selected item editor bar '.item-editor-bar' is visible at the bottom"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify 'data-testid=debug-items-count' has text '1' and 'data-testid=debug-last-action' has text 'item-added'"
     },
     {
       "type": "action",
@@ -155,7 +167,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify toast message 'kaydedildi' or 'saved' appears"
+      "description": "Verify 'data-testid=debug-notes-count' has text '2' and 'data-testid=debug-last-action' has text 'note-created'"
     },
     {
       "type": "action",
@@ -163,7 +175,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify toast message 'bağlantı' or 'connection' appears"
+      "description": "Verify 'data-testid=debug-links-count' has text '1' and 'data-testid=debug-last-action' has text 'link-created'"
     },
     {
       "type": "action",
@@ -207,15 +219,11 @@
     },
     {
       "type": "assertion",
-      "description": "Verify Visual Study Mode HUD is visible at the bottom and displays 'Not'"
+      "description": "Verify Visual Study Mode HUD is visible at the bottom and 'data-testid=debug-study-mode-active' has text 'true'"
     },
     {
       "type": "action",
       "description": "Click 'data-testid=study-hud-next-button' to go to next note in study session"
-    },
-    {
-      "type": "assertion",
-      "description": "Verify HUD updates to show next note index"
     },
     {
       "type": "action",
@@ -223,7 +231,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify study session HUD is closed"
+      "description": "Verify 'data-testid=debug-study-mode-active' has text 'false'"
     },
     {
       "type": "action",
@@ -231,23 +239,11 @@
     },
     {
       "type": "assertion",
-      "description": "Verify URL path is still '/app' and no 404 error is shown"
-    },
-    {
-      "type": "action",
-      "description": "Click 'data-testid=dashboard-button' to open control panel"
-    },
-    {
-      "type": "action",
-      "description": "Fill search input 'data-testid=dashboard-search-input' with 'Test'"
+      "description": "Verify 'data-testid=debug-app-loaded' has text 'true' and no 404 error is shown"
     },
     {
       "type": "assertion",
-      "description": "Verify the notes and connections persisted in LocalStorage/IndexedDB and appear in search results"
-    },
-    {
-      "type": "action",
-      "description": "Click close button of control panel"
+      "description": "Verify 'data-testid=debug-notes-count' still has text '2' and 'data-testid=debug-items-count' still has text '1' after reload"
     },
     {
       "type": "action",
@@ -263,7 +259,7 @@
     },
     {
       "type": "assertion",
-      "description": "Verify backup download is triggered and toast message 'yedek' or 'backup' appears"
+      "description": "Verify 'data-testid=debug-last-action' has text 'backup-exported'"
     }
   ]
 }

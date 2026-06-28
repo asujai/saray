@@ -11,11 +11,11 @@
     },
     {
       "type": "assertion",
-      "description": "Verify the landing page with 'Saray' title and 'Saray'ı Aç' or 'Open Saray' button is loaded"
+      "description": "Verify the landing page with 'Atrium 3D' title and 'Atrium 3D'yi Aç' or 'Open Atrium 3D' button is loaded"
     },
     {
       "type": "action",
-      "description": "Click the 'Saray'ı Aç' or 'Open Saray' button to open the 3D application"
+      "description": "Click the 'Atrium 3D'yi Aç' or 'Open Atrium 3D' button to open the 3D application"
     },
     {
       "type": "assertion",

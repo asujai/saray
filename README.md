@@ -1,8 +1,11 @@
-# 🏰 Saray — 3D Spatial Mind Map
+# 🏰 Atrium 3D — 3D Spatial Mind Map
 
-Saray, notlarınızı ve fikirlerinizi üç boyutlu bir evin odalarına, duvarlarına ve eşyalarına yerleştirerek düzenlemenizi sağlayan, **mekânsal hafıza (spatial memory)** odaklı yenilikçi bir 3D zihin haritası uygulamasıdır.
+Atrium 3D, notlarınızı ve fikirlerinizi üç boyutlu bir evin odalarına, duvarlarına ve eşyalarına yerleştirerek düzenlemenizi sağlayan, **mekânsal hafıza (spatial memory)** odaklı yenilikçi bir 3D zihin haritası uygulamasıdır.
 
-Klasik iki boyutlu zihin haritalarının aksine Saray, bilgiyi fiziksel bir mimari alana yerleştirir. Fikirlerinizi odalara, duvarlara veya mobilyalara yerleştirerek zihninizde güçlü mekânsal bağlar kurabilir, sanal ortamda yürüyerek bilgilerinizi çok daha kalıcı bir şekilde hatırlayabilirsiniz.
+Klasik iki boyutlu zihin haritalarının aksine Atrium 3D, bilgiyi fiziksel bir mimari alana yerleştirir. Fikirlerinizi odalara, duvarlara veya mobilyalara yerleştirerek zihninizde güçlü mekânsal bağlar kurabilir, sanal ortamda yürüyerek bilgilerinizi çok daha kalıcı bir şekilde hatırlayabilirsiniz.
+
+> [!NOTE]
+> Projenin GitHub depo ismi `asujai/saray` (eski adı olan Saray nedeniyle) olarak kalmakla birlikte, resmi uygulama adı ve marka kimliği **Atrium 3D** olarak güncellenmiştir.
 
 ---
 
@@ -12,14 +15,14 @@ Klasik iki boyutlu zihin haritalarının aksine Saray, bilgiyi fiziksel bir mima
 ---
 
 ## 🌟 What I Built / Ne İnşa Ettim
-Saray, bilgileri 2D listeler yerine 3D uzamsal ortamlarda görselleştirerek hatırlamayı kolaylaştıran bir **3D Zihin Sarayı (Mind Palace)** uygulamasıdır. Kullanıcılar:
+Atrium 3D, bilgileri 2D listeler yerine 3D uzamsal ortamlarda görselleştirerek hatırlamayı kolaylaştıran bir **3D Zihin Sarayı (Mind Palace)** uygulamasıdır. Kullanıcılar:
 *   **3D Gezinti ve Kontroller**: Yürüyüş (Walk) ve serbest uçuş (Fly) modları ile 3D oda navigasyonu yapabilirler.
 *   **Dinamik Not Panelleri**: Duvarlara tıklayıp sürükleyerek 3D not kartları oluşturabilirler.
 *   **Çok Sayfalı Notlar**: Her not içinde sayfalar oluşturup yerel görseller yükleyebilirler.
 *   **Etkileşimli Eşyalar & Kitaplıklar**: Sahneye mobilyalar yerleştirebilir, kitaplıklara not bağlı kitaplar ekleyebilirler.
 *   **3D Kavramsal Bağlantılar**: Notlar ve nesneler arasında bezier eğrileri çizerek ilişkileri görselleştirebilirler.
 *   **Holografik Kontrol Paneli**: Tüm notlarda arama yapıp ilgili nota anında ışınlanabilirler (Teleport).
-*   **Çulışma Oturumu (Study Mode)**: Seçtikleri notlar arasında sıralı zihin sarayı turları yapabilirler.
+*   **Çalışma Oturumu (Study Mode)**: Seçtikleri notlar arasında sıralı zihin sarayı turları yapabilirler.
 
 ---
 
@@ -49,13 +52,14 @@ TestSprite E2E test planları kapsamında doğrulanan ana senaryolar:
 1.  **Scene & HUD Verification:** Canlı URL'in başarıyla açılması, 3D Canvas elementlerinin render edilmesi ve yüzen kontrol panelinin ekranda görünürlüğü.
 2.  **Settings & UI Customization:** Ayarlar modalının açılması, dil seçeneklerinin (TR/EN) değiştirilmesi ve arayüz teması (Açık/Koyu) geçişlerinin stabil çalışması.
 3.  **Holographic Navigator & Study Mode:** Holografik kontrol panelinin açılması, not arama motorunun çalışması ve Çalışma Odası (Study Mode) sekmelerinin erişilebilirliği.
+4.  **Visual Evidence & Real State Verification:** `?testMode=true` ile devreye giren testMode debug status paneli yardımıyla gerçek state değişikliklerinin, not, eşya ve bağlantı ekleme işlemlerinin kararlı şekilde doğrulanması.
 
 ---
 
 ## 📂 Proje Yapısı
 
 ```text
-saray/
+atrium-3d/
 ├── .testsprite/         # TestSprite konfigürasyonu
 ├── public/              # Statik varlıklar ve 3D modeller
 ├── src/
@@ -73,7 +77,7 @@ saray/
 │   │   └── db.js                   # Veritabanı ve yerel depolama yardımcıları
 │   ├── App.css
 │   ├── App.jsx          # Ana 3D Kanvas kurulumu
-│   ├── SarayApp.jsx     # Uygulama durum yönetimi ve ana mantık
+│   ├── SarayApp.jsx     # Uygulama durum yönetimi ve ana mantık (Atrium 3D çekirdek motoru)
 │   ├── index.css        # Küresel CSS ve tasarım sistemi kuralları
 │   └── main.jsx         # React başlangıç noktası
 ├── index.html           # Giriş HTML şablonu
@@ -111,5 +115,3 @@ Projeyi yerel ortamınızda ayağa kaldırmak ve geliştirmek için aşağıdaki
    ```bash
    npm run lint
    ```
-
-

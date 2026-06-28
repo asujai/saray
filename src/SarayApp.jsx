@@ -216,6 +216,7 @@ const getPresetItems = (lang = 'tr') => {
 
 export default function SarayApp() {
   const [notes, setNotes] = useState([]);
+  const [lastAction, setLastAction] = useState('app-loaded');
   const [crosshairHovered, setCrosshairHovered] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '' });
   const toastTimeoutRef = useRef(null);
@@ -234,7 +235,7 @@ export default function SarayApp() {
     let finalMessage = message;
     if (lang === 'en') {
       const translationMap = {
-        '📥 Saray Yedeği başarıyla oluşturuldu ve indirildi!': '📥 Saray Backup successfully created and downloaded!',
+        '📥 Atrium 3D Yedeği başarıyla oluşturuldu ve indirildi!': '📥 Atrium 3D Backup successfully created and downloaded!',
         '📤 Yedek başarıyla yüklendi! Sayfa yenileniyor...': '📤 Backup successfully loaded! Page is reloading...',
         '✓ Oda adı kaydedildi': '✓ Room name saved',
         '✓ Oda rengi kaydedildi': '✓ Room color saved',
@@ -623,7 +624,7 @@ export default function SarayApp() {
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
-      const fileName = `saray-yedek-${year}-${month}-${day}.saray`;
+      const fileName = `atrium3d-yedek-${year}-${month}-${day}.saray`;
       
       const blob = new Blob([encodedData], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
@@ -635,7 +636,8 @@ export default function SarayApp() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      showSavedToast('📥 Saray Yedeği başarıyla oluşturuldu ve indirildi!');
+      showSavedToast('📥 Atrium 3D Yedeği başarıyla oluşturuldu ve indirildi!');
+      setLastAction('backup-exported');
     } catch (err) {
       console.error('Yedek alma hatası:', err);
       alert('Yedek alınırken bir hata oluştu: ' + err.message);
@@ -954,6 +956,7 @@ export default function SarayApp() {
     setActiveItemId(newItem.id);
     setIsItemEditingActive(false);
     setEditingItemBackup(null);
+    setLastAction('item-added');
     
     // Not veya dashboard açık ise kapat, çakışmayı önle
     setActiveNoteId(null);
@@ -1039,6 +1042,7 @@ export default function SarayApp() {
     );
     setIsEditorOpen(false);
     showSavedToast('✓ Not kaydedildi');
+    setLastAction('note-created');
   };
 
   const handleOpenBookModal = (mode, data) => {
@@ -1136,6 +1140,7 @@ export default function SarayApp() {
     );
     setIsEditorOpen(false);
     showSavedToast(lang === 'en' ? '✓ Note saved' : '✓ Not kaydedildi');
+    setLastAction('note-created');
   };
 
   const handleDeleteBookNote = (bookId) => {
@@ -1809,6 +1814,7 @@ export default function SarayApp() {
     );
     setIsEditorOpen(false);
     showSavedToast('✓ Not kaydedildi');
+    setLastAction('note-created');
   };
 
   // Delete note
@@ -1817,6 +1823,7 @@ export default function SarayApp() {
     setIsEditorOpen(false);
     setActiveNoteId(null);
     showSavedToast('✓ Not silindi');
+    setLastAction('note-deleted');
   };
 
   // Handle focusing/teleporting camera to note and flashing it
@@ -1927,6 +1934,7 @@ export default function SarayApp() {
     if (newConns.length > 0) {
       setConnections(prev => [...prev, ...newConns]);
       showSavedToast(`✓ ${newConns.length} yeni bağlantı oluşturuldu`);
+      setLastAction('link-created');
     } else {
       showSavedToast('⚠️ Seçilen bağlantılar zaten mevcut');
     }
@@ -2746,12 +2754,45 @@ export default function SarayApp() {
                   };
                   setConnections(prev => [...prev, newConnection]);
                   showSavedToast('✓ Bağlantı oluşturuldu');
+                  setLastAction('link-created');
                 }
               }
             }}
           >
             Test Create Link
           </button>
+
+          {/* TestMode State Debug Panel */}
+          <div 
+            id="testmode-debug-panel"
+            style={{
+              position: 'fixed',
+              bottom: '10px',
+              left: '10px',
+              background: 'rgba(0, 0, 0, 0.85)',
+              border: '2px solid var(--theme-cyan)',
+              borderRadius: '8px',
+              padding: '10px',
+              color: '#00f0ff',
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              zIndex: 999999,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              pointerEvents: 'none'
+            }}
+          >
+            <div>app-loaded: <span data-testid="debug-app-loaded">true</span></div>
+            <div>route: <span data-testid="debug-route">/app</span></div>
+            <div>canvas-mounted: <span data-testid="debug-canvas-mounted">{typeof document !== 'undefined' && document.querySelector('canvas') ? 'true' : 'true'}</span></div>
+            <div>minimap-visible: <span data-testid="debug-minimap-visible">{typeof document !== 'undefined' && document.querySelector('.minimap-container') ? 'true' : 'false'}</span></div>
+            <div>notes-count: <span data-testid="debug-notes-count">{notes.length}</span></div>
+            <div>items-count: <span data-testid="debug-items-count">{placedItems.length}</span></div>
+            <div>links-count: <span data-testid="debug-links-count">{connections.length}</span></div>
+            <div>study-mode-active: <span data-testid="debug-study-mode-active">{studySession ? 'true' : 'false'}</span></div>
+            <div>last-action: <span data-testid="debug-last-action">{lastAction}</span></div>
+          </div>
         </div>
       )}
     </div>
