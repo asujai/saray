@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useState } from 'react';
-import { Text, Html } from '@react-three/drei';
+import { Text, Html, useGLTF, Edges } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -432,101 +432,69 @@ function LargeBookshelfModel({ color }) {
 }
 
 function LibraryShelfModel({ color, books = [], onOpenBookNote }) {
-  const shelfColor = color || '#78350f';
+  const { scene } = useGLTF('/models/kitaplik_modeli.gltf');
+
+  const { clonedScene } = useMemo(() => {
+    const clone = scene.clone();
+    clone.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(clone);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+
+    const factor = size.y > 0 ? 2.2 / size.y : 0.791;
+
+    clone.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material) {
+          child.material = child.material.clone();
+          child.material.roughness = 0.85;
+          child.material.metalness = 0.1;
+          
+          if (color) {
+            const finalColor = new THREE.Color(color);
+            // Arkalık mesh'leri local z < -0.1 koordinatlarındadır. Onları koyulaştırarak derinlik algısı katıyoruz.
+            if (child.position && child.position.z < -0.1) {
+              finalColor.multiplyScalar(0.65);
+            } else if (child.position && child.position.y > 2.7) {
+              finalColor.multiplyScalar(1.05); // Üst tabla parlaması
+            } else if (child.position && child.position.y < 0.1) {
+              finalColor.multiplyScalar(0.8);  // Zemin gölgelemesi
+            }
+            child.material.color.copy(finalColor);
+          }
+        }
+      }
+    });
+
+    clone.position.set(-center.x * factor, -box.min.y * factor, -center.z * factor);
+    clone.scale.set(factor, factor, factor);
+
+    return { clonedScene: clone };
+  }, [scene]);
+
   return (
     <group>
-      {/* Yan Dikmeler */}
-      <mesh castShadow position={[-1.07, 1.1, 0]}>
-        <boxGeometry args={[0.06, 2.2, 0.35]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.7} />
-      </mesh>
-      <mesh castShadow position={[1.07, 1.1, 0]}>
-        <boxGeometry args={[0.06, 2.2, 0.35]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.7} />
-      </mesh>
-      {/* Alt ve Üst Tablalar */}
-      <mesh castShadow receiveShadow position={[0, 0.02, 0]}>
-        <boxGeometry args={[2.2, 0.04, 0.35]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.7} />
-      </mesh>
-      <mesh castShadow position={[0, 2.18, 0]}>
-        <boxGeometry args={[2.2, 0.04, 0.35]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.7} />
-      </mesh>
-      {/* Arka Kapak */}
-      <mesh receiveShadow position={[0, 1.1, -0.17]}>
-        <boxGeometry args={[2.08, 2.12, 0.02]} />
-        <meshStandardMaterial color="#451a03" roughness={0.9} />
-      </mesh>
-      {/* İç Dikey Dikmeler */}
-      <mesh castShadow position={[-0.35, 1.1, 0.005]}>
-        <boxGeometry args={[0.04, 2.12, 0.33]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.8} />
-      </mesh>
-      <mesh castShadow position={[0.35, 1.1, 0.005]}>
-        <boxGeometry args={[0.04, 2.12, 0.33]} />
-        <meshStandardMaterial color={shelfColor} roughness={0.8} />
-      </mesh>
-      {/* İç Yatay Raflar */}
-      {/* Raf 1 (y=0.5) */}
-      <mesh position={[-0.71, 0.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0, 0.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0.71, 0.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      {/* Raf 2 (y=1.0) */}
-      <mesh position={[-0.71, 1.0, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0, 1.0, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0.71, 1.0, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      {/* Raf 3 (y=1.5) */}
-      <mesh position={[-0.71, 1.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0, 1.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
-      <mesh position={[0.71, 1.5, 0.005]} castShadow>
-        <boxGeometry args={[0.66, 0.03, 0.33]} />
-        <meshStandardMaterial color={shelfColor} />
-      </mesh>
+      <primitive object={clonedScene} />
 
-      {/* Kitaplar */}
       {books.map((book) => {
         const slot = book.slotIndex;
-        const row = Math.floor(slot / 6);
-        const col = slot % 6;
-        let x = 0;
-        if (col === 0) x = -0.85;
-        else if (col === 1) x = -0.55;
-        else if (col === 2) x = -0.15;
-        else if (col === 3) x = 0.15;
-        else if (col === 4) x = 0.55;
-        else if (col === 5) x = 0.85;
+        const row = Math.floor(slot / 5);
+        const col = slot % 5;
 
-        let y = 0.2;
-        if (row === 1) y = 0.7;
-        else if (row === 2) y = 1.2;
-        else if (row === 3) y = 1.7;
+        // X koordinatları (Sütunlar)
+        const xCoords = [-1.569, -0.785, 0, 0.785, 1.569];
+        const x = xCoords[col] !== undefined ? xCoords[col] : 0;
 
-        const z = 0.065;
+        // Y koordinatları (Satırlar - Kitap merkezleri rafların üzerine gelecek şekilde)
+        const yCoords = [0.142, 0.454, 0.765, 1.077, 1.390, 1.701, 2.013];
+        const y = yCoords[row] !== undefined ? yCoords[row] : 0.142;
+
+        const z = 0.08;
 
         return (
           <group key={book.bookId} position={[x, y, z]}>
@@ -545,8 +513,8 @@ function LibraryShelfModel({ color, books = [], onOpenBookNote }) {
                 document.body.style.cursor = 'default';
               }}
             >
-              <boxGeometry args={[0.06, 0.32, 0.22]} />
-              <meshStandardMaterial color={book.color || '#ef4444'} roughness={0.6} />
+              <boxGeometry args={[0.12, 0.32, 0.22]} />
+              <meshStandardMaterial color={book.color || '#ef4444'} roughness={0.7} metalness={0.05} />
             </mesh>
             <Text
               position={[0, 0, 0.111]}
@@ -665,7 +633,7 @@ function LargeLibraryShelfModel({ color, books = [], onOpenBookNote }) {
                 document.body.style.cursor = 'default';
               }}
             >
-              <boxGeometry args={[0.06, 0.32, 0.22]} />
+              <boxGeometry args={[0.12, 0.32, 0.22]} />
               <meshStandardMaterial color={book.color || '#ef4444'} roughness={0.6} />
             </mesh>
             <Text
@@ -1445,7 +1413,7 @@ export default function PlacedItem3D({
       case 'large_bookshelf':
         return [1.9, 2.1, 0.45];
       case 'libraryShelf':
-        return [2.2, 2.2, 0.38];
+        return [3.92, 2.2, 0.38];
       case 'largeLibraryShelf':
         return [4.4, 2.2, 0.38];
       case 'low_bookshelf':
@@ -1519,11 +1487,10 @@ export default function PlacedItem3D({
         {(isSelected || isFlashed || isCrosshairHovered) && (
           <mesh ref={helperMeshRef} position={[0, helperBounds[1] / 2, 0]}>
             <boxGeometry args={helperBounds} />
-            <meshBasicMaterial
+            <meshBasicMaterial transparent opacity={0} />
+            <Edges
               color="#00f0ff"
-              wireframe
-              transparent
-              opacity={0.7}
+              lineWidth={2.5}
               toneMapped={false}
             />
           </mesh>
@@ -1564,7 +1531,7 @@ export default function PlacedItem3D({
         </Html>
       )}
 
-      {item.linkedNote && isNoteNotEmpty(item.linkedNote) && (
+      {item.linkedNote && isNoteNotEmpty(item.linkedNote) && !item.linkedNote.hidden && (
         <group 
           ref={iconRef}
           position={[posArray[0], posArray[1] + iconY, posArray[2]]}
@@ -1627,3 +1594,5 @@ export default function PlacedItem3D({
     </group>
   );
 }
+
+useGLTF.preload('/models/kitaplik_modeli.gltf');

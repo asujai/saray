@@ -179,7 +179,28 @@ const UI_TRANSLATIONS = {
     mobile_look: 'BAKIŞ',
     mobile_look_desc: 'Kaydırın',
     mobile_fly_up: 'YÜKSEL',
-    mobile_fly_down: 'ALÇAL'
+    mobile_fly_down: 'ALÇAL',
+    
+    // Sekmeler
+    tab_appearance: 'Görünüm',
+    tab_room_colors: 'Oda Renkleri',
+    tab_wall_covering: 'Duvar Kaplama',
+    tab_cleanup: 'Temizlik',
+    tab_backup: 'Yedekleme',
+    tab_language: 'Dil',
+    controls_title: 'Kontroller',
+    select_target: 'Seçilecek Alan',
+    floor_and_wall: 'Zemin & Duvar Renkleri',
+    select_color: 'Renk Seçin',
+    apply_color: 'Rengi Uygula',
+    cleanup_desc: 'Bu odadaki eşyaları veya notları toplu olarak silebilirsiniz.',
+    what_to_remove: 'Temizlenecek Tür',
+    remove_objects: 'Sadece Eşyalar',
+    remove_notes: 'Sadece Duvar Notları',
+    remove_all: 'Tüm Oda İçeriği',
+    remove_all_confirm: 'UYARI: Odadaki seçili tüm içerik silinecek. Devam etmek istiyor musunuz?',
+    btn_remove: 'Temizliği Başlat',
+    return_to_home: 'Ana Sayfaya Dön'
   },
   en: {
     // General
@@ -349,7 +370,28 @@ const UI_TRANSLATIONS = {
     mobile_look: 'LOOK',
     mobile_look_desc: 'Swipe',
     mobile_fly_up: 'UP',
-    mobile_fly_down: 'DOWN'
+    mobile_fly_down: 'DOWN',
+    
+    // Tabs
+    tab_appearance: 'Appearance',
+    tab_room_colors: 'Room Colors',
+    tab_wall_covering: 'Wall Covering',
+    tab_cleanup: 'Cleanup',
+    tab_backup: 'Backup',
+    tab_language: 'Language',
+    controls_title: 'Controls',
+    select_target: 'Target Element',
+    floor_and_wall: 'Floor & Wall Colors',
+    select_color: 'Select Color',
+    apply_color: 'Apply Color',
+    cleanup_desc: 'You can batch delete items or notes in this room.',
+    what_to_remove: 'Select what to remove',
+    remove_objects: 'Only Objects',
+    remove_notes: 'Only Wall Notes',
+    remove_all: 'Entire Room Content',
+    remove_all_confirm: 'WARNING: All selected content in the room will be deleted. Do you want to continue?',
+    btn_remove: 'Execute Cleanup',
+    return_to_home: 'Return to Home Page'
   }
 };
 
@@ -357,6 +399,51 @@ const UI_TRANSLATIONS = {
 function calculateCharLimit(_w, _h) {
   return 100000;
 }
+
+// Preset Wall Coverings
+const PRESET_WALLS = [
+  { id: 'wood-panel', name: 'Ahşap Panel', thumbnail: '🪵', url: '/foto_kaplama/ahsap.jpg' },
+  { id: 'brick-red', name: 'Kızıl Tuğla', thumbnail: '🧱', url: '/foto_kaplama/tugla.jpg' },
+  { id: 'marble-white', name: 'Beyaz Mermer', thumbnail: '🏛️', url: '/foto_kaplama/mermer.jpg' },
+  { id: 'concrete-gray', name: 'Brüt Beton', thumbnail: '🪙', url: '/foto_kaplama/beton.jpg' }
+];
+
+// Room walls mapping matching the 3D scene wall naming/indices
+const wallsByRoom = {
+  kitchen: [
+    { id: 'kitchen_wall_0', name: 'Mutfak Arka Duvar' },
+    { id: 'kitchen_wall_1', name: 'Mutfak Sol Yan Duvar' },
+    { id: 'kitchen_wall_2', name: 'Mutfak Sağ Bölme Duvarı (Giriş)' }
+  ],
+  bedroom: [
+    { id: 'bedroom_wall_0', name: 'Yatak Odası Sol Duvar (Yatak Arkası)' },
+    { id: 'bedroom_wall_1', name: 'Yatak Odası Arka Duvar' },
+    { id: 'bedroom_wall_2', name: 'Yatak Odası Sağ Bölme Duvarı' }
+  ],
+  study: [
+    { id: 'study_wall_0', name: 'Çalışma Odası Arka Duvar (Kitaplık Arkası)' },
+    { id: 'study_wall_1', name: 'Çalışma Odası Sol Bölme Duvarı' },
+    { id: 'study_wall_2', name: 'Çalışma Odası Sağ Dış Duvar' }
+  ],
+  living: [
+    { id: 'living_wall_0', name: 'Salon Sol Bölme Duvarı (Giriş)' },
+    { id: 'living_wall_1', name: 'Salon Arka Duvar (TV Arkası)' },
+    { id: 'living_wall_2', name: 'Salon Sağ Dış Duvar' }
+  ],
+  hall: [
+    { id: 'hall_wall_0', name: 'Giriş Holü Arka Duvar' },
+    { id: 'hall_wall_1', name: 'Giriş Holü Sol Yan Duvar' }
+  ]
+};
+
+// Rooms lists for settings selection dropdown
+const roomsList = [
+  { id: 'kitchen', name: 'Mutfak' },
+  { id: 'bedroom', name: 'Yatak Odası' },
+  { id: 'study', name: 'Çalışma Odası' },
+  { id: 'living', name: 'Salon' },
+  { id: 'hall', name: 'Giriş Holü' }
+];
 
 // Compress image before storing as base64
 function compressImage(file, maxWidth = 1600, quality = 0.8) {
@@ -476,10 +563,15 @@ export default function UIOverlay({
   devMode = false,
   footballThemeActive = false,
   setFootballThemeActive,
+  kitchenPatternActive = false,
+  setKitchenPatternActive,
+  wallCustomizations = {},
+  setWallCustomizations,
   mobileControlsEnabled = false,
   setMobileControlsEnabled = () => {},
   onExportBackup,
   onImportBackup,
+  onClearRoomData,
   lang = 'tr',
   setLang,
   isBookModalOpen = false,
@@ -491,6 +583,123 @@ export default function UIOverlay({
 }) {
   const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.tr;
   const [pages, setPages] = useState([{ text: '', image: null, layout: 'image-top-text-bottom' }]);
+
+  // Gelişmiş Ayarlar Paneli Tab ve Seçim State'leri
+  const [activeSettingsTab, setActiveSettingsTab] = useState('appearance');
+  const [colorSelectedRoom, setColorSelectedRoom] = useState('kitchen');
+  const [colorSelectedTarget, setColorSelectedTarget] = useState('floor');
+  const [colorSelectedColor, setColorSelectedColor] = useState('#eae3d2');
+  const [cleanupSelectedRoom, setCleanupSelectedRoom] = useState('kitchen');
+  const [cleanupSelectedType, setCleanupSelectedType] = useState('objects');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Duvar Özelleştirme State'leri
+  const [selectedRoom, setSelectedRoom] = useState('kitchen');
+  const [selectedWall, setSelectedWall] = useState('kitchen_wall_0');
+  const [activeWallTab, setActiveWallTab] = useState('preset');
+  const [customImage, setCustomImage] = useState(null);
+  const [imageResolution, setImageResolution] = useState({ w: 0, h: 0 });
+  const [imageResolutionWarning, setImageResolutionWarning] = useState(false);
+  const [wallZoom, setWallZoom] = useState(1.0);
+  const [wallOffsetX, setWallOffsetX] = useState(0.0);
+  const [wallOffsetY, setWallOffsetY] = useState(0.0);
+
+  // Oda değişince o odanın ilk duvarını otomatik seç
+  useEffect(() => {
+    const walls = wallsByRoom[selectedRoom] || [];
+    if (walls.length > 0) {
+      setSelectedWall(walls[0].id);
+    }
+  }, [selectedRoom]);
+
+  // Duvar değiştiğinde mevcut özelleştirmeleri yükle
+  useEffect(() => {
+    const custom = wallCustomizations[selectedWall];
+    if (custom) {
+      if (custom.type === 'custom') {
+        setCustomImage(custom.url);
+        setWallZoom(custom.zoom || 1.0);
+        setWallOffsetX(custom.offsetX || 0.0);
+        setWallOffsetY(custom.offsetY || 0.0);
+        setActiveWallTab('upload');
+      } else {
+        setCustomImage(null);
+        setActiveWallTab('preset');
+      }
+    } else {
+      setCustomImage(null);
+      setWallZoom(1.0);
+      setWallOffsetX(0.0);
+      setWallOffsetY(0.0);
+    }
+  }, [selectedWall, wallCustomizations]);
+
+  // Görsel yükleme işlemi
+  const handleWallCustomImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Çözünürlük tespiti
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      setImageResolution({ w: img.width, h: img.height });
+      // Çözünürlük 512x512'den küçükse uyarı ver
+      if (img.width < 512 || img.height < 512) {
+        setImageResolutionWarning(true);
+      } else {
+        setImageResolutionWarning(false);
+      }
+    };
+
+    // Görseli sıkıştır ve base64 formatına çevir
+    try {
+      const compressed = await compressImage(file, 2048, 0.85);
+      setCustomImage(compressed);
+    } catch (err) {
+      console.error("Görsel sıkıştırma hatası:", err);
+      // Hata durumunda sıkıştırmadan oku
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        setCustomImage(evt.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Duvar özelleştirmesini uygula
+  const handleApplyWall = (presetUrl) => {
+    const updated = { ...wallCustomizations };
+    if (presetUrl) {
+      updated[selectedWall] = {
+        type: 'preset',
+        url: presetUrl,
+        zoom: 1.0,
+        offsetX: 0.0,
+        offsetY: 0.0
+      };
+    } else if (customImage) {
+      updated[selectedWall] = {
+        type: 'custom',
+        url: customImage,
+        zoom: wallZoom,
+        offsetX: wallOffsetX,
+        offsetY: wallOffsetY
+      };
+    }
+    setWallCustomizations(updated);
+  };
+
+  // Duvar özelleştirmesini temizle
+  const handleClearWall = () => {
+    const updated = { ...wallCustomizations };
+    delete updated[selectedWall];
+    setWallCustomizations(updated);
+    setCustomImage(null);
+    setWallZoom(1.0);
+    setWallOffsetX(0.0);
+    setWallOffsetY(0.0);
+  };
 
   const [bookSpineLabel, setBookSpineLabel] = useState('');
   const [bookSlotIndex, setBookSlotIndex] = useState(0);
@@ -1021,446 +1230,711 @@ export default function UIOverlay({
           </button>
         </div>
 
-        <div className="settings-body">
-          {/* Her Oda İçin Ayrı Bölüm */}
-          {Object.entries({
-            hall: t.room_hall,
-            bedroom: t.room_bedroom,
-            kitchen: t.room_kitchen,
-            study: t.room_study,
-            living: t.room_living
-          }).map(([id, defaultLabel]) => (
-            <div key={id} className="settings-room-row">
-              <div className="room-name-input-group">
-                <label className="room-input-label">{defaultLabel} — {t.room_new_name}</label>
-                <input
-                  type="text"
-                  className="room-name-input"
-                  value={roomNames[id] || ''}
-                  onChange={(e) => onUpdateRoomName(id, e.target.value)}
-                  maxLength={20}
-                />
-              </div>
-              
-              <div className="color-selectors-group">
-                <div>
-                  <span className="color-selector-label">{t.floor_color}</span>
-                  <div className="color-row">
-                    {['#eae3d2', '#3e2723', '#0b0d19', '#eae6df', '#eedec3', '#bbf7d0', '#bfdbfe', '#fbcfe8'].map((c) => (
-                      <div
-                        key={c}
-                        className={`color-dot ${roomFloorColors[id] === c ? 'selected' : ''}`}
-                        style={{ backgroundColor: c }}
-                        onClick={() => onUpdateRoomFloorColor(id, c)}
-                      />
+        <div className="settings-container">
+          {/* Sol Sekme Menüsü */}
+          <div className="settings-sidebar">
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'appearance' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('appearance')}
+            >
+              🖼️ {t.tab_appearance}
+            </button>
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'roomColors' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('roomColors')}
+            >
+              🎨 {t.tab_room_colors}
+            </button>
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'wallCovering' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('wallCovering')}
+            >
+              🧱 {t.tab_wall_covering}
+            </button>
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'cleanup' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('cleanup')}
+            >
+              🗑️ {t.tab_cleanup}
+            </button>
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'backup' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('backup')}
+            >
+              💾 {t.tab_backup}
+            </button>
+            <button 
+              className={`settings-tab-btn ${activeSettingsTab === 'language' ? 'active' : ''}`}
+              onClick={() => setActiveSettingsTab('language')}
+            >
+              🌐 {t.tab_language}
+            </button>
+          </div>
+
+          {/* Sağ Sekme İçeriği */}
+          <div className="settings-content">
+            
+            {/* 1. SEKMELİ GÖRÜNÜM (APPEARANCE) */}
+            {activeSettingsTab === 'appearance' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Oda İsimleri */}
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🏠 {lang === 'en' ? 'Rename Rooms' : 'Odaları Yeniden Adlandır'}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    {Object.entries({
+                      hall: t.room_hall,
+                      bedroom: t.room_bedroom,
+                      kitchen: t.room_kitchen,
+                      study: t.room_study,
+                      living: t.room_living
+                    }).map(([id, defaultLabel]) => (
+                      <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600' }}>{defaultLabel}</span>
+                        <input
+                          type="text"
+                          className="room-name-input"
+                          value={roomNames[id] || ''}
+                          onChange={(e) => onUpdateRoomName(id, e.target.value)}
+                          maxLength={20}
+                          style={{ padding: '6px 10px', fontSize: '12px' }}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
-                
-                <div>
-                  <span className="color-selector-label">{t.wall_color}</span>
-                  <div className="color-row">
-                    {['#f8fafc', '#ebd9c0', '#1e293b', '#fafafa', '#cbd5e1', '#0f172a', '#022c22', '#1e1b4b'].map((c) => (
-                      <div
-                        key={c}
-                        className={`color-dot ${roomWallColors[id] === c ? 'selected' : ''}`}
-                        style={{ backgroundColor: c }}
-                        onClick={() => onUpdateRoomWallColor(id, c)}
-                      />
-                    ))}
+
+                {/* UI Tema Seçimi */}
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🎨 {t.ui_theme}</h4>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setUiTheme('dark')}
+                      style={{
+                        flex: 1, padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                        border: uiTheme === 'dark' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
+                        background: uiTheme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
+                        color: uiTheme === 'dark' ? '#a5b4fc' : 'var(--text-muted)'
+                      }}
+                    >
+                      🌙 {t.dark_theme}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUiTheme('light')}
+                      style={{
+                        flex: 1, padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                        border: uiTheme === 'light' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
+                        background: uiTheme === 'light' ? 'rgba(99, 102, 241, 0.1)' : 'var(--button-bg-secondary)',
+                        color: uiTheme === 'light' ? '#6366f1' : 'var(--text-muted)'
+                      }}
+                    >
+                      ☀️ {t.light_theme}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Duvar Temaları */}
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>⚽ {t.room_wall_themes}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)' }}>⚽ {t.football_theme}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t.football_theme_desc}</span>
+                      </div>
+                      <div 
+                        onClick={() => setFootballThemeActive && setFootballThemeActive(!footballThemeActive)}
+                        style={{
+                          width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                          background: footballThemeActive ? '#10b981' : 'var(--button-bg-secondary)', cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{
+                          width: '14px', height: '14px', borderRadius: '50%', background: '#fff',
+                          position: 'absolute', top: '3px', left: footballThemeActive ? '19px' : '3px', transition: 'left 0.2s'
+                        }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)' }}>📐 {t.kitchen_pattern}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t.kitchen_pattern_desc}</span>
+                      </div>
+                      <div 
+                        onClick={() => setKitchenPatternActive && setKitchenPatternActive(!kitchenPatternActive)}
+                        style={{
+                          width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                          background: kitchenPatternActive ? '#10b981' : 'var(--button-bg-secondary)', cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{
+                          width: '14px', height: '14px', borderRadius: '50%', background: '#fff',
+                          position: 'absolute', top: '3px', left: kitchenPatternActive ? '19px' : '3px', transition: 'left 0.2s'
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kontroller (Controls) */}
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🕹️ {t.controls_title}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {devMode && (
+                      <button
+                        onClick={() => setFreeFlightEnabled(!freeFlightEnabled)}
+                        style={{
+                          padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--panel-border)', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                          background: freeFlightEnabled ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                          color: freeFlightEnabled ? '#a5b4fc' : 'var(--text-muted)'
+                        }}
+                      >
+                        ✈️ {t.free_flight}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setMobileControlsEnabled(!mobileControlsEnabled)}
+                      style={{
+                        padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--panel-border)', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                        background: mobileControlsEnabled ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                        color: mobileControlsEnabled ? '#a5b4fc' : 'var(--text-muted)'
+                      }}
+                    >
+                      📱 {t.mobile_control}
+                    </button>
+                    <button
+                      onClick={() => setAllowQuickTravel(!allowQuickTravel)}
+                      style={{
+                        padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--panel-border)', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                        background: allowQuickTravel ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                        color: allowQuickTravel ? '#a5b4fc' : 'var(--text-muted)',
+                        gridColumn: devMode ? 'span 1' : 'span 2'
+                      }}
+                    >
+                      🚨 {t.quick_travel}
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )}
 
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
-          
-          <div className="settings-template-section" style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 8px 0' }}>
-              <span>🏢</span> {t.study_room_template}
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 15px 0', lineHeight: '1.4' }}>
-              {t.study_room_template_desc}
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
-                className="btn-primary" 
-                onClick={(e) => { onLoadPresetTemplate(); e.currentTarget.blur(); }}
-                style={{ flex: 1, padding: '10px', fontSize: '12px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '6px', fontWeight: '500' }}
-              >
-                {t.load_preset}
-              </button>
-              <button 
-                className="btn-secondary" 
-                onClick={(e) => { onClearRoomTemplate(); e.currentTarget.blur(); }}
-                style={{ flex: 1, padding: '10px', fontSize: '12px', background: 'var(--theme-danger-bg)', border: '1px solid var(--theme-danger-bg)', color: 'var(--theme-danger)', cursor: 'pointer', borderRadius: '6px', fontWeight: '500' }}
-              >
-                {t.clear_study_room}
-              </button>
-            </div>
-          </div>
+            {/* 2. ODA RENKLERİ (ROOM COLORS - KOMPAKT AKIŞ) */}
+            {activeSettingsTab === 'roomColors' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🎨 {t.floor_and_wall}</h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Oda Seçimi */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_room}</label>
+                      <select 
+                        value={colorSelectedRoom} 
+                        onChange={(e) => setColorSelectedRoom(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)', color: 'var(--text-main)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+                      >
+                        {roomsList.map(r => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+                    {/* Zemin / Duvar Seçimi */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_target}</label>
+                      <div style={{ display: 'flex', gap: '4px', background: 'var(--panel-bg-sub)', padding: '3px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                        <button
+                          type="button"
+                          onClick={() => setColorSelectedTarget('floor')}
+                          style={{
+                            flex: 1, padding: '6px 0', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                            background: colorSelectedTarget === 'floor' ? 'var(--button-bg-secondary)' : 'transparent',
+                            color: colorSelectedTarget === 'floor' ? 'var(--text-main)' : 'var(--text-muted)', cursor: 'pointer'
+                          }}
+                        >
+                          Floor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setColorSelectedTarget('wall')}
+                          style={{
+                            flex: 1, padding: '6px 0', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                            background: colorSelectedTarget === 'wall' ? 'var(--button-bg-secondary)' : 'transparent',
+                            color: colorSelectedTarget === 'wall' ? 'var(--text-main)' : 'var(--text-muted)', cursor: 'pointer'
+                          }}
+                        >
+                          Wall
+                        </button>
+                      </div>
+                    </div>
 
-          {/* Hareket ve Navigasyon Ayarları */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 12px 0' }}>
-              <span>⚡</span> {t.movement_settings}
-            </h3>
+                    {/* Renk Seçimi */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_color}</label>
+                      
+                      {/* Renk Paleti */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '8px', margin: '4px 0' }}>
+                        {(colorSelectedTarget === 'floor' 
+                          ? ['#eae3d2', '#3e2723', '#0b0d19', '#eae6df', '#eedec3', '#bbf7d0', '#bfdbfe', '#fbcfe8']
+                          : ['#f8fafc', '#ebd9c0', '#1e293b', '#fafafa', '#cbd5e1', '#0f172a', '#022c22', '#1e1b4b']
+                        ).map((c) => (
+                          <div
+                            key={c}
+                            className={`color-dot ${colorSelectedColor === c ? 'selected' : ''}`}
+                            style={{ backgroundColor: c, width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', border: colorSelectedColor === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)', transition: 'all 0.1s' }}
+                            onClick={() => setColorSelectedColor(c)}
+                          />
+                        ))}
+                      </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Serbest Uçuş Toggle */}
-              {devMode && (
-                <label style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 12px', borderRadius: '8px',
-                  background: freeFlightEnabled ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.04)',
-                  border: freeFlightEnabled ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-                  cursor: 'pointer', transition: 'all 0.2s'
-                }}>
-                  <div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>{t.free_flight}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.free_flight_desc}</div>
+                      {/* Özel Renk Seçici */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                        <input 
+                          type="color" 
+                          value={colorSelectedColor} 
+                          onChange={(e) => setColorSelectedColor(e.target.value)}
+                          style={{ border: 'none', background: 'transparent', width: '32px', height: '32px', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{lang === 'en' ? 'Or choose custom hex:' : 'Veya özel renk kodu:'} <strong>{colorSelectedColor}</strong></span>
+                      </div>
+                    </div>
+
+                    {/* Uygulama Butonu */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (colorSelectedTarget === 'floor') {
+                          onUpdateRoomFloorColor(colorSelectedRoom, colorSelectedColor);
+                        } else {
+                          onUpdateRoomWallColor(colorSelectedRoom, colorSelectedColor);
+                        }
+                      }}
+                      className="btn-primary"
+                      style={{ padding: '10px', fontSize: '12px', marginTop: '6px' }}
+                    >
+                      💾 {t.apply_color}
+                    </button>
                   </div>
-                  <div
-                    onClick={(e) => { e.preventDefault(); setFreeFlightEnabled(!freeFlightEnabled); }}
-                    style={{
-                      width: '40px', height: '22px', borderRadius: '11px', position: 'relative', cursor: 'pointer',
-                      background: freeFlightEnabled ? '#6366f1' : '#374151', transition: 'background 0.2s'
-                    }}
-                  >
-                    <div style={{
-                      width: '18px', height: '18px', borderRadius: '50%', background: '#fff',
-                      position: 'absolute', top: '2px', left: freeFlightEnabled ? '20px' : '2px',
-                      transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                    }} />
-                  </div>
-                </label>
-              )}
-
-              {/* Mobil Kontroller Toggle */}
-              <label style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 12px', borderRadius: '8px',
-                background: mobileControlsEnabled ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255,255,255,0.04)',
-                border: mobileControlsEnabled ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-                cursor: 'pointer', transition: 'all 0.2s'
-              }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>{t.mobile_control}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.mobile_control_desc}</div>
                 </div>
-                <div
-                  onClick={(e) => { e.preventDefault(); setMobileControlsEnabled(!mobileControlsEnabled); }}
-                  style={{
-                    width: '40px', height: '22px', borderRadius: '11px', position: 'relative', cursor: 'pointer',
-                    background: mobileControlsEnabled ? '#6366f1' : '#374151', transition: 'background 0.2s'
-                  }}
-                >
-                  <div style={{
-                    width: '16px', height: '16px', borderRadius: '50%', background: 'white',
-                    position: 'absolute', top: '2px', left: mobileControlsEnabled ? '20px' : '2px',
-                    transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                  }} />
-                </div>
-              </label>
-
-              {/* Hızlı Işınlanma Toggle */}
-              <label style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 12px', borderRadius: '8px',
-                background: allowQuickTravel ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.04)',
-                border: allowQuickTravel ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-                cursor: 'pointer', transition: 'all 0.2s'
-              }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>{t.quick_travel}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.quick_travel_desc}</div>
-                </div>
-                <div
-                  onClick={(e) => { e.preventDefault(); setAllowQuickTravel(!allowQuickTravel); }}
-                  style={{
-                    width: '40px', height: '22px', borderRadius: '11px', position: 'relative', cursor: 'pointer',
-                    background: allowQuickTravel ? '#10b981' : '#374151', transition: 'background 0.2s'
-                  }}
-                >
-                  <div style={{
-                    width: '18px', height: '18px', borderRadius: '50%', background: '#fff',
-                    position: 'absolute', top: '2px', left: allowQuickTravel ? '20px' : '2px',
-                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                  }} />
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid var(--panel-border)' }} />
-
-          {/* Ev Konsepti Ayarları */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 12px 0' }}>
-              <span>🏡</span> {t.home_concept}
-            </h3>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                className={`btn-theme ${theme === 'minimal' ? 'active' : ''}`}
-                onClick={() => setTheme('minimal')}
-                title={t.minimal_desc}
-                style={{ flex: 1, padding: '8px', fontSize: '13px', justifyContent: 'center' }}
-              >
-                {t.minimal}
-              </button>
-              <button
-                type="button"
-                className={`btn-theme ${theme === 'library' ? 'active' : ''}`}
-                onClick={() => setTheme('library')}
-                title={t.library_desc}
-                style={{ flex: 1, padding: '8px', fontSize: '13px', justifyContent: 'center' }}
-              >
-                {t.library}
-              </button>
-              <button
-                type="button"
-                className={`btn-theme ${theme === 'sci-fi' ? 'active' : ''}`}
-                onClick={() => setTheme('sci-fi')}
-                title={t.scifi_desc}
-                style={{ flex: 1, padding: '8px', fontSize: '13px', justifyContent: 'center' }}
-              >
-                {t.scifi}
-              </button>
-            </div>
-          </div>
-
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid var(--panel-border)' }} />
-
-          {/* Tema Seçimi Ayarları */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 12px 0' }}>
-              <span>🎨</span> {t.ui_theme}
-            </h3>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setUiTheme('dark')}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  border: uiTheme === 'dark' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
-                  background: uiTheme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
-                  color: uiTheme === 'dark' ? '#a5b4fc' : 'var(--text-muted)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t.dark_theme}
-              </button>
-              <button
-                type="button"
-                onClick={() => setUiTheme('light')}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  border: uiTheme === 'light' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
-                  background: uiTheme === 'light' ? 'rgba(99, 102, 241, 0.1)' : 'var(--button-bg-secondary)',
-                  color: uiTheme === 'light' ? '#6366f1' : 'var(--text-muted)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {t.light_theme}
-              </button>
-            </div>
-          </div>
-
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid var(--panel-border)' }} />
-
-          {/* Oda Tema Kaplamaları */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 12px 0' }}>
-              <span>⚽</span> {t.room_wall_themes}
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '10px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>{t.football_theme}</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.football_theme_desc}</span>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                <div 
-                  onClick={() => setFootballThemeActive && setFootballThemeActive(!footballThemeActive)}
-                  style={{
-                    width: '40px', height: '22px', borderRadius: '11px', position: 'relative',
-                    background: footballThemeActive ? '#10b981' : 'var(--button-bg-secondary)',
-                    border: '1px solid ' + (footballThemeActive ? '#10b981' : 'var(--panel-border)'),
-                    cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                >
-                  <div style={{
-                    width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
-                    position: 'absolute', top: '2px', left: footballThemeActive ? '20px' : '2px',
-                    transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                  }} />
+            )}
+
+            {/* 3. DUVAR KAPLAMA SİSTEMİ (WALL COVERING) */}
+            {activeSettingsTab === 'wallCovering' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🧱 {t.wall_customization}</h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Oda ve Duvar Seçimi */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_room}</label>
+                        <select 
+                          value={selectedRoom} 
+                          onChange={(e) => setSelectedRoom(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)', color: 'var(--text-main)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+                        >
+                          {roomsList.map(r => (
+                            <option key={r.id} value={r.id}>{r.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_wall}</label>
+                        <select 
+                          value={selectedWall} 
+                          onChange={(e) => setSelectedWall(e.target.value)}
+                          style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)', color: 'var(--text-main)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+                        >
+                          {(wallsByRoom[selectedRoom] || []).map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Sekme Seçicileri (Tab Buttons) */}
+                    <div style={{ display: 'flex', gap: '4px', background: 'var(--panel-bg-sub)', padding: '3px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                      <button
+                        onClick={() => setActiveWallTab('preset')}
+                        style={{
+                          flex: 1, padding: '6px 0', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                          background: activeWallTab === 'preset' ? 'var(--button-bg-secondary)' : 'transparent',
+                          color: activeWallTab === 'preset' ? 'var(--text-main)' : 'var(--text-muted)', cursor: 'pointer'
+                        }}
+                      >
+                        {t.preset_templates}
+                      </button>
+                      <button
+                        onClick={() => setActiveWallTab('upload')}
+                        style={{
+                          flex: 1, padding: '6px 0', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '600',
+                          background: activeWallTab === 'upload' ? 'var(--button-bg-secondary)' : 'transparent',
+                          color: activeWallTab === 'upload' ? 'var(--text-main)' : 'var(--text-muted)', cursor: 'pointer'
+                        }}
+                      >
+                        {t.upload_image}
+                      </button>
+                    </div>
+
+                    {/* Ayrıntılar */}
+                    {activeWallTab === 'preset' ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                        {PRESET_WALLS.map(preset => (
+                          <button
+                            key={preset.id}
+                            onClick={() => handleApplyWall(preset.url)}
+                            title={preset.name}
+                            style={{
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                              padding: '10px 4px', border: '1px solid var(--panel-border)', borderRadius: '10px',
+                              background: 'var(--input-bg)', cursor: 'pointer', transition: 'all 0.2s', outline: 'none'
+                            }}
+                          >
+                            <span style={{ fontSize: '20px' }}>{preset.thumbnail}</span>
+                            <span style={{ fontSize: '9px', fontWeight: '600', color: 'var(--text-main)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+                              {preset.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* Dosya Seçme Girişi */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            id="wall-image-uploader" 
+                            onChange={handleWallCustomImageUpload}
+                            style={{ display: 'none' }} 
+                          />
+                          <label 
+                            htmlFor="wall-image-uploader"
+                            style={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                              padding: '10px', border: '1px dashed var(--panel-border)', borderRadius: '8px',
+                              background: 'var(--input-bg)', cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                              color: 'var(--text-muted)', transition: 'all 0.2s'
+                            }}
+                          >
+                            📁 {t.upload_image}
+                          </label>
+                        </div>
+
+                        {/* Çözünürlük Uyarısı */}
+                        {customImage && (
+                          <div style={{
+                            padding: '8px 10px', borderRadius: '8px', fontSize: '11px',
+                            background: imageResolutionWarning ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                            border: '1px solid ' + (imageResolutionWarning ? '#f59e0b' : '#10b981'),
+                            color: imageResolutionWarning ? '#f59e0b' : '#10b981'
+                          }}>
+                            {imageResolutionWarning 
+                              ? t.resolution_warning.replace('WxH', `${imageResolution.w}x${imageResolution.h}`)
+                              : t.resolution_ok.replace('WxH', `${imageResolution.w}x${imageResolution.h}`)
+                            }
+                          </div>
+                        )}
+
+                        {/* Kırpma / Konumlandırma Önizleme Kutusu */}
+                        {customImage && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.preview}</div>
+                            
+                            {/* Önizleme Maskesi */}
+                            <div style={{
+                              width: '100%', height: '140px', borderRadius: '10px', border: '1px solid var(--panel-border)',
+                              background: '#0a0a0c', overflow: 'hidden', display: 'flex', alignItems: 'center',
+                              justifyContent: 'center', position: 'relative'
+                            }}>
+                              <div style={{
+                                width: '100%', height: '100%',
+                                backgroundImage: `url(${customImage})`,
+                                backgroundSize: `${wallZoom * 100}%`,
+                                backgroundPosition: `${50 + (wallOffsetX * 50)}% ${50 + (wallOffsetY * 50)}%`,
+                                backgroundRepeat: 'no-repeat',
+                                transition: 'background-size 0.1s, background-position 0.1s'
+                              }} />
+                            </div>
+
+                            {/* Kontroller */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {/* Yatay Kaydırma */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                  <span>{t.horizontal_offset}</span>
+                                  <span>{wallOffsetX.toFixed(2)}</span>
+                                </div>
+                                <input 
+                                  type="range" min="-1" max="1" step="0.01" value={wallOffsetX}
+                                  onChange={(e) => setWallOffsetX(parseFloat(e.target.value))}
+                                  style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--theme-accent-muted)' }}
+                                />
+                              </div>
+
+                              {/* Dikey Kaydırma */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                  <span>{t.vertical_offset}</span>
+                                  <span>{wallOffsetY.toFixed(2)}</span>
+                                </div>
+                                <input 
+                                  type="range" min="-1" max="1" step="0.01" value={wallOffsetY}
+                                  onChange={(e) => setWallOffsetY(parseFloat(e.target.value))}
+                                  style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--theme-accent-muted)' }}
+                                />
+                              </div>
+
+                              {/* Yakınlaştırma */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                  <span>{t.zoom}</span>
+                                  <span>{wallZoom.toFixed(1)}x</span>
+                                </div>
+                                <input 
+                                  type="range" min="0.5" max="3" step="0.1" value={wallZoom}
+                                  onChange={(e) => setWallZoom(parseFloat(e.target.value))}
+                                  style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--theme-accent-muted)' }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Uygulama Butonu */}
+                            <button
+                              onClick={() => handleApplyWall(null)}
+                              style={{
+                                width: '100%', padding: '10px', background: '#10b981', color: '#fff',
+                                border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+                                cursor: 'pointer', transition: 'all 0.2s', outline: 'none'
+                              }}
+                            >
+                              💾 {t.apply_to_wall}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Temizleme Butonu */}
+                    {wallCustomizations[selectedWall] && (
+                      <button
+                        onClick={handleClearWall}
+                        style={{
+                          width: '100%', padding: '8px', background: 'transparent', color: '#ef4444',
+                          border: '1px solid #ef4444', borderRadius: '8px', fontSize: '11px', fontWeight: '600',
+                          cursor: 'pointer', transition: 'all 0.2s', outline: 'none', marginTop: '4px'
+                        }}
+                      >
+                        🗑️ {t.clear_wall}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </label>
-            </div>
-          </div>
+              </div>
+            )}
 
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid var(--panel-border)' }} />
+            {/* 4. NESNE & NOT TEMİZLEME (CLEANUP) */}
+            {activeSettingsTab === 'cleanup' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🗑️ {t.tab_cleanup}</h4>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px', marginTop: '-6px' }}>
+                    {t.cleanup_desc}
+                  </p>
 
-          {/* Saray Yedeği Ayarları */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 8px 0' }}>
-              <span>💾</span> {t.saray_backup}
-            </h3>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '12px' }}>
-              {t.saray_backup_desc}
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={onExportBackup}
-                className="btn-primary"
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                {t.get_backup}
-              </button>
-              <button
-                type="button"
-                onClick={() => backupFileInputRef.current && backupFileInputRef.current.click()}
-                className="btn-secondary"
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'var(--button-bg-secondary)',
-                  border: '1px solid var(--panel-border)',
-                  color: 'var(--text-main)'
-                }}
-              >
-                {t.load_backup}
-              </button>
-              <input
-                type="file"
-                ref={backupFileInputRef}
-                onChange={handleBackupFileChange}
-                accept=".saray"
-                style={{ display: 'none' }}
-              />
-            </div>
-          </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Oda Seçimi */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.select_room}</label>
+                      <select 
+                        value={cleanupSelectedRoom} 
+                        onChange={(e) => setCleanupSelectedRoom(e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)', color: 'var(--text-main)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+                      >
+                        {roomsList.map(r => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-          <div className="settings-section-divider" style={{ margin: '20px 0', borderTop: '1px solid var(--panel-border)' }} />
+                    {/* Silinecek Tür Seçimi */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)' }}>{t.what_to_remove}</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--panel-bg-sub)', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-main)', cursor: 'pointer' }}>
+                          <input 
+                            type="radio" 
+                            name="cleanupType" 
+                            checked={cleanupSelectedType === 'objects'} 
+                            onChange={() => setCleanupSelectedType('objects')} 
+                          />
+                          <span>🛋️ {t.remove_objects}</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-main)', cursor: 'pointer' }}>
+                          <input 
+                            type="radio" 
+                            name="cleanupType" 
+                            checked={cleanupSelectedType === 'notes'} 
+                            onChange={() => setCleanupSelectedType('notes')} 
+                          />
+                          <span>📝 {t.remove_notes}</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--theme-danger)', cursor: 'pointer', fontWeight: '600' }}>
+                          <input 
+                            type="radio" 
+                            name="cleanupType" 
+                            checked={cleanupSelectedType === 'all'} 
+                            onChange={() => setCleanupSelectedType('all')} 
+                          />
+                          <span>💥 {t.remove_all}</span>
+                        </label>
+                      </div>
+                    </div>
 
-          {/* Dil Seçimi / Language */}
-          <div style={{ padding: '5px 10px 15px 10px' }}>
-            <h3 style={{ fontSize: '15px', color: 'var(--theme-accent-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 12px 0' }}>
-              <span>🌐</span> {t.language}
-            </h3>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setLang && setLang('tr')}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  border: lang === 'tr' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
-                  background: lang === 'tr' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
-                  color: lang === 'tr' ? '#a5b4fc' : 'var(--text-muted)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                🇹🇷 Türkçe
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang && setLang('en')}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  border: lang === 'en' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
-                  background: lang === 'en' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
-                  color: lang === 'en' ? '#a5b4fc' : 'var(--text-muted)',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                🇬🇧 English
-              </button>
-            </div>
+                    {/* Onay Diyaloğu */}
+                    {showDeleteConfirm && (
+                      <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#fca5a5', fontSize: '11px', marginTop: '6px' }}>
+                        ⚠️ {t.remove_all_confirm}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClearRoomData && onClearRoomData(cleanupSelectedRoom, cleanupSelectedType);
+                              setShowDeleteConfirm(false);
+                            }}
+                            style={{ padding: '4px 8px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}
+                          >
+                            {lang === 'en' ? 'Yes, Delete' : 'Evet, Sil'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
+                          >
+                            {t.cancel}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Temizle Butonu */}
+                    {!showDeleteConfirm && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (cleanupSelectedType === 'all') {
+                            setShowDeleteConfirm(true);
+                          } else {
+                            onClearRoomData && onClearRoomData(cleanupSelectedRoom, cleanupSelectedType);
+                          }
+                        }}
+                        style={{
+                          padding: '10px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                          background: cleanupSelectedType === 'all' ? '#ef4444' : 'var(--theme-accent-muted)',
+                          color: '#fff', transition: 'all 0.2s', marginTop: '6px'
+                        }}
+                      >
+                        🗑️ {t.btn_remove}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. YEDEKLEME (BACKUP) */}
+            {activeSettingsTab === 'backup' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>💾 {t.saray_backup}</h4>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '16px', marginTop: '-6px' }}>
+                    {t.saray_backup_desc}
+                  </p>
+                  
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={onExportBackup}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}
+                    >
+                      📥 {t.get_backup}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => backupFileInputRef.current && backupFileInputRef.current.click()}
+                      className="btn-secondary"
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', background: 'var(--button-bg-secondary)', border: '1px solid var(--panel-border)', color: 'var(--text-main)' }}
+                    >
+                      📤 {t.load_backup}
+                    </button>
+                    <input
+                      type="file"
+                      ref={backupFileInputRef}
+                      onChange={handleBackupFileChange}
+                      accept=".saray"
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 6. DİL SEÇİMİ (LANGUAGE) */}
+            {activeSettingsTab === 'language' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🌐 {t.language}</h4>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setLang && setLang('tr')}
+                      style={{
+                        flex: 1, padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                        border: lang === 'tr' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
+                        background: lang === 'tr' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
+                        color: lang === 'tr' ? '#a5b4fc' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      }}
+                    >
+                      🇹🇷 Türkçe
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLang && setLang('en')}
+                      style={{
+                        flex: 1, padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                        border: lang === 'en' ? '1px solid #6366f1' : '1px solid var(--panel-border)',
+                        background: lang === 'en' ? 'rgba(99, 102, 241, 0.2)' : 'var(--button-bg-secondary)',
+                        color: lang === 'en' ? '#a5b4fc' : 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                      }}
+                    >
+                      🇬🇧 English
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="settings-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-            <button 
-              className="btn-danger" 
-              style={{ flex: 1, padding: '10px' }}
-              onClick={onResetColors}
-              title={lang === 'en' ? "Reset all room floor and wall colors to default theme settings." : "Tüm odaların zemin ve duvar renklerini varsayılan konsept ayarlarına döndürür."}
-            >
-              {t.reset_customizations}
-            </button>
-            <button 
-              className="btn-primary" 
-              style={{ flex: 1 }}
-              onClick={() => setIsSettingsOpen(false)}
-            >
-              {t.ok}
-            </button>
-          </div>
+        {/* Modal Alt Footer (Buttons) */}
+        <div className="settings-footer" style={{ display: 'flex', flexDirection: 'row', gap: '10px', padding: '15px 20px', borderTop: '1px solid var(--panel-border)', background: 'rgba(0,0,0,0.2)' }}>
+          <button 
+            className="btn-danger" 
+            style={{ flex: 1.2, padding: '10px', fontSize: '12px' }}
+            onClick={onResetColors}
+            title={lang === 'en' ? "Reset all room floor and wall colors to default theme settings." : "Tüm odaların zemin ve duvar renklerini varsayılan konsept ayarlarına döndürür."}
+          >
+            {t.reset_customizations}
+          </button>
+          
           <button 
             className="btn-secondary" 
             style={{ 
-              width: '100%', 
-              padding: '10px', 
-              borderRadius: '8px', 
-              fontSize: '13px', 
-              fontWeight: '500', 
-              cursor: 'pointer',
-              background: 'var(--button-bg-secondary)',
-              border: '1px solid var(--panel-border)',
-              color: 'var(--text-main)',
-              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px'

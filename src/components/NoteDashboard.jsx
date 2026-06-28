@@ -164,6 +164,7 @@ function formatDate(dateString, lang = 'tr') {
 }
 
 function getNoteTitle(note, lang = 'tr') {
+  if (note.title && note.title.trim()) return note.title;
   const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const firstPageText = note.pages?.[0]?.text || '';
   const lines = firstPageText.split('\n').map(l => l.trim()).filter(Boolean);
@@ -202,7 +203,11 @@ export default function NoteDashboard({
   onDeleteConcept,
   uiTheme,
   lang = 'tr',
-  setLang
+  setLang,
+  currentRoomId = 'study',
+  onUpdateNotesVisibility,
+  onConnectNotes,
+  onStartStudySession
 }) {
   const dt = DASH_TRANSLATIONS[lang] || DASH_TRANSLATIONS.tr;
   const [searchQuery, setSearchQuery] = useState('');
@@ -212,6 +217,7 @@ export default function NoteDashboard({
   const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'connections' | 'concepts'
   const [newConceptName, setNewConceptName] = useState('');
   const [newConceptColor, setNewConceptColor] = useState('#00f0ff');
+  const [checkedNoteIds, setCheckedNoteIds] = useState([]);
 
   const CONCEPT_COLORS = ['#00f0ff', '#a78bfa', '#60a5fa', '#facc15', '#fb923c', '#4ade80', '#f472b6', '#fca5a5', '#34d399', '#38bdf8'];
 
@@ -308,12 +314,40 @@ export default function NoteDashboard({
                : item.linkedNote.pages[0].text)
             : dt.empty_content,
           itemLabel: defaultLabel,
-          itemType: item.type
+          itemType: item.type,
+          hidden: item.linkedNote.hidden || false
         };
       });
 
     return [...wallNotes, ...itemNotes];
   }, [notes, placedItems, roomNames]);
+
+  // Filtrelenmiş oda notları (Görsel Çalışma Modu için)
+  const currentRoomNotes = useMemo(() => {
+    return allNotes.filter(note => note.roomId === currentRoomId);
+  }, [allNotes, currentRoomId]);
+
+  const isAllChecked = useMemo(() => {
+    return currentRoomNotes.length > 0 && currentRoomNotes.every(n => checkedNoteIds.includes(n.id));
+  }, [currentRoomNotes, checkedNoteIds]);
+
+  const toggleCheckedNote = (id) => {
+    setCheckedNoteIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (isAllChecked) {
+      setCheckedNoteIds([]);
+    } else {
+      setCheckedNoteIds(currentRoomNotes.map(n => n.id));
+    }
+  };
+
+  React.useEffect(() => {
+    setCheckedNoteIds([]);
+  }, [currentRoomId]);
 
   // Extract all unique tags dynamically from all notes
   const allAvailableTags = useMemo(() => {
@@ -415,6 +449,7 @@ export default function NoteDashboard({
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(0, 240, 255, 0.15)', padding: '0 24px', background: 'var(--panel-bg-soft)', flexShrink: 0 }}>
           {[
             { id: 'notes', name: dt.tab_notes },
+            { id: 'study', name: lang === 'en' ? '👁️ Study Mode' : '👁️ Çalışma Modu' },
             { id: 'connections', name: dt.tab_connections },
             { id: 'concepts', name: dt.tab_concepts }
           ].map((tab) => (
@@ -629,6 +664,227 @@ export default function NoteDashboard({
           <span>{dt.listed}: {filteredNotes.length} {dt.note_singular}</span>
         </div>
       </>
+    )}
+
+    {/* GÖRSEL ÇALIŞMA MODU SEKMESİ */}
+    {activeTab === 'study' && (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header info */}
+        <div style={{ padding: '16px 24px', background: 'var(--panel-bg-soft)', borderBottom: '1px solid rgba(0, 240, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.95rem', color: 'var(--theme-cyan)', fontWeight: 'bold', fontFamily: 'sans-serif' }}>
+              📍 {lang === 'en' ? 'Active Room:' : 'Aktif Oda:'} {roomNames[currentRoomId] || currentRoomId}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>
+              {checkedNoteIds.length} / {currentRoomNotes.length} {lang === 'en' ? 'selected' : 'seçili'}
+            </span>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'sans-serif', lineHeight: '1.4' }}>
+            {lang === 'en' 
+              ? 'Select notes in this room to change their visibility, connect them in order, or navigate through them sequentially.' 
+              : 'Görünürlüklerini değiştirmek, sırayla bağlamak veya aralarında gezinmek için bu odadaki notları seçin.'}
+          </p>
+        </div>
+
+        {/* Actions Bar */}
+        <div style={{ padding: '12px 24px', background: 'var(--panel-bg-hard)', display: 'flex', gap: '8px', flexWrap: 'wrap', borderBottom: '1px solid rgba(0, 240, 255, 0.08)' }}>
+          <button
+            onClick={toggleSelectAll}
+            className="btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+          >
+            {isAllChecked ? (lang === 'en' ? 'Deselect All' : 'Seçimi Kaldır') : (lang === 'en' ? 'Select All' : 'Tümünü Seç')}
+          </button>
+
+          <button
+            disabled={checkedNoteIds.length === 0}
+            onClick={() => {
+              onUpdateNotesVisibility(
+                checkedNoteIds.reduce((acc, id) => ({ ...acc, [id]: false }), {})
+              );
+            }}
+            className="btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '6px 12px', opacity: checkedNoteIds.length === 0 ? 0.5 : 1 }}
+          >
+            👁️ {lang === 'en' ? 'Show' : 'Görünür Yap'}
+          </button>
+
+          <button
+            disabled={checkedNoteIds.length === 0}
+            onClick={() => {
+              onUpdateNotesVisibility(
+                checkedNoteIds.reduce((acc, id) => ({ ...acc, [id]: true }), {})
+              );
+            }}
+            className="btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '6px 12px', opacity: checkedNoteIds.length === 0 ? 0.5 : 1 }}
+          >
+            🙈 {lang === 'en' ? 'Hide' : 'Gizle'}
+          </button>
+
+          <button
+            disabled={checkedNoteIds.length === 0}
+            onClick={() => {
+              const updates = {};
+              currentRoomNotes.forEach(n => {
+                updates[n.id] = !checkedNoteIds.includes(n.id);
+              });
+              onUpdateNotesVisibility(updates);
+            }}
+            className="btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '6px 12px', opacity: checkedNoteIds.length === 0 ? 0.5 : 1 }}
+          >
+            🎯 {lang === 'en' ? 'Show Only' : 'Sadece Bunları Göster'}
+          </button>
+
+          <button
+            disabled={checkedNoteIds.length < 2}
+            onClick={() => {
+              const selectedNotesWithTypes = checkedNoteIds.map(id => {
+                const found = currentRoomNotes.find(n => n.id === id);
+                return found ? { id: found.id, type: found.isWallNote ? 'note' : 'item' } : null;
+              }).filter(Boolean);
+              onConnectNotes(selectedNotesWithTypes);
+            }}
+            className="btn-secondary"
+            style={{ fontSize: '0.75rem', padding: '6px 12px', opacity: checkedNoteIds.length < 2 ? 0.5 : 1 }}
+          >
+            🔗 {lang === 'en' ? 'Connect in Order' : 'Sırayla Bağla'}
+          </button>
+
+          <button
+            disabled={checkedNoteIds.length === 0}
+            onClick={() => {
+              const orderedNoteList = checkedNoteIds.map(id => currentRoomNotes.find(n => n.id === id)).filter(Boolean);
+              onStartStudySession(orderedNoteList);
+              onClose();
+            }}
+            style={{ 
+              fontSize: '0.75rem', 
+              padding: '6px 12px', 
+              opacity: checkedNoteIds.length === 0 ? 0.5 : 1,
+              background: 'var(--theme-cyan)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            🚀 {lang === 'en' ? 'Start Study Session' : 'Çalışmayı Başlat'}
+          </button>
+        </div>
+
+        {/* List Section */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }} onWheel={handleWheel}>
+          {currentRoomNotes.length === 0 ? (
+            <div className="empty-dashboard-state" style={{ padding: '40px 0' }}>
+              <FileText size={48} className="empty-icon" />
+              <p style={{ fontFamily: 'sans-serif' }}>
+                {lang === 'en' ? 'No notes in this room.' : 'Bu odada henüz not bulunmuyor.'}
+              </p>
+              <span style={{ fontFamily: 'sans-serif' }}>
+                {lang === 'en' ? 'Add notes to this room to start studying.' : 'Çalışmaya başlamak için odaya not ekleyin.'}
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {currentRoomNotes.map((note) => {
+                const isChecked = checkedNoteIds.includes(note.id);
+                const isHidden = note.hidden;
+                
+                return (
+                  <div
+                    key={note.id}
+                    onClick={() => toggleCheckedNote(note.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: isChecked ? 'rgba(0, 240, 255, 0.05)' : 'var(--panel-bg-soft)',
+                      border: isChecked ? '1px solid var(--theme-cyan)' : '1px solid var(--panel-border)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      gap: '12px',
+                      opacity: isHidden ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <div style={{ display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        readOnly
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          accentColor: 'var(--theme-cyan)',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    </div>
+
+                    {/* Color Indicator */}
+                    <div
+                      style={{
+                        width: '4px',
+                        height: '24px',
+                        borderRadius: '2px',
+                        background: note.color || '#fef08a',
+                        flexShrink: 0
+                      }}
+                    />
+
+                    {/* Details */}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 'bold', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {note.displayTitle}
+                        </span>
+                        {isHidden && (
+                          <span style={{ fontSize: '0.65rem', background: 'var(--theme-danger-bg)', color: 'var(--theme-danger)', border: '1px solid var(--theme-danger)', padding: '1px 4px', borderRadius: '4px', fontFamily: 'sans-serif' }}>
+                            {lang === 'en' ? 'Hidden' : 'Gizli'}
+                          </span>
+                        )}
+                        {!note.isWallNote && (
+                          <span style={{ fontSize: '0.65rem', background: 'var(--theme-success-bg)', color: 'var(--theme-success)', border: '1px solid var(--theme-success)', padding: '1px 4px', borderRadius: '4px', fontFamily: 'sans-serif' }}>
+                            {note.itemLabel || (lang === 'en' ? 'Item' : 'Eşya')}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {note.displayPreview}
+                      </span>
+                    </div>
+
+                    {/* Focus Camera Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onGoToNote(note);
+                      }}
+                      className="btn-secondary"
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '0.7rem',
+                        borderRadius: '4px',
+                        flexShrink: 0
+                      }}
+                    >
+                      👁️ {lang === 'en' ? 'View' : 'Odaklan'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     )}
 
     {/* 3D BAĞLANTILAR SEKMESİ */}

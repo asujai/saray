@@ -396,7 +396,7 @@ export default function Note3D({
         <Text
           position={textPosition} 
           fontSize={hasImage && scrollLineIndex === 0 ? fontSize * 0.82 : fontSize}
-          color="#1e293b" 
+          color={note.textColor || '#1e293b'} 
           maxWidth={textMaxWidth}
           lineHeight={1.35}
           anchorX="center"

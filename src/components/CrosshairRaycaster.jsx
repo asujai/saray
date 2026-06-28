@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-export default function CrosshairRaycaster({ cameraMode, isBlocked, onHoverChange }) {
+export default function CrosshairRaycaster({ cameraView, isBlocked, onHoverChange }) {
   const { camera, raycaster, scene } = useThree();
 
   // Merkez koordinatı {x: 0, y: 0}
@@ -37,7 +37,7 @@ export default function CrosshairRaycaster({ cameraMode, isBlocked, onHoverChang
   };
 
   useFrame(() => {
-    if (cameraMode !== 'free' || isBlocked) {
+    if (cameraView !== 'first' || isBlocked) {
       if (lastFoundRef.current !== null) {
         lastFoundRef.current = null;
         onHoverChange(null);
@@ -47,8 +47,9 @@ export default function CrosshairRaycaster({ cameraMode, isBlocked, onHoverChang
 
     raycaster.setFromCamera(centerCoords, camera);
 
-    // Sahnedeki nesneleri kontrol et
-    const intersects = raycaster.intersectObjects(scene.children, true);
+    // Yalnızca geçerli bir raycast fonksiyonu olan nesneleri kontrol et
+    const targets = scene.children.filter(obj => obj && typeof obj.raycast === 'function');
+    const intersects = raycaster.intersectObjects(targets, true);
 
     let found = null;
 

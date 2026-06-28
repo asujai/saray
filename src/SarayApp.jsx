@@ -1,6 +1,6 @@
 // Hologram dashboard integration active
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import Room from './components/Room';
 import Player from './components/Player';
@@ -12,6 +12,21 @@ import CrosshairRaycaster from './components/CrosshairRaycaster';
 import { getAllNotes, saveAllNotesToDB, initDB } from './utils/db';
 import MiniMapTracker from './components/MiniMapTracker';
 import { QuadraticBezierLine } from '@react-three/drei';
+
+function PlayerRoomTracker({ getRoomIdFromPosition, onRoomChange }) {
+  const { camera } = useThree();
+  const lastRoomRef = useRef(null);
+  
+  useFrame(() => {
+    const roomId = getRoomIdFromPosition(camera.position.x, camera.position.z);
+    if (roomId !== lastRoomRef.current) {
+      lastRoomRef.current = roomId;
+      onRoomChange(roomId);
+    }
+  });
+  
+  return null;
+}
 
 const LOCAL_STORAGE_KEY = 'saray_3d_mindmap_notes';
 
@@ -267,7 +282,8 @@ export default function SarayApp() {
     }, 2000);
   };
   const [isLoaded, setIsLoaded] = useState(false);
-  const [cameraMode, setCameraMode] = useState('third-person'); // 'free' or 'third-person'
+  const [movementMode, setMovementMode] = useState('walk'); // 'walk' or 'fly'
+  const [cameraView, setCameraView] = useState('third'); // 'third' or 'first'
   const [isAddMode, setIsAddMode] = useState(false);
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false); // New state to control large editor modal visibility
@@ -280,14 +296,22 @@ export default function SarayApp() {
   const [hoveredNoteId, setHoveredNoteId] = useState(null);
   const [editorMode, setEditorMode] = useState('note'); // 'note' or 'item'
   const [allowQuickTravel, setAllowQuickTravel] = useState(() => localStorage.getItem('saray_allow_quick_travel') === 'true');
-  const [freeFlightEnabled, setFreeFlightEnabled] = useState(() => localStorage.getItem('saray_free_flight_enabled') === 'true');
+  const [freeFlightEnabled, setFreeFlightEnabled] = useState(true);
   const [devMode, setDevMode] = useState(() => localStorage.getItem('saray_dev_mode_enabled') === 'true');
   const [highlightedRoomId, setHighlightedRoomId] = useState(null);
   const highlightTimeoutRef = useRef(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('saray_mindmap_theme') || 'minimal');
   const [uiTheme, setUiTheme] = useState(() => localStorage.getItem('saray_ui_theme') || 'dark');
   const [footballThemeActive, setFootballThemeActive] = useState(() => localStorage.getItem('saray_football_theme') === 'true');
+  const [kitchenPatternActive, setKitchenPatternActive] = useState(() => localStorage.getItem('saray_kitchen_pattern') === 'true');
+  const [wallCustomizations, setWallCustomizations] = useState(() => {
+    const saved = localStorage.getItem('saray_wall_customizations');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [mobileControlsEnabled, setMobileControlsEnabled] = useState(() => localStorage.getItem('saray_mobile_controls_enabled') === 'true');
+  const [currentPlayerRoomId, setCurrentPlayerRoomId] = useState('study');
+  const [selectedStudyNotes, setSelectedStudyNotes] = useState([]);
+  const [currentStudyIndex, setCurrentStudyIndex] = useState(-1);
 
   useEffect(() => {
     localStorage.setItem('saray_mobile_controls_enabled', mobileControlsEnabled);
@@ -304,6 +328,14 @@ export default function SarayApp() {
   useEffect(() => {
     localStorage.setItem('saray_football_theme', footballThemeActive ? 'true' : 'false');
   }, [footballThemeActive]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_kitchen_pattern', kitchenPatternActive ? 'true' : 'false');
+  }, [kitchenPatternActive]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_wall_customizations', JSON.stringify(wallCustomizations));
+  }, [wallCustomizations]);
 
   // Eşya yerleştirme sistemi state'leri
   const [placedItems, setPlacedItems] = useState(() => {
@@ -364,14 +396,7 @@ export default function SarayApp() {
     localStorage.setItem('saray_dev_mode_enabled', devMode);
   }, [devMode]);
 
-  useEffect(() => {
-    if (!devMode) {
-      setFreeFlightEnabled(false);
-      if (cameraMode === 'free') {
-        setCameraMode('third-person');
-      }
-    }
-  }, [devMode, cameraMode]);
+
 
   const triggerHighlight = (roomId) => {
     if (!roomId || roomId === 'unknown') return;
@@ -808,6 +833,63 @@ export default function SarayApp() {
     showSavedToast('✓ Çalışma Odası Boşaltıldı');
   };
 
+  const handleClearRoomData = async (roomId, type) => {
+    if (type === 'objects' || type === 'all') {
+      setPlacedItems((prev) => {
+        const filtered = prev.filter(item => item.roomId !== roomId);
+        localStorage.setItem('saray_placed_items', JSON.stringify(filtered));
+        return filtered;
+      });
+    }
+
+    if (type === 'notes' || type === 'all') {
+      const roomWallsMap = {
+        kitchen: [
+          'wall_back_kitchen', 'wall_left_kitchen', 'wall_inner_left_division_kitchen',
+          'wall_inner_left_hall_kitchen_lower', 'wall_inner_left_hall_kitchen_mid',
+          'wall_inner_left_hall_lintel1_kitchen'
+        ],
+        bedroom: [
+          'wall_front_bedroom', 'wall_left_bedroom', 'wall_inner_left_division_bedroom',
+          'wall_inner_left_hall_bedroom_mid', 'wall_inner_left_hall_bedroom_upper',
+          'wall_inner_left_hall_lintel2_bedroom'
+        ],
+        study: [
+          'wall_front_study', 'wall_right_study', 'wall_inner_right_division_study',
+          'wall_inner_right_hall_study_mid', 'wall_inner_right_hall_study_upper',
+          'wall_inner_right_hall_lintel2_study'
+        ],
+        living: [
+          'wall_back_living', 'wall_right_living', 'wall_inner_right_division_living',
+          'wall_inner_right_hall_living_lower', 'wall_inner_right_hall_living_mid',
+          'wall_inner_right_hall_lintel1_living'
+        ],
+        hall: [
+          'wall_back_hall', 'wall_front_hall',
+          'wall_inner_left_hall_lower', 'wall_inner_left_hall_mid', 'wall_inner_left_hall_upper',
+          'wall_inner_left_hall_lintel1', 'wall_inner_left_hall_lintel2',
+          'wall_inner_right_hall_lower', 'wall_inner_right_hall_mid', 'wall_inner_right_hall_upper',
+          'wall_inner_right_hall_lintel1', 'wall_inner_right_hall_lintel2'
+        ]
+      };
+
+      const roomWalls = roomWallsMap[roomId] || [];
+      try {
+        let dbNotes = await getAllNotes();
+        const filteredNotes = dbNotes.filter(n => !roomWalls.includes(n.wallId));
+        await saveAllNotesToDB(filteredNotes);
+        setNotes(filteredNotes);
+      } catch (err) {
+        console.error('Notlar silinirken hata:', err);
+      }
+    }
+
+    const toastMsg = lang === 'en' 
+      ? `✓ Room elements cleared successfully` 
+      : '✓ Oda içeriği başarıyla temizlendi';
+    showSavedToast(toastMsg);
+  };
+
   const getRoomIdFromPosition = (x, z) => {
     if (x >= -5 && x <= 5) return 'hall';
     if (x < -5 && z > 0) return 'bedroom';
@@ -934,7 +1016,7 @@ export default function SarayApp() {
     showSavedToast('✓ Değişiklikler iptal edildi');
   };
 
-  const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info', tags = []) => {
+  const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info', tags = [], textColor = '#1e293b') => {
     setPlacedItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
@@ -946,6 +1028,7 @@ export default function SarayApp() {
               currentPageIndex,
               iconType,
               tags,
+              textColor,
               updatedAt: new Date().toISOString()
             },
             updatedAt: new Date().toISOString()
@@ -1300,24 +1383,7 @@ export default function SarayApp() {
   // Global Keyboard Shortcuts (C: Camera, E: Add Mode, H: Dashboard, Q/E/PageUp/PageDown/Scale/Delete for Items)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Geliştirici Modu Kısayolu: Ctrl + Shift + F
-      if (e.ctrlKey && e.shiftKey && e.code === 'KeyF') {
-        setDevMode((prev) => {
-          const next = !prev;
-          if (next) {
-            setFreeFlightEnabled(true);
-            setCameraMode('free');
-            showSavedToast('✓ Geliştirici Modu & Uçuş Aktif');
-          } else {
-            setFreeFlightEnabled(false);
-            setCameraMode('third-person');
-            showSavedToast('✓ Geliştirici Modu Kapatıldı');
-          }
-          return next;
-        });
-        e.preventDefault();
-        return;
-      }
+
 
       // Prevent shortcut trigger when user is typing in form inputs/textarea
       if (
@@ -1389,7 +1455,7 @@ export default function SarayApp() {
 
       if (e.code === 'KeyN') {
         const isBlocked = isEditorOpen || isDashboardOpen || isItemEditingActive;
-        if (cameraMode !== 'birds-eye' && !isBlocked) {
+        if (!isBlocked) {
           if (crosshairHovered && crosshairHovered.type === 'wall') {
             const bounds = calculateNoteBounds({
               wallId: crosshairHovered.id,
@@ -1431,16 +1497,34 @@ export default function SarayApp() {
         }
       }
 
-      if (e.code === 'KeyC') {
-        setCameraMode((prev) => {
-          if (prev === 'third-person') return 'birds-eye';
-          if (prev === 'birds-eye') return freeFlightEnabled ? 'free' : 'third-person';
-          return 'third-person'; // free → third-person
-        });
+      if (e.code === 'KeyV') {
+        let currentMode = 'walk-third';
+        if (movementMode === 'walk' && cameraView === 'first') currentMode = 'walk-first';
+        else if (movementMode === 'fly' && cameraView === 'third') currentMode = 'fly-third';
+        else if (movementMode === 'fly' && cameraView === 'first') currentMode = 'fly-first';
+
+        if (currentMode === 'walk-third') {
+          setCameraView('first');
+          setMovementMode('walk');
+        } else if (currentMode === 'walk-first') {
+          if (freeFlightEnabled) {
+            setCameraView('third');
+            setMovementMode('fly');
+          } else {
+            setCameraView('third');
+            setMovementMode('walk');
+          }
+        } else if (currentMode === 'fly-third') {
+          setCameraView('first');
+          setMovementMode('fly');
+        } else if (currentMode === 'fly-first') {
+          setCameraView('third');
+          setMovementMode('walk');
+        }
       }
       
       if (e.code === 'KeyE') {
-        if (!isDashboardOpen && cameraMode !== 'birds-eye') {
+        if (!isDashboardOpen) {
           setIsAddMode((prev) => !prev);
         }
       }
@@ -1493,7 +1577,7 @@ export default function SarayApp() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, cameraMode, isEditorOpen, pendingConnectionSource, freeFlightEnabled, setIsItemDrawerOpen, setIsSettingsOpen, setIsAddMode, setIsDashboardOpen]);
+  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, movementMode, cameraView, isEditorOpen, pendingConnectionSource, freeFlightEnabled, setIsItemDrawerOpen, setIsSettingsOpen, setIsAddMode, setIsDashboardOpen]);
 
   // Context Menu (Right Click) global listener to close editor and deselect active note / cancel item edit
   useEffect(() => {
@@ -1719,9 +1803,9 @@ export default function SarayApp() {
   };
 
   // Save changes to note
-  const handleSaveNote = (id, pages, currentPageIndex, color, tags = []) => {
+  const handleSaveNote = (id, pages, currentPageIndex, color, tags = [], title = '', textColor = '#1e293b') => {
     setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, tags, updatedAt: new Date().toISOString() } : n))
+      prev.map((n) => (n.id === id ? { ...n, pages, currentPageIndex, color, tags, title, textColor, updatedAt: new Date().toISOString() } : n))
     );
     setIsEditorOpen(false);
     showSavedToast('✓ Not kaydedildi');
@@ -1795,6 +1879,115 @@ export default function SarayApp() {
       const item = placedItems.find(i => i.id === targetId);
       if (item) {
         handleGoToItem(item);
+      }
+    }
+  };
+
+  const handleUpdateNotesVisibility = (updates) => {
+    setNotes((prev) =>
+      prev.map((n) => (updates[n.id] !== undefined ? { ...n, hidden: updates[n.id] } : n))
+    );
+    setPlacedItems((prev) =>
+      prev.map((item) => {
+        if (item.linkedNote && updates[item.id] !== undefined) {
+          return {
+            ...item,
+            linkedNote: { ...item.linkedNote, hidden: updates[item.id] },
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleConnectNotes = (noteIdsWithTypes) => {
+    if (noteIdsWithTypes.length < 2) return;
+    const newConns = [];
+    const timestamp = Date.now();
+    for (let i = 0; i < noteIdsWithTypes.length - 1; i++) {
+      const from = noteIdsWithTypes[i];
+      const to = noteIdsWithTypes[i + 1];
+      const exists = connections.some(c => c.fromId === from.id && c.toId === to.id) ||
+                     newConns.some(c => c.fromId === from.id && c.toId === to.id);
+      if (exists) continue;
+      newConns.push({
+        id: `connection_${timestamp}_${i}_${Math.random().toString(36).substr(2, 5)}`,
+        fromId: from.id,
+        toId: to.id,
+        fromType: from.type,
+        toType: to.type,
+        conceptId: 'concept_general',
+        color: '#00f0ff',
+        isVisible: true,
+        label: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+    if (newConns.length > 0) {
+      setConnections(prev => [...prev, ...newConns]);
+      showSavedToast(`✓ ${newConns.length} yeni bağlantı oluşturuldu`);
+    } else {
+      showSavedToast('⚠️ Seçilen bağlantılar zaten mevcut');
+    }
+  };
+
+  const handleStartStudySession = (orderedNotes) => {
+    setSelectedStudyNotes(orderedNotes);
+    if (orderedNotes.length > 0) {
+      setCurrentStudyIndex(0);
+      handleFocusOnStudyNote(orderedNotes[0]);
+    } else {
+      setCurrentStudyIndex(-1);
+    }
+  };
+
+  const handleFocusOnStudyNote = (studyTarget) => {
+    if (!studyTarget) return;
+    const isWallNote = studyTarget.isWallNote;
+    if (isWallNote) {
+      const note = notes.find(n => n.id === studyTarget.id);
+      if (!note) return;
+      setFlashedNoteId(note.id);
+      setTimeout(() => setFlashedNoteId(null), 8000);
+      try {
+        const euler = new THREE.Euler(...note.rotation);
+        const normal = new THREE.Vector3(0, 0, 1).applyEuler(euler).normalize();
+        const notePos = new THREE.Vector3(...note.position);
+        const camPos = notePos.clone().addScaledVector(normal, 1.6);
+        const lookDir = notePos.clone().sub(camPos).normalize();
+        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
+        const pitchVal = Math.asin(lookDir.y);
+        
+        setCameraFocusRequest({
+          position: [camPos.x, camPos.y, camPos.z],
+          pitch: pitchVal,
+          yaw: yawVal,
+          time: Date.now()
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      const item = placedItems.find(i => i.id === studyTarget.id);
+      if (!item) return;
+      setFlashedItemId(item.id);
+      setTimeout(() => setFlashedItemId(null), 8000);
+      try {
+        const itemPos = new THREE.Vector3(item.position.x ?? 0, item.position.y ?? 0, item.position.z ?? 0);
+        const camPos = itemPos.clone().add(new THREE.Vector3(0, 1.4, 1.8));
+        const lookDir = itemPos.clone().sub(camPos).normalize();
+        const yawVal = Math.atan2(-lookDir.x, -lookDir.z);
+        const pitchVal = Math.asin(lookDir.y);
+        
+        setCameraFocusRequest({
+          position: [camPos.x, camPos.y, camPos.z],
+          pitch: pitchVal,
+          yaw: yawVal,
+          time: Date.now()
+        });
+      } catch (err) {
+        console.error(err);
       }
     }
   };
@@ -1941,9 +2134,22 @@ export default function SarayApp() {
       return false;
     };
 
+    const isObjectHidden = (id, type) => {
+      if (type === 'note') {
+        const n = notes.find(x => x.id === id);
+        return n && n.hidden;
+      }
+      if (type === 'item') {
+        const i = placedItems.find(x => x.id === id);
+        return i && i.linkedNote && i.linkedNote.hidden;
+      }
+      return false;
+    };
+
     return connections.filter(c => {
       if (!c.isVisible) return false;
       if (!objectExists(c.fromId, c.fromType) || !objectExists(c.toId, c.toType)) return false;
+      if (isObjectHidden(c.fromId, c.fromType) || isObjectHidden(c.toId, c.toType)) return false;
 
       if (connectionVisibilityMode === 'selected-only') {
         const selectedId = activeNoteId || activeItemId;
@@ -2042,7 +2248,7 @@ export default function SarayApp() {
         shadows 
         camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.6, 5] }}
         onCreated={({ gl }) => {
-          gl.shadowMap.type = THREE.PCFShadowMap;
+          gl.shadowMap.type = THREE.PCFSoftShadowMap;
         }}
       >
         {/* Sis ve Yumuşak Gökyüzü Atmosferi */}
@@ -2051,7 +2257,7 @@ export default function SarayApp() {
 
         {/* Ekran merkezinden nesne tespiti yapan raycaster */}
         <CrosshairRaycaster
-          cameraMode={cameraMode}
+          cameraView={cameraView}
           isBlocked={isEditorOpen || isDashboardOpen || isItemEditingActive}
           onHoverChange={setCrosshairHovered}
         />
@@ -2071,6 +2277,8 @@ export default function SarayApp() {
           isItemDrawerOpen={isItemDrawerOpen}
           highlightedRoomId={highlightedRoomId}
           footballThemeActive={footballThemeActive}
+          kitchenPatternActive={kitchenPatternActive}
+          wallCustomizations={wallCustomizations}
           onDrawingStart={handleDrawingStart}
           onDrawingMove={handleDrawingMove}
           onDrawingEnd={handleDrawingEnd}
@@ -2078,27 +2286,30 @@ export default function SarayApp() {
         />
 
         {/* 3D Sticky Notes */}
-        {notes.map((note) => (
-          <Note3D
-            key={note.id}
-            note={note}
-            onClick={handleNoteClick}
-            isAddMode={isAddMode}
-            activeNoteId={activeNoteId}
-            onEditClick={() => setIsEditorOpen(true)}
-            onSetPageIndex={handleSetNotePageIndex}
-            isFlashed={flashedNoteId === note.id}
-            onHoverChange={setHoveredNoteId}
-            isCrosshairHovered={crosshairHovered?.type === 'note' && crosshairHovered?.id === note.id}
-            notes={notes}
-            placedItems={placedItems}
-            onNavigateToTarget={handleNavigateToTarget}
-            pendingConnectionSource={pendingConnectionSource}
-            onStartConnection={handleStartConnection}
-            onCancelConnection={handleCancelConnection}
-            hideControls={isAnyPanelOpen}
-          />
-        ))}
+        {notes.map((note) => {
+          if (note.hidden) return null;
+          return (
+            <Note3D
+              key={note.id}
+              note={note}
+              onClick={handleNoteClick}
+              isAddMode={isAddMode}
+              activeNoteId={activeNoteId}
+              onEditClick={() => setIsEditorOpen(true)}
+              onSetPageIndex={handleSetNotePageIndex}
+              isFlashed={flashedNoteId === note.id}
+              onHoverChange={setHoveredNoteId}
+              isCrosshairHovered={crosshairHovered?.type === 'note' && crosshairHovered?.id === note.id}
+              notes={notes}
+              placedItems={placedItems}
+              onNavigateToTarget={handleNavigateToTarget}
+              pendingConnectionSource={pendingConnectionSource}
+              onStartConnection={handleStartConnection}
+              onCancelConnection={handleCancelConnection}
+              hideControls={isAnyPanelOpen}
+            />
+          );
+        })}
 
         {/* Sahneye Yerleştirilmiş Eşyalar */}
         {placedItems.map((item) => (
@@ -2166,7 +2377,7 @@ export default function SarayApp() {
               end={toPos}
               mid={midPos}
               color={conn.color || '#00f0ff'}
-              lineWidth={1.5}
+              lineWidth={3}
               transparent
               opacity={opacity}
             />
@@ -2192,9 +2403,17 @@ export default function SarayApp() {
           );
         })()}
 
+        {/* Player Room Tracker */}
+        <PlayerRoomTracker 
+          getRoomIdFromPosition={getRoomIdFromPosition} 
+          onRoomChange={setCurrentPlayerRoomId} 
+        />
+
         {/* Character & movement logic */}
         <Player 
-          cameraMode={cameraMode} 
+          movementMode={movementMode}
+          cameraView={cameraView}
+          placedItems={placedItems}
           devMode={devMode}
           mobileControlsEnabled={mobileControlsEnabled}
           activeNoteId={activeNoteId}
@@ -2229,8 +2448,11 @@ export default function SarayApp() {
         onResetColors={handleResetColors}
         onLoadPresetTemplate={handleLoadPresetTemplate}
         onClearRoomTemplate={handleClearRoomTemplate}
-        cameraMode={cameraMode}
-        setCameraMode={setCameraMode}
+        onClearRoomData={handleClearRoomData}
+        movementMode={movementMode}
+        setMovementMode={setMovementMode}
+        cameraView={cameraView}
+        setCameraView={setCameraView}
         isAddMode={isAddMode}
         setIsAddMode={handleSetIsAddMode}
         activeNote={activeNote}
@@ -2285,6 +2507,10 @@ export default function SarayApp() {
         devMode={devMode}
         footballThemeActive={footballThemeActive}
         setFootballThemeActive={setFootballThemeActive}
+        kitchenPatternActive={kitchenPatternActive}
+        setKitchenPatternActive={setKitchenPatternActive}
+        wallCustomizations={wallCustomizations}
+        setWallCustomizations={setWallCustomizations}
         mobileControlsEnabled={mobileControlsEnabled}
         setMobileControlsEnabled={setMobileControlsEnabled}
         onExportBackup={handleExportBackup}
@@ -2323,6 +2549,10 @@ export default function SarayApp() {
         placedItems={placedItems}
         activeNoteId={activeNoteId}
         roomNames={roomNames}
+        currentRoomId={currentPlayerRoomId}
+        onUpdateNotesVisibility={handleUpdateNotesVisibility}
+        onConnectNotes={handleConnectNotes}
+        onStartStudySession={handleStartStudySession}
         onSelectNote={(id) => {
           if (id && id.startsWith('item_')) {
             setEditorMode('item');
@@ -2356,6 +2586,105 @@ export default function SarayApp() {
         uiTheme={uiTheme}
         lang={lang}
       />
+
+      {/* Çalışma Modu Navigasyon HUD'ı */}
+      {currentStudyIndex >= 0 && selectedStudyNotes.length > 0 && !isDashboardOpen && (
+        <div style={{
+          position: 'fixed',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--panel-bg-solid)',
+          border: '1px solid var(--theme-cyan)',
+          borderRadius: '12px',
+          padding: '16px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          zIndex: 9999,
+          boxShadow: '0 0 20px rgba(0, 240, 255, 0.25)',
+          backdropFilter: 'blur(8px)',
+          animation: 'hologram-fadein 0.2s ease forwards'
+        }}>
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: '4px',
+            background: 'var(--theme-cyan)',
+            borderRadius: '12px 0 0 12px'
+          }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--theme-cyan)', fontWeight: 'bold', letterSpacing: '1px', fontFamily: 'monospace' }}>
+              {lang === 'en' ? 'VISUAL STUDY MODE' : 'GÖRSEL ÇALIŞMA MODU'}
+            </span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 'bold', fontFamily: 'sans-serif' }}>
+              {selectedStudyNotes[currentStudyIndex]?.displayTitle || selectedStudyNotes[currentStudyIndex]?.title}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'sans-serif' }}>
+              {lang === 'en' ? 'Note' : 'Not'} {currentStudyIndex + 1} / {selectedStudyNotes.length}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => {
+                const nextIdx = (currentStudyIndex - 1 + selectedStudyNotes.length) % selectedStudyNotes.length;
+                setCurrentStudyIndex(nextIdx);
+                handleFocusOnStudyNote(selectedStudyNotes[nextIdx]);
+              }}
+              className="btn-secondary"
+              style={{ padding: '8px 12px', fontSize: '0.8rem', cursor: 'pointer' }}
+              title={lang === 'en' ? 'Previous Note' : 'Önceki Not'}
+            >
+              ⬅️ {lang === 'en' ? 'Prev' : 'Önceki'}
+            </button>
+            <button
+              onClick={() => {
+                const nextIdx = (currentStudyIndex + 1) % selectedStudyNotes.length;
+                setCurrentStudyIndex(nextIdx);
+                handleFocusOnStudyNote(selectedStudyNotes[nextIdx]);
+              }}
+              style={{
+                background: 'var(--theme-cyan)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title={lang === 'en' ? 'Next Note' : 'Sonraki Not'}
+            >
+              {lang === 'en' ? 'Next' : 'Sonraki'} ➡️
+            </button>
+            <button
+              onClick={() => {
+                setCurrentStudyIndex(-1);
+                setSelectedStudyNotes([]);
+                showSavedToast(lang === 'en' ? '✓ Study session ended' : '✓ Çalışma seansı sonlandırıldı');
+              }}
+              className="btn-secondary"
+              style={{
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderColor: 'var(--theme-danger)',
+                color: 'var(--theme-danger)',
+                cursor: 'pointer'
+              }}
+              title={lang === 'en' ? 'Exit Study Mode' : 'Çalışma Modundan Çık'}
+            >
+              ❌
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
