@@ -2251,7 +2251,6 @@ export default function UIOverlay({
 
                   {/* İptal */}
                   <button
-                    data-testid="item-add-book-button"
                     className="btn-primary-item"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
@@ -2334,6 +2333,7 @@ export default function UIOverlay({
                 {/* Kitap Ekleme (Kütüphane Rafı ise) */}
                 {(selectedItem.type === 'libraryShelf' || selectedItem.type === 'largeLibraryShelf') && (
                   <button
+                    data-testid="item-add-book-button"
                     className="btn-primary-item"
                     style={{
                       background: 'var(--button-bg-secondary)',
