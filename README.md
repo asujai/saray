@@ -51,6 +51,12 @@ Bu proje, **TestSprite Hackathon Season 3** kapsamında TestSprite platformu ve 
 *   **Doğrulananlar:** Atrium 3D marka temizliği, `open-atrium-button` geçişi, sıkı `?testMode=true` kapısı, gerçek canvas mount state kanıtı ve Netlify SPA fallback ile `/app` / `/app?testMode=true` route'larının canlıda 404 vermemesi.
 *   **Not:** Headless CI ortamlarında WebGL video capture sınırlı olabilir; bu nedenle LOOP-05, sahte görsel kanıt yerine canlı DOM/debug state değerlerini (`debug-canvas-mounted`, `debug-study-mode-active`, `debug-route`) kullanarak doğrulama yapar.
 
+### LOOP-06 Full App Verification Sonucu
+*   **Plan dosyası:** `plan-full-app-verification.json`
+*   **Durum:** PASSED — Run ID: `3e6905d1-6509-4be0-be71-090c8c4ca32c`
+*   **Doğrulananlar:** Canlı route fallback, sıkı TestMode kapısı, gerçek debug DOM/state kanıtları, 31 eşya tipi, duvar notu, eşya notu, kitaplık kitabı, 3D kavramsal bağlantı, dashboard arama, Study Mode, reload persistence ve backup export akışı.
+*   **Fix notu:** LOOP-06 hazırlığı sırasında `item-add-book-button` test id'sinin yanlış butona bağlı olduğu görüldü ve gerçek kitap ekleme butonuna taşındı. Final run bu düzeltme Netlify'a deploy edildikten sonra çalıştırıldı.
+
 ---
 
 ## 📊 Loop Coverage / Test Kapsamı
@@ -59,6 +65,8 @@ TestSprite E2E test planları kapsamında doğrulanan ana senaryolar:
 2.  **Settings & UI Customization:** Ayarlar modalının açılması, dil seçeneklerinin (TR/EN) değiştirilmesi ve arayüz teması (Açık/Koyu) geçişlerinin stabil çalışması.
 3.  **Holographic Navigator & Study Mode:** Holografik kontrol panelinin açılması, not arama motorunun çalışması ve Çalışma Odası (Study Mode) sekmelerinin erişilebilirliği.
 4.  **Visual Evidence & Real State Verification:** `?testMode=true` ile devreye giren testMode debug status paneli yardımıyla gerçek state değişikliklerinin, not, eşya ve bağlantı ekleme işlemlerinin kararlı şekilde doğrulanması.
+5.  **Content Creation & Persistence:** Duvar notu, eşya notu, kitaplık kitabı, bağlantı, reload sonrası kalıcılık ve backup export akışı canlı Netlify deployment üzerinde doğrulanmıştır.
+6.  **Known Limits:** Headless CI ortamında WebGL video kaydı her zaman güvenilir olmadığı için düşük seviye çarpışma fiziği, piksel bazlı 3D görüntü doğrulaması ve GPU video kanıtı iddia edilmez; bunun yerine gerçek DOM/debug state kanıtı kullanılır.
 
 ---
 
