@@ -217,10 +217,12 @@ const getPresetItems = (lang = 'tr') => {
 export default function SarayApp() {
   const [notes, setNotes] = useState([]);
   const [lastAction, setLastAction] = useState('app-loaded');
+  const [isCanvasMounted, setIsCanvasMounted] = useState(false);
   const [crosshairHovered, setCrosshairHovered] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '' });
   const toastTimeoutRef = useRef(null);
   const [lang, setLang] = useState(() => localStorage.getItem('saray_app_lang') || 'tr');
+  const isTestMode = new URLSearchParams(window.location.search).get('testMode') === 'true';
 
   const [activeBookId, setActiveBookId] = useState(null);
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
@@ -2247,6 +2249,7 @@ export default function SarayApp() {
   }, [editorMode, notes, activeNoteId, placedItems, activeItemId, activeBookId]);
 
   const isAnyPanelOpen = isEditorOpen || isDashboardOpen || isItemDrawerOpen || isSettingsOpen || isConceptSelectOpen;
+  const isStudyModeActive = currentStudyIndex >= 0 && selectedStudyNotes.length > 0;
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -2257,6 +2260,7 @@ export default function SarayApp() {
         camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.6, 5] }}
         onCreated={({ gl }) => {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          setIsCanvasMounted(Boolean(gl.domElement && gl.domElement.isConnected));
         }}
       >
         {/* Sis ve Yumuşak Gökyüzü Atmosferi */}
@@ -2696,8 +2700,9 @@ export default function SarayApp() {
           </div>
         </div>
       )}
-      {window.location.search.includes('testMode') && (
-        <div style={{ display: 'none' }}>
+      {isTestMode && (
+        <>
+          <div style={{ display: 'none' }}>
           <button 
             data-testid="test-add-note-helper"
             onClick={() => {
@@ -2761,6 +2766,7 @@ export default function SarayApp() {
           >
             Test Create Link
           </button>
+          </div>
 
           {/* TestMode State Debug Panel */}
           <div 
@@ -2783,17 +2789,17 @@ export default function SarayApp() {
               pointerEvents: 'none'
             }}
           >
-            <div>app-loaded: <span data-testid="debug-app-loaded">true</span></div>
-            <div>route: <span data-testid="debug-route">/app</span></div>
-            <div>canvas-mounted: <span data-testid="debug-canvas-mounted">{typeof document !== 'undefined' && document.querySelector('canvas') ? 'true' : 'true'}</span></div>
+            <div>app-loaded: <span data-testid="debug-app-loaded">{isLoaded ? 'true' : 'false'}</span></div>
+            <div>route: <span data-testid="debug-route">{window.location.pathname}</span></div>
+            <div>canvas-mounted: <span data-testid="debug-canvas-mounted">{isCanvasMounted ? 'true' : 'false'}</span></div>
             <div>minimap-visible: <span data-testid="debug-minimap-visible">{typeof document !== 'undefined' && document.querySelector('.minimap-container') ? 'true' : 'false'}</span></div>
             <div>notes-count: <span data-testid="debug-notes-count">{notes.length}</span></div>
             <div>items-count: <span data-testid="debug-items-count">{placedItems.length}</span></div>
             <div>links-count: <span data-testid="debug-links-count">{connections.length}</span></div>
-            <div>study-mode-active: <span data-testid="debug-study-mode-active">{studySession ? 'true' : 'false'}</span></div>
+            <div>study-mode-active: <span data-testid="debug-study-mode-active">{isStudyModeActive ? 'true' : 'false'}</span></div>
             <div>last-action: <span data-testid="debug-last-action">{lastAction}</span></div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

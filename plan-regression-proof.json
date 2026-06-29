@@ -1,0 +1,57 @@
+{
+  "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
+  "type": "frontend",
+  "name": "Atrium 3D LOOP-05 Regression Proof",
+  "description": "Verify Atrium 3D branding, the renamed launch test id, strict testMode gating, and real debug evidence for canvas and Study Mode state after the LOOP-05 fixes deploy.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the landing page uses Atrium 3D branding, has no visible old Saray product branding, and shows a launch button with data-testid=open-atrium-button."
+    },
+    {
+      "type": "action",
+      "description": "Click the launch button with data-testid=open-atrium-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the app opens at /app without a TestMode Debug/Status Panel or test helper controls because testMode=true is not present."
+    },
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/?testMode=true"
+    },
+    {
+      "type": "action",
+      "description": "Click the launch button with data-testid=open-atrium-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the app opens at /app with testMode=true preserved in the URL and the TestMode Debug/Status Panel is present."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify data-testid=debug-app-loaded is true, data-testid=debug-route reports /app, a real canvas element exists, and data-testid=debug-canvas-mounted is true only alongside that real canvas."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify data-testid=debug-study-mode-active is false before a study session starts and no runtime error is shown."
+    },
+    {
+      "type": "action",
+      "description": "Record the current value of data-testid=debug-notes-count."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden test helper button with data-testid=test-add-note-helper."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify data-testid=debug-notes-count increases by exactly one, proving the debug panel is reporting real application state."
+    }
+  ]
+}

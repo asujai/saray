@@ -11,11 +11,11 @@
     },
     {
       "type": "assertion",
-      "description": "Verify the landing page with 'Atrium 3D' title is loaded and 'data-testid=open-saray-button' is visible"
+      "description": "Verify the landing page with 'Atrium 3D' title is loaded and 'data-testid=open-atrium-button' is visible"
     },
     {
       "type": "action",
-      "description": "Click the button 'data-testid=open-saray-button'"
+      "description": "Click the button 'data-testid=open-atrium-button'"
     },
     {
       "type": "assertion",

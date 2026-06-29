@@ -582,6 +582,7 @@ export default function UIOverlay({
   onSaveBook
 }) {
   const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.tr;
+  const isTestMode = new URLSearchParams(window.location.search).get('testMode') === 'true';
   const [pages, setPages] = useState([{ text: '', image: null, layout: 'image-top-text-bottom' }]);
 
   // Gelişmiş Ayarlar Paneli Tab ve Seçim State'leri
@@ -2712,7 +2713,7 @@ export default function UIOverlay({
               </label>
             )}
 
-            {window.location.search.includes('testMode') && !currentPage.image && (
+            {isTestMode && !currentPage.image && (
               <button
                 data-testid="test-upload-image-helper"
                 type="button"

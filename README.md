@@ -45,6 +45,11 @@ Bu proje, **TestSprite Hackathon Season 3** kapsamında TestSprite platformu ve 
 *   **Project ID:** `d591bb97-f4bd-4700-bc64-28efa2e4cff0`
 *   **Type:** Frontend E2E / AI-driven Plan Testing
 
+### LOOP-05 Regression Proof Hazırlığı
+*   **Plan dosyası:** `plan-regression-proof.json`
+*   **Amaç:** Atrium 3D marka temizliği, `open-atrium-button` geçişi, sıkı `?testMode=true` kapısı ve gerçek debug state kanıtlarını deploy sonrası doğrulamak.
+*   **Durum:** Kod ve plan hazırlandı. TestSprite Run ID yalnızca Netlify deploy tamamlanıp plan başarıyla geçtikten sonra buraya yazılacaktır.
+
 ---
 
 ## 📊 Loop Coverage / Test Kapsamı

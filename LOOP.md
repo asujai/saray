@@ -28,3 +28,11 @@
 * **Result:** PASSED (Run ID: `1d64ffb8-a229-4db7-b4d2-80a195360688`)
 * **Failure summary:** None.
 * **Fix summary:** Implemented a dedicated testMode debug panel in the application DOM that exposes genuine React state metrics (notes-count, items-count, links-count, study-mode status, canvas-mounted status, minimap-visible status, and last-action tracking) when `?testMode=true` is appended to the URL. This allows Playwright/TestSprite to reliably verify real 3D state updates and UI interactions even when the canvas video recording is blank due to headless browser WebGL hardware acceleration limits in the CI runner. All 14/14 aggregated steps passed successfully.
+
+### [LOOP-05] — Regression-Proof Debug Evidence Preparation
+* **Maker action:** Prepared a targeted LOOP-05 patch to remove old user-visible Saray branding from the landing metadata/localizations, rename the launch test id to `open-atrium-button`, preserve `?testMode=true` while entering `/app`, restrict TestMode helpers/panel to an exact `testMode=true` query value, and replace fake debug values with real application state evidence.
+* **Checker/TestSprite run:** Pending until the updated Netlify deploy is live. Planned command: `testsprite test create --plan-from plan-regression-proof.json --run --wait --target-url https://atrium3d.netlify.app/ --timeout 600 --output json`.
+* **Result:** Pending.
+* **Run ID:** Pending; write only after TestSprite passes on the deployed LOOP-05 build.
+* **Failure summary:** Pending.
+* **Fix summary:** `plan-regression-proof.json` is ready to verify strict TestMode gating, real canvas-mounted evidence, safe Study Mode debug state, and the Atrium 3D launch selector after deployment.

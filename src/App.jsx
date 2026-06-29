@@ -92,9 +92,9 @@ const TRANSLATIONS = {
   de: {
     badge: "🚀 Vorabzugang / Beta-Webversion",
     title: "Organisieren Sie Ihre Infos in einem 3D-Raum",
-    desc: "Saray ist eine Desktop-orientierte Mind-Mapping-Anwendung, mit der Sie Ihre Notizen, Bilder und Verbindungen in einem 3D-Arbeitszimmer organisieren können.",
-    betaMsg: '"Saray befindet sich derzeit in der Beta-Webversion. Die endgültige Desktop-App wird durch das Feedback der ersten Benutzer gestaltet."',
-    openButton: "Saray öffnen",
+    desc: "Atrium 3D ist eine Desktop-orientierte Mind-Mapping-Anwendung, mit der Sie Ihre Notizen, Bilder und Verbindungen in einem 3D-Arbeitszimmer organisieren können.",
+    betaMsg: '"Atrium 3D befindet sich derzeit in der Beta-Webversion. Die endgültige Desktop-App wird durch das Feedback der ersten Benutzer gestaltet."',
+    openButton: "Atrium 3D öffnen",
     experienceWarning: "🖥️ Das beste Erlebnis haben Sie auf dem Computer. Optionaler mobiler Steuerungsmodus und Tablet-Unterstützung sind aktiv.",
     betaSectionTitle: "Was ist in der Beta enthalten?",
     betaSectionDesc: "Kernfunktionen, die in der aktuellen Webversion verfügbar sind:",
@@ -120,8 +120,8 @@ const TRANSLATIONS = {
     future5Desc: "iOS- und Android-Mobilversionen neben Desktop-Anwendungen (PC/Mac).",
     earlyUserTitle: "Vorteile für frühe Anwender",
     earlyUserDesc: "Benutzer, die während der Beta-Phase Feedback geben, können in der endgültigen Version von besonderen Vorteilen, Rabatten und personalisierten Überraschungsinhalten (personalisierte Raumgegenstände, spezielle Dekoartikel, spezielle Themen oder Wandverkleidungen) profitieren.",
-    supportTitle: "Saray unterstützen",
-    supportDesc: "Wenn Sie die völlig unabhängige Entwicklung von Saray unterstützen und zu unserem Projekt beitragen möchten, können Sie die folgenden Support-Optionen nutzen:",
+    supportTitle: "Atrium 3D unterstützen",
+    supportDesc: "Wenn Sie die völlig unabhängige Entwicklung von Atrium 3D unterstützen und zu unserem Projekt beitragen möchten, können Sie die folgenden Support-Optionen nutzen:",
     support1Title: "Einen Kaffee spendieren",
     support1Desc: "Sie können unsere Motivation unterstützen, indem Sie dem Entwicklerteam einen einmaligen kleinen Kaffee spendieren.",
     support2Title: "Patreon-Patron werden",
@@ -135,9 +135,9 @@ const TRANSLATIONS = {
   it: {
     badge: "🚀 Accesso Anticipato / Versione Beta Web",
     title: "Organizza le tue informazioni in una stanza 3D",
-    desc: "Saray è un'applicazione per mappe mentali orientata al desktop che ti consente di organizzare appunti, immagini e connessioni in uno studio 3D.",
-    betaMsg: '"Saray è attualmente in versione beta web. L\'app desktop finale sarà modellata sui feedback dei primi utenti."',
-    openButton: "Apri Saray",
+    desc: "Atrium 3D è un'applicazione per mappe mentali orientata al desktop che ti consente di organizzare appunti, immagini e connessioni in uno studio 3D.",
+    betaMsg: '"Atrium 3D è attualmente in versione beta web. L\'app desktop finale sarà modellata sui feedback dei primi utenti."',
+    openButton: "Apri Atrium 3D",
     experienceWarning: "🖥️ La migliore esperienza si ottiene su computer. La modalità di controllo mobile e il supporto per tablet opzionali sono attivi.",
     betaSectionTitle: "Cosa c'è nella Beta?",
     betaSectionDesc: "Funzionalità principali disponibili nell'attuale versione web:",
@@ -163,8 +163,8 @@ const TRANSLATIONS = {
     future5Desc: "Versioni mobili iOS e Android insieme ad applicazioni desktop (PC/Mac).",
     earlyUserTitle: "Vantaggi per i primi utenti",
     earlyUserDesc: "Gli utenti che forniscono feedback durante il processo beta possono beneficiare di vantaggi speciali, sconti e contenuti a sorpresa personalizzati (oggetti per stanze personalizzati, oggetti decorativi speciali, temi o rivestimenti murali speciali) nella versione finale.",
-    supportTitle: "Supporta Saray",
-    supportDesc: "Se desideri supportare lo sviluppo completamente indipendente di Saray e contribuire al nostro progetto, puoi utilizzare le seguenti opzioni di supporto:",
+    supportTitle: "Supporta Atrium 3D",
+    supportDesc: "Se desideri supportare lo sviluppo completamente indipendente di Atrium 3D e contribuire al nostro progetto, puoi utilizzare le seguenti opzioni di supporto:",
     support1Title: "Offri un caffè",
     support1Desc: "Puoi sostenere la nostra motivazione offrendo al team di sviluppo un piccolo caffè una tantum.",
     support2Title: "Diventa un patrono su Patreon",
@@ -178,9 +178,9 @@ const TRANSLATIONS = {
   fr: {
     badge: "🚀 Accès Anticipé / Version Web Bêta",
     title: "Organisez vos informations dans une pièce 3D",
-    desc: "Saray est une application de cartes mentales orientée bureau qui vous permet d'organiser vos notes, images et connexions dans un bureau d'étude 3D.",
-    betaMsg: '"Saray est actuellement en version bêta web. L\'application de bureau finale sera façonnée par les retours des premiers utilisateurs."',
-    openButton: "Ouvrir Saray",
+    desc: "Atrium 3D est une application de cartes mentales orientée bureau qui vous permet d'organiser vos notes, images et connexions dans un bureau d'étude 3D.",
+    betaMsg: '"Atrium 3D est actuellement en version bêta web. L\'application de bureau finale sera façonnée par les retours des premiers utilisateurs."',
+    openButton: "Ouvrir Atrium 3D",
     experienceWarning: "🖥️ La meilleure expérience est sur ordinateur. Le mode de contrôle mobile et le support pour tablette en option sont actifs.",
     betaSectionTitle: "Qu'y a-t-il dans la Bêta ?",
     betaSectionDesc: "Fonctionnalités clés disponibles dans la version web actuelle :",
@@ -206,8 +206,8 @@ const TRANSLATIONS = {
     future5Desc: "Versions mobiles iOS et Android aux côtés d'applications de bureau (PC/Mac).",
     earlyUserTitle: "Avantages pour les premiers utilisateurs",
     earlyUserDesc: "Les utilisateurs qui fournissent des retours pendant le processus bêta peuvent bénéficier d'avantages spéciaux, de réductions et de contenus surprises personnalisés (objets de pièce personnalisés, objets décoratifs spéciaux, thèmes ou revêtements muraux spéciaux) dans la version finale.",
-    supportTitle: "Soutenir Saray",
-    supportDesc: "Si vous souhaitez soutenir le développement entièrement indépendant de Saray et contribuer à notre projet, vous pouvez utiliser les options de soutien suivantes :",
+    supportTitle: "Soutenir Atrium 3D",
+    supportDesc: "Si vous souhaitez soutenir le développement entièrement indépendant d'Atrium 3D et contribuer à notre projet, vous pouvez utiliser les options de soutien suivantes :",
     support1Title: "Offrir un café",
     support1Desc: "Vous pouvez soutenir notre motivation en offrant à l'équipe de développement un petit café unique.",
     support2Title: "Devenir parrain sur Patreon",
@@ -251,7 +251,8 @@ export default function App() {
 
   // Navigate function that pushes history state
   const navigate = (toPath) => {
-    window.history.pushState({}, '', toPath);
+    const nextUrl = `${toPath}${window.location.search}`;
+    window.history.pushState({}, '', nextUrl);
     setPath(toPath);
   };
 
@@ -432,7 +433,7 @@ export default function App() {
         {/* Call to Action */}
         <div style={{ marginBottom: '60px' }}>
           <button 
-            data-testid="open-saray-button"
+            data-testid="open-atrium-button"
             onClick={() => navigate('/app')}
             style={{
               background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',

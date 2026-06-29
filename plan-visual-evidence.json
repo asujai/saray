@@ -11,11 +11,11 @@
     },
     {
       "type": "assertion",
-      "description": "Verify the landing page has logo 'ATRIUM 3D' and 'data-testid=open-saray-button' is visible"
+      "description": "Verify the landing page has logo 'ATRIUM 3D' and 'data-testid=open-atrium-button' is visible"
     },
     {
       "type": "action",
-      "description": "Click the button 'data-testid=open-saray-button'"
+      "description": "Click the button 'data-testid=open-atrium-button'"
     },
     {
       "type": "assertion",
