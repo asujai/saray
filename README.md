@@ -45,10 +45,11 @@ Bu proje, **TestSprite Hackathon Season 3** kapsamında TestSprite platformu ve 
 *   **Project ID:** `d591bb97-f4bd-4700-bc64-28efa2e4cff0`
 *   **Type:** Frontend E2E / AI-driven Plan Testing
 
-### LOOP-05 Regression Proof Hazırlığı
+### LOOP-05 Regression Proof Sonucu
 *   **Plan dosyası:** `plan-regression-proof.json`
-*   **Amaç:** Atrium 3D marka temizliği, `open-atrium-button` geçişi, sıkı `?testMode=true` kapısı ve gerçek debug state kanıtlarını deploy sonrası doğrulamak.
-*   **Durum:** Kod ve plan hazırlandı. TestSprite Run ID yalnızca Netlify deploy tamamlanıp plan başarıyla geçtikten sonra buraya yazılacaktır.
+*   **Durum:** PASSED — Run ID: `29b698d2-8e31-4031-93b2-dbf667ffe6b6`
+*   **Doğrulananlar:** Atrium 3D marka temizliği, `open-atrium-button` geçişi, sıkı `?testMode=true` kapısı, gerçek canvas mount state kanıtı ve Netlify SPA fallback ile `/app` / `/app?testMode=true` route'larının canlıda 404 vermemesi.
+*   **Not:** Headless CI ortamlarında WebGL video capture sınırlı olabilir; bu nedenle LOOP-05, sahte görsel kanıt yerine canlı DOM/debug state değerlerini (`debug-canvas-mounted`, `debug-study-mode-active`, `debug-route`) kullanarak doğrulama yapar.
 
 ---
 
