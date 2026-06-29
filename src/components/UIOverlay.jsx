@@ -2250,8 +2250,9 @@ export default function UIOverlay({
                   </button>
 
                   {/* İptal */}
-                  <button 
-                    className="btn-primary-item" 
+                  <button
+                    data-testid="item-add-book-button"
+                    className="btn-primary-item"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -2418,6 +2419,7 @@ export default function UIOverlay({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '0 4px 10px 4px' }}>
               <span className="control-label" style={{ fontSize: '0.75rem' }}>{t.note_title}</span>
               <input
+                data-testid="item-note-title-input"
                 type="text"
                 value={itemNoteTitle}
                 onChange={(e) => setItemNoteTitle(e.target.value)}
@@ -3072,6 +3074,7 @@ export default function UIOverlay({
                 {lang === 'en' ? 'Book Spine Label' : 'Kitap Sırt Yazısı'} (Max 15)
               </label>
               <input
+                data-testid="book-spine-input"
                 type="text"
                 value={bookSpineLabel}
                 onChange={(e) => setBookSpineLabel(e.target.value.slice(0, 15))}
@@ -3094,6 +3097,7 @@ export default function UIOverlay({
                 {lang === 'en' ? 'Shelf / Slot Location' : 'Raf / Bölme Konumu'}
               </label>
               <select
+                data-testid="book-slot-select"
                 value={bookSlotIndex}
                 onChange={(e) => setBookSlotIndex(parseInt(e.target.value))}
                 style={{
@@ -3153,6 +3157,7 @@ export default function UIOverlay({
               {lang === 'en' ? 'Cancel' : 'İptal'}
             </button>
             <button 
+              data-testid="book-save-button"
               className="btn-primary" 
               style={{ background: 'var(--theme-success-bg)', color: 'var(--theme-success)', border: '1px solid var(--theme-success)' }} 
               onClick={handleSaveBookClick}

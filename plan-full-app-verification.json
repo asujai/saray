@@ -1,0 +1,305 @@
+{
+  "projectId": "d591bb97-f4bd-4700-bc64-28efa2e4cff0",
+  "type": "frontend",
+  "name": "Atrium 3D full app verification covers observable core flows",
+  "description": "A broad deterministic TestSprite suite for Atrium 3D that verifies routing, branding, strict TestMode gating, real DOM/state debug evidence, rendering boot, localization, themes, room color controls, wall notes, item placement, item notes, bookshelf books, conceptual links, dashboard search, Study Mode, persistence, backup export, and route reload stability. Collision and low-level 3D physics are intentionally not claimed because they are not reliably observable through TestSprite DOM evidence.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the landing page loads with Atrium 3D branding, has a launch button with data-testid=open-atrium-button, and does not show old Saray product branding in visible user-facing copy."
+    },
+    {
+      "type": "action",
+      "description": "Navigate directly to https://atrium3d.netlify.app/app"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the direct /app route loads the Atrium 3D app shell rather than a Netlify 404 page, and the TestMode Debug/Status Panel is not present."
+    },
+    {
+      "type": "action",
+      "description": "Navigate directly to https://atrium3d.netlify.app/app?testMode=false"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify testMode=false does not activate the TestMode Debug/Status Panel or hidden test helper controls."
+    },
+    {
+      "type": "action",
+      "description": "Navigate directly to https://atrium3d.netlify.app/not-a-real-route"
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the invalid route falls back to the SPA without showing a Netlify 404 page."
+    },
+    {
+      "type": "action",
+      "description": "Navigate to https://atrium3d.netlify.app/?testMode=true"
+    },
+    {
+      "type": "action",
+      "description": "Click the launch button with data-testid=open-atrium-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the app opens at /app while preserving testMode=true in the URL and the TestMode Debug/Status Panel is present."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden test helper with data-testid=test-reset-state-helper."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-app-loaded is true, debug-route is /app, a real canvas exists with debug-canvas-mounted true, debug-minimap-visible is true, debug-notes-count is 0, debug-items-count is 0, debug-links-count is 0, debug-books-count is 0, debug-study-mode-active is false, debug-language is tr, debug-ui-theme is dark, and debug-last-action is test-reset."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden test helper with data-testid=test-add-all-items-helper."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-items-count is 31, debug-item-types includes representative available item types such as desk, chair, libraryShelf, largeLibraryShelf, board, lamp, rug, pc, box, plant, and large_plant, and debug-last-action is items-batch-added."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden test helper with data-testid=test-reset-state-helper again to return to a clean deterministic state."
+    },
+    {
+      "type": "action",
+      "description": "Open settings with data-testid=settings-button."
+    },
+    {
+      "type": "action",
+      "description": "Open the language tab with data-testid=tab-language."
+    },
+    {
+      "type": "action",
+      "description": "Switch language to English with data-testid=lang-en-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify visible settings labels change to English and debug-language reports en."
+    },
+    {
+      "type": "action",
+      "description": "Switch language back to Turkish with data-testid=lang-tr-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify visible settings labels return to Turkish and debug-language reports tr."
+    },
+    {
+      "type": "action",
+      "description": "Open the appearance tab with data-testid=tab-appearance."
+    },
+    {
+      "type": "action",
+      "description": "Switch to light theme with data-testid=ui-theme-light-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the page applies the light UI theme and debug-ui-theme reports light while the settings modal remains readable."
+    },
+    {
+      "type": "action",
+      "description": "Switch back to dark theme with data-testid=ui-theme-dark-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the page applies the dark UI theme and debug-ui-theme reports dark while the settings modal remains readable."
+    },
+    {
+      "type": "action",
+      "description": "Open the room colors tab with data-testid=tab-room-colors."
+    },
+    {
+      "type": "action",
+      "description": "Select the study room in data-testid=room-color-select."
+    },
+    {
+      "type": "action",
+      "description": "Choose the floor target with data-testid=color-target-floor."
+    },
+    {
+      "type": "action",
+      "description": "Choose a preset color with data-testid=color-dot-preset."
+    },
+    {
+      "type": "action",
+      "description": "Apply the room color with data-testid=apply-room-color-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the room color action completes without closing the app or hiding the debug panel."
+    },
+    {
+      "type": "action",
+      "description": "Close settings by clicking data-testid=settings-button."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden test helper with data-testid=test-add-note-helper to create a wall note."
+    },
+    {
+      "type": "action",
+      "description": "Fill the note editor textarea with 'Codex wall note: Turkish ASCII text, English text, and a deliberately long but safe regression paragraph for layout stability.'"
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden image helper with data-testid=test-upload-image-helper."
+    },
+    {
+      "type": "action",
+      "description": "Save the wall note with data-testid=save-note-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-notes-count is 1 and debug-last-action is note-created, proving the wall note was saved into real app state."
+    },
+    {
+      "type": "action",
+      "description": "Open the item drawer with data-testid=add-item-button."
+    },
+    {
+      "type": "action",
+      "description": "Place a desk with data-testid=item-card-desk."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-items-count is 1, debug-item-types includes desk, debug-last-action is item-added, and the item editor bar is visible."
+    },
+    {
+      "type": "action",
+      "description": "Open the item note editor with data-testid=item-add-note-button."
+    },
+    {
+      "type": "action",
+      "description": "Fill data-testid=item-note-title-input with 'Codex Desk Note'."
+    },
+    {
+      "type": "action",
+      "description": "Fill the note editor textarea with 'Codex item note attached to the desk.'"
+    },
+    {
+      "type": "action",
+      "description": "Save the item note with data-testid=save-note-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-notes-count is 2 and debug-last-action is note-created, proving the item-attached note is stored in app state."
+    },
+    {
+      "type": "action",
+      "description": "Open the item drawer again with data-testid=add-item-button."
+    },
+    {
+      "type": "action",
+      "description": "Place a library shelf with data-testid=item-card-libraryShelf."
+    },
+    {
+      "type": "action",
+      "description": "Open the book modal with data-testid=item-add-book-button."
+    },
+    {
+      "type": "action",
+      "description": "Fill data-testid=book-spine-input with 'CodexBook'."
+    },
+    {
+      "type": "action",
+      "description": "Save the book with data-testid=book-save-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-items-count is 2, debug-item-types includes libraryShelf, debug-books-count is 1, and debug-last-action is book-added."
+    },
+    {
+      "type": "action",
+      "description": "Click the hidden helper with data-testid=test-create-link-helper to create a conceptual 3D relation."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-links-count is 1 and debug-last-action is link-created."
+    },
+    {
+      "type": "action",
+      "description": "Open the holographic dashboard with data-testid=dashboard-button."
+    },
+    {
+      "type": "action",
+      "description": "Fill data-testid=dashboard-search-input with 'Codex'."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the dashboard search results include the Codex wall note and Codex Desk Note item note."
+    },
+    {
+      "type": "action",
+      "description": "Open the connections tab with data-testid=dash-tab-connections."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the connections tab shows a created relation rather than the empty connections state."
+    },
+    {
+      "type": "action",
+      "description": "Open the Study Mode tab with data-testid=dash-tab-study."
+    },
+    {
+      "type": "action",
+      "description": "Select all current room notes with data-testid=study-select-all-button."
+    },
+    {
+      "type": "action",
+      "description": "Start Study Mode with data-testid=study-start-session-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the Study Mode HUD is visible and debug-study-mode-active is true."
+    },
+    {
+      "type": "action",
+      "description": "Advance Study Mode with data-testid=study-hud-next-button."
+    },
+    {
+      "type": "action",
+      "description": "Go back in Study Mode with data-testid=study-hud-prev-button."
+    },
+    {
+      "type": "action",
+      "description": "Exit Study Mode with data-testid=study-hud-exit-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-study-mode-active is false after exiting Study Mode."
+    },
+    {
+      "type": "action",
+      "description": "Reload the current app page."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify the app reloads without a 404, debug-route remains /app, debug-canvas-mounted is true, debug-notes-count remains 2, debug-items-count remains 2, debug-books-count remains 1, and debug-links-count remains 1."
+    },
+    {
+      "type": "action",
+      "description": "Open settings with data-testid=settings-button."
+    },
+    {
+      "type": "action",
+      "description": "Open the backup tab with data-testid=tab-backup."
+    },
+    {
+      "type": "action",
+      "description": "Export a backup with data-testid=export-backup-button."
+    },
+    {
+      "type": "assertion",
+      "description": "Verify debug-last-action is backup-exported and the app remains stable after exporting notes, items, books, and links."
+    }
+  ]
+}

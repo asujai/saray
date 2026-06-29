@@ -29,6 +29,48 @@ function PlayerRoomTracker({ getRoomIdFromPosition, onRoomChange }) {
 }
 
 const LOCAL_STORAGE_KEY = 'saray_3d_mindmap_notes';
+const DEFAULT_CONNECTION_CONCEPTS = [
+  { id: "concept_general", name: "Genel", color: "#00f0ff" },
+  { id: "concept_idea", name: "Fikir", color: "#a78bfa" },
+  { id: "concept_source", name: "Kaynak", color: "#60a5fa" },
+  { id: "concept_task", name: "Görev", color: "#facc15" },
+  { id: "concept_cause", name: "Sebep-Sonuç", color: "#fb923c" },
+  { id: "concept_continue", name: "Devamı", color: "#4ade80" },
+  { id: "concept_compare", name: "Karşılaştırma", color: "#f472b6" }
+];
+const TEST_ITEM_TYPES = [
+  'desk',
+  'large_desk',
+  'meeting_table',
+  'l_desk',
+  'round_table',
+  'chair',
+  'office_chair',
+  'guest_chair',
+  'stool',
+  'shelf',
+  'large_bookshelf',
+  'libraryShelf',
+  'largeLibraryShelf',
+  'low_bookshelf',
+  'file_cabinet',
+  'drawer_cabinet',
+  'large_rack',
+  'wallshelf',
+  'small_wallshelf',
+  'board',
+  'large_board',
+  'whiteboard',
+  'lamp',
+  'floor_lamp',
+  'desk_lamp',
+  'rug',
+  'pc',
+  'box',
+  'archive_box',
+  'plant',
+  'large_plant'
+];
 
 const getPresetItems = (lang = 'tr') => {
   const isEn = lang === 'en';
@@ -690,6 +732,91 @@ export default function SarayApp() {
     }
   };
 
+  const handleTestResetState = async () => {
+    const emptyRoomColors = {
+      hall: null,
+      bedroom: null,
+      kitchen: null,
+      study: null,
+      living: null
+    };
+
+    try {
+      await saveAllNotesToDB([]);
+    } catch (err) {
+      console.error('Test reset DB clear failed:', err);
+    }
+
+    setNotes([]);
+    setPlacedItems([]);
+    setConnections([]);
+    setConnectionConcepts(DEFAULT_CONNECTION_CONCEPTS);
+    setConnectionVisibilityMode('selected-only');
+    setRoomFloorColors(emptyRoomColors);
+    setRoomWallColors(emptyRoomColors);
+    setWallCustomizations({});
+    setSelectedStudyNotes([]);
+    setCurrentStudyIndex(-1);
+    setActiveNoteId(null);
+    setActiveItemId(null);
+    setActiveBookId(null);
+    setIsEditorOpen(false);
+    setIsDashboardOpen(false);
+    setIsItemDrawerOpen(false);
+    setIsSettingsOpen(false);
+    setIsConceptSelectOpen(false);
+    setPendingConnectionSource(null);
+    setPendingConnectionTarget(null);
+    setTheme('minimal');
+    setUiTheme('dark');
+    setLang('tr');
+    setLastAction('test-reset');
+
+    localStorage.setItem('saray_mindmap_v3_reset', 'true');
+    localStorage.setItem('saray_preset_rooms_initialized', 'true');
+    localStorage.setItem('saray_placed_items', '[]');
+    localStorage.setItem('saray_connections', '[]');
+    localStorage.setItem('saray_connection_concepts', JSON.stringify(DEFAULT_CONNECTION_CONCEPTS));
+    localStorage.setItem('saray_connection_visibility_mode', 'selected-only');
+    localStorage.setItem('saray_room_floor_colors', JSON.stringify(emptyRoomColors));
+    localStorage.setItem('saray_room_wall_colors', JSON.stringify(emptyRoomColors));
+    localStorage.setItem('saray_wall_customizations', '{}');
+    localStorage.setItem('saray_mindmap_theme', 'minimal');
+    localStorage.setItem('saray_ui_theme', 'dark');
+    localStorage.setItem('saray_app_lang', 'tr');
+    localStorage.setItem('saray_lang', 'tr');
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  };
+
+  const handleTestAddAllItems = () => {
+    const baseX = 7;
+    const baseZ = 3;
+    const spacing = 2.2;
+    const testItems = TEST_ITEM_TYPES.map((type, index) => ({
+      id: `test_item_${type}_${Date.now()}_${index}`,
+      type,
+      source: 'testMode',
+      roomId: 'study',
+      position: {
+        x: baseX + ((index % 6) * spacing),
+        y: 0.005,
+        z: baseZ + (Math.floor(index / 6) * spacing)
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: '#818cf8',
+      linkedNote: null,
+      books: type === 'libraryShelf' || type === 'largeLibraryShelf' ? [] : undefined,
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }));
+
+    setPlacedItems(testItems);
+    setActiveItemId(testItems[0]?.id || null);
+    setLastAction('items-batch-added');
+  };
+
   const handleSetIsAddMode = (val) => {
     if (val && pendingConnectionSource) {
       handleCancelConnection();
@@ -1111,6 +1238,7 @@ export default function SarayApp() {
     setIsBookModalOpen(false);
     setBookModalData(null);
     showSavedToast(lang === 'en' ? '✓ Book saved' : '✓ Kitap kaydedildi');
+    setLastAction('book-added');
   };
 
   const handleSaveBookNote = (bookId, pages, currentPageIndex, title, iconType = 'info', tags = []) => {
@@ -2250,6 +2378,7 @@ export default function SarayApp() {
 
   const isAnyPanelOpen = isEditorOpen || isDashboardOpen || isItemDrawerOpen || isSettingsOpen || isConceptSelectOpen;
   const isStudyModeActive = currentStudyIndex >= 0 && selectedStudyNotes.length > 0;
+  const booksCount = placedItems.reduce((total, item) => total + ((item.books || []).length), 0);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -2703,6 +2832,18 @@ export default function SarayApp() {
       {isTestMode && (
         <>
           <div style={{ display: 'none' }}>
+          <button
+            data-testid="test-reset-state-helper"
+            onClick={handleTestResetState}
+          >
+            Test Reset State
+          </button>
+          <button
+            data-testid="test-add-all-items-helper"
+            onClick={handleTestAddAllItems}
+          >
+            Test Add All Items
+          </button>
           <button 
             data-testid="test-add-note-helper"
             onClick={() => {
@@ -2793,8 +2934,16 @@ export default function SarayApp() {
             <div>route: <span data-testid="debug-route">{window.location.pathname}</span></div>
             <div>canvas-mounted: <span data-testid="debug-canvas-mounted">{isCanvasMounted ? 'true' : 'false'}</span></div>
             <div>minimap-visible: <span data-testid="debug-minimap-visible">{typeof document !== 'undefined' && document.querySelector('.minimap-container') ? 'true' : 'false'}</span></div>
+            <div>language: <span data-testid="debug-language">{lang}</span></div>
+            <div>ui-theme: <span data-testid="debug-ui-theme">{uiTheme}</span></div>
+            <div>mindmap-theme: <span data-testid="debug-mindmap-theme">{theme}</span></div>
+            <div>current-room: <span data-testid="debug-current-room">{currentPlayerRoomId}</span></div>
+            <div>movement-mode: <span data-testid="debug-movement-mode">{movementMode}</span></div>
+            <div>camera-view: <span data-testid="debug-camera-view">{cameraView}</span></div>
             <div>notes-count: <span data-testid="debug-notes-count">{notes.length}</span></div>
             <div>items-count: <span data-testid="debug-items-count">{placedItems.length}</span></div>
+            <div>item-types: <span data-testid="debug-item-types">{placedItems.map(item => item.type).join(',')}</span></div>
+            <div>books-count: <span data-testid="debug-books-count">{booksCount}</span></div>
             <div>links-count: <span data-testid="debug-links-count">{connections.length}</span></div>
             <div>study-mode-active: <span data-testid="debug-study-mode-active">{isStudyModeActive ? 'true' : 'false'}</span></div>
             <div>last-action: <span data-testid="debug-last-action">{lastAction}</span></div>
