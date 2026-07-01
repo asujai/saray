@@ -2,6 +2,43 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Eye, Edit3, Save, Trash2, X, Plus, ChevronLeft, ChevronRight, ImagePlus, Compass, Settings } from 'lucide-react';
 
+function resizeAndCompressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 512;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      callback(compressedDataUrl);
+    };
+    img.onerror = () => {
+      callback(null);
+    };
+    img.src = event.target.result;
+  };
+  reader.onerror = () => callback(null);
+  reader.readAsDataURL(file);
+}
+
 const COLOR_PALETTE = [
   { name: 'Sarı', value: '#fef08a' },
   { name: 'Mavi', value: '#bfdbfe' },
@@ -112,6 +149,7 @@ const UI_TRANSLATIONS = {
     item_pc: 'Bilgisayar Seti',
     item_box: 'Koli / Kutu',
     item_archive_box: 'Arşiv Sandığı',
+    item_customVisualBox: 'Özel Görsel Kutu',
     item_plant: 'Saksı Bitkisi',
     item_large_plant: 'Büyük Saksı Bitkisi',
     item_item: 'Eşya',
@@ -303,6 +341,7 @@ const UI_TRANSLATIONS = {
     item_pc: 'PC Set',
     item_box: 'Box',
     item_archive_box: 'Archive Chest',
+    item_customVisualBox: 'Custom Visual Box',
     item_plant: 'Potted Plant',
     item_large_plant: 'Large Potted Plant',
     item_item: 'Item',
@@ -539,6 +578,10 @@ export default function UIOverlay({
   onStartEdit,
   onSaveEdit,
   onCancelEdit,
+  isItemMovingActive = false,
+  onStartMove = () => {},
+  onSaveMove = () => {},
+  onCancelMove = () => {},
   toast = null,
   crosshairHovered = null,
   notes = [],
@@ -2052,6 +2095,7 @@ export default function UIOverlay({
                 { id: 'pc', label: t.item_pc, icon: '💻' },
                 { id: 'box', label: t.item_box, icon: '📦' },
                 { id: 'archive_box', label: t.item_archive_box, icon: '🗳️' },
+                { id: 'customVisualBox', label: t.item_customVisualBox, icon: '🖼️' },
                 { id: 'plant', label: t.item_plant, icon: '🪴' },
                 { id: 'large_plant', label: t.item_large_plant, icon: '🌴' }
               ]
@@ -2084,8 +2128,76 @@ export default function UIOverlay({
         </div>
       </div>
 
+      {/* Taşıma Modu Küçük Kontrol Alanı */}
+      {isItemMovingActive && activeItemId && !isEditorOpen && (() => {
+        const selectedItem = placedItems.find((i) => i.id === activeItemId);
+        if (!selectedItem) return null;
+        
+        return (
+          <div 
+            className="item-editor-bar glass-panel interactive-ui"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
+              zIndex: 99999,
+              width: '90%',
+              maxWidth: '500px'
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--theme-accent)' }}>
+                🚀 {lang === 'en' ? 'Item Moving Mode' : 'Taşıma Modu Aktif'}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {lang === 'en' ? 'Drag to move (Use WASD to walk). Hold Space to move vertical (up-down).' : 'Sürükleyerek taşıyın (WASD ile yürüyün). Dikey (yukarı-aşağı) taşıma için Space tuşuna basılı tutun.'}
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="btn-primary-item"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancelMove();
+                }}
+                style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'var(--theme-danger-bg)', color: 'var(--theme-danger)', border: '1px solid var(--theme-danger)', borderRadius: '6px' }}
+              >
+                {t.cancel}
+              </button>
+              <button
+                className="btn-primary-item"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSaveMove();
+                }}
+                style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'var(--theme-success-bg)', color: 'var(--theme-success)', border: '1px solid var(--theme-success)', borderRadius: '6px' }}
+              >
+                {t.save}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Seçili Eşya Düzenleme Paneli */}
-      {activeItemId && !isEditorOpen && (() => {
+      {activeItemId && !isEditorOpen && !isItemMovingActive && (() => {
         const selectedItem = placedItems.find((i) => i.id === activeItemId);
         if (!selectedItem) return null;
 
@@ -2121,7 +2233,8 @@ export default function UIOverlay({
           floor_lamp: t.item_floor_lamp,
           desk_lamp: t.item_desk_lamp,
           large_plant: t.item_large_plant,
-          archive_box: t.item_archive_box
+          archive_box: t.item_archive_box,
+          customVisualBox: t.item_customVisualBox
         }[selectedItem.type] || t.item_item;
 
         // Renk paleti seçenekleri
@@ -2169,70 +2282,220 @@ export default function UIOverlay({
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
-            style={{ padding: isItemEditingActive ? '12px 20px' : '16px 24px', flexWrap: 'wrap', gap: '12px' }}
+            style={isItemEditingActive ? {
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '16px', 
+              padding: '20px 24px', 
+              width: '100%', 
+              maxWidth: '800px',
+              margin: '0 auto', 
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)'
+            } : { 
+              padding: '16px 24px', 
+              flexWrap: 'wrap', 
+              gap: '12px' 
+            }}
           >
             <div className="item-info">
               <span className="item-label-glow">{defaultLabel}</span>
-              <span className="item-room-label">{lang === 'en' ? 'Room' : 'Oda'}: {roomNames[selectedItem.roomId] || selectedItem.roomId}</span>
+              <span className="item-room-label" style={{ marginLeft: '12px' }}>{lang === 'en' ? 'Room' : 'Oda'}: {roomNames[selectedItem.roomId] || selectedItem.roomId}</span>
             </div>
 
             {isItemEditingActive ? (
-              // DÜZENLEME MODU AÇIKKEN
-              <div className="editor-controls-group" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
-                {/* Hassas Konum Butonları */}
-                <div className="editor-control-section" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span className="control-label">{t.item_positioning}</span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('y', 0.1); }} title="Yukarı Kaldır (PageUp)">Y+ ⬆️</button>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('y', -0.1); }} title="Aşağı İndir (PageDown)">Y- ⬇️</button>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('x', -0.1); }} title="Sola Kaydır">X- ⬅️</button>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('x', 0.1); }} title="Sağa Kaydır">X+ ➡️</button>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('z', -0.1); }} title="İleri Kaydır">Z- ⬆️</button>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleMoveCoord('z', 0.1); }} title="Geri Kaydır">Z+ ⬇️</button>
-                  </div>
+              // DÜZENLEME MODU AÇIKKEN (Sadeleştirilmiş Yeni Tasarım)
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                {/* 1. Üst Bilgilendirme */}
+                <div style={{ fontSize: '0.8rem', color: 'var(--theme-accent)', background: 'var(--theme-accent-bg)', padding: '6px 12px', borderRadius: '6px', width: '100%' }}>
+                  ⚙️ {lang === 'en' ? 'Editing item properties. Dragging is disabled in this mode.' : 'Eşya özellikleri düzenleniyor. Bu moddayken sahnede sürükleme yapılamaz.'}
                 </div>
 
-                {/* Renk Seçimi */}
-                <div className="editor-control-section">
-                  <span className="control-label">{t.item_color}</span>
-                  <div className="color-options-row">
-                    {colors.map((c) => (
-                      <div
-                        key={c}
-                        className={`color-option-dot ${selectedItem.color === c ? 'selected' : ''}`}
-                        style={{ backgroundColor: c }}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.currentTarget.blur();
-                          onUpdatePlacedItem(activeItemId, { color: c });
-                        }}
-                      />
-                    ))}
+                {/* 2. Temel Kontroller Satırı */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                  {/* Renk Seçimi */}
+                  <div className="editor-control-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span className="control-label" style={{ fontWeight: '600' }}>🎨 {t.item_color}</span>
+                    <div className="color-options-row" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {colors.map((c) => (
+                        <div
+                          key={c}
+                          className={`color-option-dot ${selectedItem.color === c ? 'selected' : ''}`}
+                          style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            backgroundColor: c, 
+                            cursor: 'pointer',
+                            border: selectedItem.color === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)',
+                            boxShadow: selectedItem.color === c ? '0 0 8px rgba(255,255,255,0.6)' : 'none'
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.blur();
+                            onUpdatePlacedItem(activeItemId, { color: c });
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Döndürme */}
+                  <div className="editor-control-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span className="control-label" style={{ fontWeight: '600' }}>🔄 {t.item_rotate}</span>
+                    <div className="btn-group" style={{ display: 'flex', gap: '4px' }}>
+                      <button className="btn-control" style={{ flex: 1, padding: '6px 12px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleRotate('left'); }} title="Sola Döndür (Q)">↺ Sola</button>
+                      <button className="btn-control" style={{ flex: 1, padding: '6px 12px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleRotate('right'); }} title="Sağa Döndür (E)">Sağa ↻</button>
+                    </div>
+                  </div>
+
+                  {/* Boyut Ayarı (Genel Eşyalar İçin) */}
+                  {selectedItem.type !== 'customVisualBox' && (
+                    <div className="editor-control-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span className="control-label" style={{ fontWeight: '600' }}>📐 {t.item_size}</span>
+                      <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <button className="btn-control" style={{ padding: '6px 12px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(-0.1); }} title="Küçült">-</button>
+                        <span className="value-display" style={{ minWidth: '40px', textAlign: 'center', fontWeight: 'bold' }}>{scaleVal.toFixed(1)}x</span>
+                        <button className="btn-control" style={{ padding: '6px 12px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(0.1); }} title="Büyüt">+</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Ölçek (Boyut) */}
-                <div className="editor-control-section">
-                  <span className="control-label">{t.item_size}</span>
-                  <div className="btn-group">
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(-0.1); }} title="Küçült (-)">-</button>
-                    <span className="value-display">{scaleVal.toFixed(1)}x</span>
-                    <button className="btn-control" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(0.1); }} title="Büyüt (+)">+</button>
-                  </div>
-                </div>
+                {/* 3. Özel Görsel Kutu Ayarları */}
+                {selectedItem.type === 'customVisualBox' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', width: '100%' }}>
+                    {/* Manuel Kutu Boyutları (Genişlik, Yükseklik, Derinlik) */}
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
+                      {/* Genişlik */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Width' : 'Genişlik'}</span>
+                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.max(0.1, (selectedItem.boxWidth || 1) - 0.1) }); }}>-</button>
+                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxWidth || 1).toFixed(1)}m</span>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.min(3.0, (selectedItem.boxWidth || 1) + 0.1) }); }}>+</button>
+                        </div>
+                      </div>
 
-                {/* Döndürme */}
-                <div className="editor-control-section">
-                  <span className="control-label">{t.item_rotate}</span>
-                  <div className="btn-group">
-                    <button className="btn-control font-arrow" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleRotate('left'); }} title="Sola Döndür (Q)">↺</button>
-                    <button className="btn-control font-arrow" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleRotate('right'); }} title="Sağa Döndür (E)">↻</button>
-                  </div>
-                </div>
+                      {/* Yükseklik */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Height' : 'Yükseklik'}</span>
+                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.max(0.1, (selectedItem.boxHeight || 1) - 0.1) }); }}>-</button>
+                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxHeight || 1).toFixed(1)}m</span>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.min(3.0, (selectedItem.boxHeight || 1) + 0.1) }); }}>+</button>
+                        </div>
+                      </div>
 
-                {/* Aksiyon Grubu */}
-                <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                      {/* Derinlik */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Depth' : 'Derinlik'}</span>
+                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.max(0.01, (selectedItem.boxDepth || 0.1) - 0.01) }); }}>-</button>
+                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxDepth || 0.1).toFixed(2)}m</span>
+                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.min(1.0, (selectedItem.boxDepth || 0.1) + 0.01) }); }}>+</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Görsel Yükleme ve Yüzey Ayarları */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                      {/* Görsel Yükle */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>🖼️ {lang === 'en' ? 'Image' : 'Görsel'}</span>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="custom-box-image-upload"
+                            style={{ display: 'none' }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const file = e.target.files[0];
+                              if (file) {
+                                resizeAndCompressImage(file, (compressedDataUrl) => {
+                                  if (compressedDataUrl) {
+                                    onUpdatePlacedItem(activeItemId, { imageData: compressedDataUrl });
+                                  }
+                                });
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor="custom-box-image-upload"
+                            className="btn-control"
+                            style={{ cursor: 'pointer', flex: 1, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: 'var(--button-bg-secondary)', color: 'var(--theme-accent)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            {selectedItem.imageData ? (lang === 'en' ? 'Change' : 'Değiştir') : (lang === 'en' ? 'Upload' : 'Yükle')}
+                          </label>
+                          {selectedItem.imageData && (
+                            <button
+                              className="btn-control"
+                              style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-bg)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--theme-danger-bg)' }}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdatePlacedItem(activeItemId, { imageData: '' });
+                              }}
+                              title="Görseli Kaldır"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Yüzey */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {lang === 'en' ? 'Apply Face' : 'Yüzey'}</span>
+                        <select
+                          className="btn-control"
+                          value={selectedItem.imageFace || 'front'}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            onUpdatePlacedItem(activeItemId, { imageFace: e.target.value });
+                          }}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
+                        >
+                          <option value="front">{lang === 'en' ? 'Front Face' : 'Ön Yüz'}</option>
+                          <option value="top">{lang === 'en' ? 'Top Face' : 'Üst Yüz'}</option>
+                        </select>
+                      </div>
+
+                      {/* Görsel Düzen */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📐 {lang === 'en' ? 'Image Fit' : 'Görsel Düzen'}</span>
+                        <select
+                          className="btn-control"
+                          value={selectedItem.imageFit || 'contain'}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            onUpdatePlacedItem(activeItemId, { imageFit: e.target.value });
+                          }}
+                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
+                        >
+                          <option value="contain">{lang === 'en' ? 'Fit (Contain)' : 'Sığdır (Contain)'}</option>
+                          <option value="cover">{lang === 'en' ? 'Crop (Cover)' : 'Kırp (Cover)'}</option>
+                          <option value="stretch">{lang === 'en' ? 'Stretch' : 'Uzat (Stretch)'}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. İnce Ayarlar (Katlanabilir Dikey Alan) */}
+                <FineTuneAccordion t={t} handleMoveCoord={handleMoveCoord} />
+
+                {/* 5. Aksiyon Grubu (Sağ Alt Köşe) */}
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px', width: '100%' }}>
                   {/* Silme */}
                   <button 
                     className="btn-danger-item" 
@@ -2243,6 +2506,7 @@ export default function UIOverlay({
                       onDeletePlacedItem(activeItemId);
                       onCancelEdit(); // State temizliği
                     }}
+                    style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px' }}
                     title="Eşyayı Sil (Delete)"
                   >
                     <Trash2 size={16} />
@@ -2259,7 +2523,7 @@ export default function UIOverlay({
                       onCancelEdit();
                     }}
                     title="Değişiklikleri iptal et ve eski haline döndür (Escape)"
-                    style={{ background: 'var(--theme-danger-bg)', color: 'var(--theme-danger)', border: '1px solid var(--theme-danger)' }}
+                    style={{ padding: '8px 16px', background: 'var(--theme-danger-bg)', color: 'var(--theme-danger)', border: '1px solid var(--theme-danger)', borderRadius: '6px' }}
                   >
                     {t.cancel}
                   </button>
@@ -2274,7 +2538,7 @@ export default function UIOverlay({
                       onSaveEdit();
                     }}
                     title="Değişiklikleri kaydet"
-                    style={{ background: 'var(--theme-success-bg)', color: 'var(--theme-success)', border: '1px solid var(--theme-success)' }}
+                    style={{ padding: '8px 16px', background: 'var(--theme-success-bg)', color: 'var(--theme-success)', border: '1px solid var(--theme-success)', borderRadius: '6px' }}
                   >
                     {t.save}
                   </button>
@@ -2287,7 +2551,25 @@ export default function UIOverlay({
                   💡 {t.item_edit_hint}
                 </span>
  
-                {/* Manuel Düzenleme Moduna Geçiş Butonu */}
+                {/* Yerini Değiştir Butonu */}
+                <button
+                  className="btn-primary-item"
+                  style={{
+                    background: 'var(--button-bg-secondary)',
+                    color: 'var(--theme-accent)',
+                    border: '1px solid var(--theme-accent)'
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.blur();
+                    onStartMove(activeItemId);
+                  }}
+                >
+                  🚀 {lang === 'en' ? 'Move' : 'Yerini Değiştir'}
+                </button>
+
+                {/* Özellikleri Düzenle Butonu */}
                 <button
                   className="btn-primary-item"
                   style={{
@@ -2302,7 +2584,7 @@ export default function UIOverlay({
                     onStartEdit(activeItemId);
                   }}
                 >
-                  {t.item_edit_btn}
+                  ⚙️ {lang === 'en' ? 'Properties' : 'Özellikleri Düzenle'}
                 </button>
  
                 {/* 3D Bağlantı Başlat */}
@@ -3477,6 +3759,44 @@ export default function UIOverlay({
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, opacity: 0.8 }}>{t.mobile_look}</span>
             <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, marginTop: '4px' }}>{t.mobile_look_desc}</span>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FineTuneAccordion({ t, handleMoveCoord }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', overflow: 'hidden', width: '100%' }}>
+      <button
+        className="interactive-ui"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          width: '100%', 
+          padding: '10px 14px', 
+          background: 'rgba(255,255,255,0.02)', 
+          border: 'none', 
+          color: 'var(--text-muted)', 
+          textAlign: 'left', 
+          fontSize: '0.8rem', 
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <span>🛠️ {t.lang === 'en' ? 'Fine Tuning (Positioning)' : 'İnce Ayar (Konumlandırma)'}</span>
+        <span style={{ fontSize: '0.65rem' }}>{isOpen ? '▲' : '▼'}</span>
+      </button>
+      {isOpen && (
+        <div style={{ padding: '12px 14px', background: 'rgba(0,0,0,0.1)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('y', 0.1)}>Y+ ⬆️ (Yukarı)</button>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('y', -0.1)}>Y- ⬇️ (Aşağı)</button>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('x', -0.1)}>X- ⬅️ (Sol)</button>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('x', 0.1)}>X+ ➡️ (Sağ)</button>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('z', -0.1)}>Z- ⬆️ (İleri)</button>
+          <button className="btn-control" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => handleMoveCoord('z', 0.1)}>Z+ ⬇️ (Geri)</button>
         </div>
       )}
     </div>

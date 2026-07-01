@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Text, Html, useGLTF, Edges } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -1155,6 +1155,7 @@ export default function PlacedItem3D({
   isFlashed,
   isAddMode,
   isItemEditingActive,
+  isItemMovingActive,
   onSelect,
   onStartEdit,
   onUpdate,
@@ -1165,6 +1166,7 @@ export default function PlacedItem3D({
   const dragRef = useRef({ isDragging: false, pointerId: null, startPosition: [0, 0, 0], dragged: false, timer: null, progressInterval: null });
   const helperMeshRef = useRef();
   const iconRef = useRef();
+  const itemGroupRef = useRef();
   const [longPressProgress, setLongPressProgress] = useState(0);
 
   useFrame((state) => {
@@ -1209,15 +1211,32 @@ export default function PlacedItem3D({
 
     const pos = item.position || { x: 0, y: 0, z: 0 };
     const posArray = [pos.x ?? 0, pos.y ?? 0, pos.z ?? 0];
+    const isThisItemMoving = isItemMovingActive && isSelected;
+
+    // Normal varsayılan Y konumu hesapla
+    const defaultY = (item.type === 'wallshelf' || item.type === 'small_wallshelf' || item.type === 'large_board') 
+      ? 1.4 
+      : item.type === 'desk_lamp' 
+        ? 0.72 
+        : item.type === 'rug' 
+          ? 0.001 
+          : 0.005;
 
     dragRef.current = {
-      isDragging: isItemEditingActive,
+      isDragging: isThisItemMoving,
       pointerId: e.pointerId,
       startPosition: [...posArray],
+      startY: e.clientY,
+      startYCoord: pos.y ?? defaultY,
       dragged: false
     };
 
-    if (!isItemEditingActive) {
+    if (isThisItemMoving) {
+      window.isDraggingPlacedItem = true;
+      try {
+        e.target.setPointerCapture(e.pointerId);
+      } catch {}
+    } else {
       dragRef.current.timer = setTimeout(() => {
         clearLongPress();
         onStartEdit(item.id);
@@ -1232,12 +1251,6 @@ export default function PlacedItem3D({
           clearInterval(dragRef.current.progressInterval);
         }
       }, 100);
-    }
-
-    if (isItemEditingActive) {
-      try {
-        e.target.setPointerCapture(e.pointerId);
-      } catch {}
     }
   };
 
@@ -1255,34 +1268,55 @@ export default function PlacedItem3D({
     }
     e.stopPropagation();
 
-    e.ray.intersectPlane(floorPlane, intersectionVec);
+    if (window.isSpaceKeyPressed) {
+      // Space basılıyken yukarı-aşağı dikey taşıma
+      const dy = (dragRef.current.startY - e.clientY) * 0.02; // Hassasiyet katsayısı
+      let targetY = dragRef.current.startYCoord + dy;
 
-    let targetX = intersectionVec.x;
-    let targetZ = intersectionVec.z;
+      // Odanın zemini ve tavanı limitleri (Y >= 0.001, Y <= 4.0)
+      targetY = Math.max(0.001, Math.min(4.0, targetY));
 
-    const limits = ROOM_LIMITS[item.roomId] || ROOM_LIMITS.unknown;
-    const clampedX = Math.max(limits.minX, Math.min(limits.maxX, targetX));
-    const clampedZ = Math.max(limits.minZ, Math.min(limits.maxZ, targetZ));
+      const startX = dragRef.current.startPosition[0];
+      const startZ = dragRef.current.startPosition[2];
 
-    const currentY = item.position?.y ?? (
-      (item.type === 'wallshelf' || item.type === 'small_wallshelf' || item.type === 'large_board') 
-        ? 1.4 
-        : item.type === 'desk_lamp' 
-          ? 0.72 
-          : item.type === 'rug' 
-            ? 0.001 
-            : 0.005
-    );
+      if (itemGroupRef.current) {
+        itemGroupRef.current.position.set(startX, targetY, startZ);
+      }
+      dragRef.current.dragged = true;
+    } else {
+      // Normal X-Z düzleminde taşıma
+      e.ray.intersectPlane(floorPlane, intersectionVec);
 
-    onUpdate(item.id, { position: { x: clampedX, y: currentY, z: clampedZ } });
+      let targetX = intersectionVec.x;
+      let targetZ = intersectionVec.z;
+
+      const limits = ROOM_LIMITS[item.roomId] || ROOM_LIMITS.unknown;
+      const clampedX = Math.max(limits.minX, Math.min(limits.maxX, targetX));
+      const clampedZ = Math.max(limits.minZ, Math.min(limits.maxZ, targetZ));
+
+      // Önceden ayarlanmış olan Y yüksekliğini koru
+      const currentY = itemGroupRef.current ? itemGroupRef.current.position.y : (item.position?.y ?? 0.005);
+
+      if (itemGroupRef.current) {
+        itemGroupRef.current.position.set(clampedX, currentY, clampedZ);
+      }
+      dragRef.current.dragged = true;
+    }
   };
 
   const handlePointerUp = (e) => {
     if (dragRef.current.isDragging) {
       dragRef.current.isDragging = false;
+      window.isDraggingPlacedItem = false;
       try {
         e.target.releasePointerCapture(dragRef.current.pointerId);
       } catch {}
+
+      if (dragRef.current.dragged && itemGroupRef.current) {
+        const newX = itemGroupRef.current.position.x;
+        const newZ = itemGroupRef.current.position.z;
+        onUpdate(item.id, { position: { x: newX, y: itemGroupRef.current.position.y, z: newZ } });
+      }
     }
     clearLongPress();
   };
@@ -1374,6 +1408,18 @@ export default function PlacedItem3D({
         return <LargePlantModel color={item.color} />;
       case 'archive_box':
         return <ArchiveBoxModel color={item.color} />;
+      case 'customVisualBox':
+        return (
+          <CustomVisualBoxModel
+            color={item.color}
+            boxWidth={item.boxWidth}
+            boxHeight={item.boxHeight}
+            boxDepth={item.boxDepth}
+            imageData={item.imageData}
+            imageFace={item.imageFace}
+            imageFit={item.imageFit}
+          />
+        );
       default:
         return null;
     }
@@ -1446,6 +1492,8 @@ export default function PlacedItem3D({
         return [0.8, 1.2, 0.8];
       case 'archive_box':
         return [0.7, 0.55, 0.52];
+      case 'customVisualBox':
+        return [item.boxWidth || 1.0, item.boxHeight || 1.0, item.boxDepth || 0.1];
       default:
         return [1, 1, 1];
     }
@@ -1474,6 +1522,7 @@ export default function PlacedItem3D({
   return (
     <group>
       <group
+        ref={itemGroupRef}
         name={`item_mesh_${item.id}`}
         position={posArray}
         rotation={rotArray}
@@ -1489,7 +1538,7 @@ export default function PlacedItem3D({
             <boxGeometry args={helperBounds} />
             <meshBasicMaterial transparent opacity={0} />
             <Edges
-              color="#00f0ff"
+              color={isFlashed ? '#f43f5e' : (isSelected ? (isItemMovingActive || isItemEditingActive ? '#fbbf24' : '#10b981') : '#00f0ff')}
               lineWidth={2.5}
               toneMapped={false}
             />
@@ -1596,3 +1645,102 @@ export default function PlacedItem3D({
 }
 
 useGLTF.preload('/models/kitaplik_modeli.gltf');
+
+function adjustTextureFit(tex, fit, face, boxW, boxH, boxD) {
+  if (!tex || !tex.image) return;
+  
+  const imgW = tex.image.width;
+  const imgH = tex.image.height;
+  if (!imgW || !imgH) return;
+  
+  let faceW = boxW || 1;
+  let faceH = face === 'top' ? (boxD || 0.1) : (boxH || 1);
+  
+  const faceAspect = faceW / faceH;
+  const imgAspect = imgW / imgH;
+  
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  
+  if (fit === 'stretch') {
+    tex.repeat.set(1, 1);
+    tex.offset.set(0, 0);
+  } else if (fit === 'contain') {
+    if (imgAspect > faceAspect) {
+      const scale = imgAspect / faceAspect;
+      tex.repeat.set(1, scale);
+      tex.offset.set(0, (1 - scale) / 2);
+    } else {
+      const scale = faceAspect / imgAspect;
+      tex.repeat.set(scale, 1);
+      tex.offset.set((1 - scale) / 2, 0);
+    }
+  } else if (fit === 'cover') {
+    if (imgAspect > faceAspect) {
+      const scale = faceAspect / imgAspect;
+      tex.repeat.set(scale, 1);
+      tex.offset.set((1 - scale) / 2, 0);
+    } else {
+      const scale = imgAspect / faceAspect;
+      tex.repeat.set(1, scale);
+      tex.offset.set(0, (1 - scale) / 2);
+    }
+  }
+  tex.needsUpdate = true;
+}
+
+function CustomVisualBoxModel({ color, boxWidth, boxHeight, boxDepth, imageData, imageFace, imageFit }) {
+  const w = boxWidth || 1.0;
+  const h = boxHeight || 1.0;
+  const d = boxDepth || 0.1;
+  const face = imageFace || 'front';
+  const fit = imageFit || 'contain';
+
+  const [texture, setTexture] = useState(null);
+
+  useEffect(() => {
+    if (!imageData) {
+      setTexture(null);
+      return;
+    }
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      imageData,
+      (tex) => {
+        adjustTextureFit(tex, fit, face, w, h, d);
+        setTexture(tex);
+      },
+      undefined,
+      (err) => {
+        console.warn("Görsel yüklenirken hata oluştu:", err);
+        setTexture(null);
+      }
+    );
+  }, [imageData, fit, face, w, h, d]);
+
+  const materials = useMemo(() => {
+    const baseMat = new THREE.MeshStandardMaterial({ color: color || '#818cf8', roughness: 0.7 });
+    const mats = [baseMat, baseMat, baseMat, baseMat, baseMat, baseMat];
+
+    if (texture) {
+      const texMat = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.5,
+        metalness: 0.1
+      });
+
+      if (face === 'top') {
+        mats[2] = texMat; // Top
+      } else {
+        mats[4] = texMat; // Front
+      }
+    }
+    return mats;
+  }, [color, texture, face]);
+
+  return (
+    <mesh position={[0, h / 2, 0]} material={materials}>
+      <boxGeometry args={[w, h, d]} />
+    </mesh>
+  );
+}

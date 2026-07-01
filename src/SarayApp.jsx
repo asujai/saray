@@ -417,6 +417,7 @@ export default function SarayApp() {
 
   const [activeItemId, setActiveItemId] = useState(null);
   const [isItemEditingActive, setIsItemEditingActive] = useState(false);
+  const [isItemMovingActive, setIsItemMovingActive] = useState(false);
   const [editingItemBackup, setEditingItemBackup] = useState(null);
   const playerPositionRef = useRef([0, 1.6, 5]);
   const playerDirectionRef = useRef([0, 0, -1]);
@@ -621,6 +622,25 @@ export default function SarayApp() {
   useEffect(() => {
     localStorage.setItem('saray_connection_visibility_mode', connectionVisibilityMode);
   }, [connectionVisibilityMode]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space') {
+        window.isSpaceKeyPressed = true;
+      }
+    };
+    const handleKeyUp = (e) => {
+      if (e.code === 'Space') {
+        window.isSpaceKeyPressed = false;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   const handleExportBackup = async () => {
     try {
@@ -1077,6 +1097,14 @@ export default function SarayApp() {
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: '#818cf8', // Varsayılan indigo
+      ...(type === 'customVisualBox' ? {
+        boxWidth: 1.0,
+        boxHeight: 1.0,
+        boxDepth: 0.1,
+        imageData: '',
+        imageFace: 'front',
+        imageFit: 'contain'
+      } : {}),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -1146,6 +1174,36 @@ export default function SarayApp() {
     setActiveItemId(null);
     setEditingItemBackup(null);
     showSavedToast('✓ Değişiklikler iptal edildi');
+  };
+
+  const handleStartMove = (itemId) => {
+    if (pendingConnectionSource) {
+      showSavedToast(lang === 'en' ? '⚠️ Item cannot be moved while connection mode is active' : '⚠️ Bağlantı modu aktifken eşya taşınamaz');
+      return;
+    }
+    const item = placedItems.find(i => i.id === itemId);
+    if (item) {
+      setEditingItemBackup(JSON.parse(JSON.stringify(item)));
+      setIsItemMovingActive(true);
+      setActiveItemId(itemId);
+    }
+  };
+
+  const handleSaveMove = () => {
+    setIsItemMovingActive(false);
+    setActiveItemId(null);
+    setEditingItemBackup(null);
+    showSavedToast(lang === 'en' ? '✓ Position saved' : '✓ Yeni konum kaydedildi');
+  };
+
+  const handleCancelMove = () => {
+    if (editingItemBackup) {
+      setPlacedItems(prev => prev.map(i => i.id === editingItemBackup.id ? editingItemBackup : i));
+    }
+    setIsItemMovingActive(false);
+    setActiveItemId(null);
+    setEditingItemBackup(null);
+    showSavedToast(lang === 'en' ? '✓ Movement canceled' : '✓ Değişiklikler iptal edildi');
   };
 
   const handleSaveItemNote = (itemId, pages, currentPageIndex, title, iconType = 'info', tags = [], textColor = '#1e293b') => {
@@ -2461,6 +2519,7 @@ export default function SarayApp() {
             isFlashed={flashedItemId === item.id}
             isAddMode={isAddMode}
             isItemEditingActive={isItemEditingActive && activeItemId === item.id}
+            isItemMovingActive={isItemMovingActive && activeItemId === item.id}
             onSelect={(id) => {
               if (pendingConnectionSource) {
                 if (isEditorOpen || isDashboardOpen) return;
@@ -2474,6 +2533,9 @@ export default function SarayApp() {
               }
               if (isItemEditingActive && activeItemId !== id) {
                 handleCancelEdit();
+              }
+              if (isItemMovingActive && activeItemId !== id) {
+                handleCancelMove();
               }
               setActiveItemId(id);
               setActiveNoteId(null); // Eşya seçildiğinde not seçimini kaldır
@@ -2624,6 +2686,10 @@ export default function SarayApp() {
         onStartEdit={handleStartEdit}
         onSaveEdit={handleSaveEdit}
         onCancelEdit={handleCancelEdit}
+        isItemMovingActive={isItemMovingActive}
+        onStartMove={handleStartMove}
+        onSaveMove={handleSaveMove}
+        onCancelMove={handleCancelMove}
         toast={toast}
         notes={notes}
         onNavigateToTarget={handleNavigateToTarget}

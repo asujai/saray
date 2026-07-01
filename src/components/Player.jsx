@@ -329,6 +329,7 @@ export default function Player({
     // 2. Drag to look
     const handleMouseDown = (e) => {
       if (e.target.closest('.interactive-ui')) return;
+      if (window.isDraggingPlacedItem) return;
       // Do not rotate camera if in Add Mode, drawing a note, editor modal is open, or item drawer is open
       if (isAddModeRef.current || activeNoteIdRef.current || isDrawingRef.current || isEditorOpenRef.current || isDashboardOpenRef.current || isItemDrawerOpenRef.current) return;
       if (e.button === 0) {
@@ -435,8 +436,8 @@ export default function Player({
     euler.y = yaw.current;
     camera.quaternion.setFromEuler(euler);
 
-    // WASD + Space/Shift Flying movement (disabled when in large editor, dashboard, editing item active, or item drawer open)
-    const canMove = !isEditorOpen && !isDashboardOpen && !isItemEditingActive && !isItemDrawerOpen;
+    // WASD + Space/Shift Flying movement (disabled when in large editor, dashboard, or item drawer open)
+    const canMove = !isEditorOpen && !isDashboardOpen && !isItemDrawerOpen;
 
     if (canMove) {
       const moveForward = (keys.current.KeyW || keys.current.ArrowUp) ? 1 : 0;
@@ -479,7 +480,7 @@ export default function Player({
       }
 
       if (movementMode === 'fly') {
-        const moveUp = keys.current.Space ? 1 : 0;
+        const moveUp = (keys.current.Space && !window.isDraggingPlacedItem) ? 1 : 0;
         const moveDown = (keys.current.ShiftLeft || keys.current.ShiftRight) ? 1 : 0;
         if (moveUp) {
           targetPosition.current.y += flySpeed * dt;
@@ -493,7 +494,7 @@ export default function Player({
         const eyeHeight = isCrouching ? 0.7 : 1.6;
 
         const isGrounded = targetPosition.current.y <= eyeHeight + 0.05;
-        if (keys.current.Space && isGrounded && verticalVelocity.current === 0) {
+        if (keys.current.Space && isGrounded && verticalVelocity.current === 0 && !window.isDraggingPlacedItem) {
           verticalVelocity.current = 5.5; // Zıplama gücü
         }
 
