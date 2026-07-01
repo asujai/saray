@@ -1,0 +1,174 @@
+{
+  "Orchestrator Agent": {
+    "score": 105,
+    "last_update": "2026-07-01T15:55:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "Sıfır hata ile temiz ve başarılı entegrasyon."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -5,
+        "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-003",
+        "change": 2,
+        "reason": "Hata giderme süreçlerinin ve güncel raporlamanın koordinasyonu."
+      },
+      {
+        "task_id": "TASK-004",
+        "change": 3,
+        "reason": "Kuş bakışı ve serbest uçuş not parlama entegrasyonunun koordinasyonu."
+      }
+    ]
+  },
+  "Product / Requirements Agent": {
+    "score": 100,
+    "last_update": "2026-07-01T15:35:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "MVP sınırlarında net gereksinim ve kabul kriteri tanımlama."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -5,
+        "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      }
+    ]
+  },
+  "Architecture Agent": {
+    "score": 105,
+    "last_update": "2026-07-01T15:45:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "Procedural geometri mimarisi ve geriye dönük uyumlu veri normalizasyonu tasarımı."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -5,
+        "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-003",
+        "change": 5,
+        "reason": "WebGL texture ve materials dispose (bellek sızıntısı önleme) tasarımının onaylanması."
+      }
+    ]
+  },
+  "UI / UX Agent": {
+    "score": 102,
+    "last_update": "2026-07-01T15:45:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "Sadeleştirilmiş Özellik Düzenleme paneli ve 3D görsel tasarımı."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -5,
+        "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-003",
+        "change": 2,
+        "reason": "Yerelleştirme dil kontrolü ve doku sığdırma oranlarının doğrulanması."
+      }
+    ]
+  },
+  "Implementation Agent": {
+    "score": 110,
+    "last_update": "2026-07-01T15:55:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "Geometrik Nesne Oluşturucu çekirdek kodlaması."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": 8,
+        "reason": "Derleme başarısı ve build kanıtı sunulması."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -5,
+        "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -10,
+        "reason": "Eksik Özellik: Üçgen prizmada (prism) ayrı yüzey kaplama desteği uygulanmadı (BUG-001)."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -3,
+        "reason": "Minor UI Bug: UIOverlay.jsx'te t.lang === 'en' kontrol hatası yapıldı (BUG-002)."
+      },
+      {
+        "task_id": "TASK-003",
+        "change": 15,
+        "reason": "BUG-001, BUG-002, BUG-003, BUG-004 hatalarının giderilmesi ve WebGL bellek dispose optimizasyonlarının kodlanması."
+      },
+      {
+        "task_id": "TASK-004",
+        "change": -10,
+        "reason": "Eksik Özellik: cameraMode state entegrasyonu ve Eye butonu TypeError hatası (BUG-005)."
+      },
+      {
+        "task_id": "TASK-004",
+        "change": 10,
+        "reason": "Kuş bakışı ve serbest uçuş modlarının ve derinlik testi devre dışı neon parıltı çerçevesinin kodlanması."
+      }
+    ]
+  },
+  "QA / Test Agent": {
+    "score": 110,
+    "last_update": "2026-07-01T15:55:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 8,
+        "reason": "Build ve Lint testlerinin başarıyla yürütülüp doğrulanması."
+      },
+      {
+        "task_id": "TASK-002",
+        "change": -8,
+        "reason": "Doğrulama testlerinde kritik gereksinim hataları (BUG-001) ve UI hataları (BUG-002) kaçırıldığı için test ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-003",
+        "change": 5,
+        "reason": "Düzeltilen hataların (dil kontrolü, doku sünmesi, kapsül edge-case'i) regression testlerinin başarıyla doğrulanması."
+      },
+      {
+        "task_id": "TASK-004",
+        "change": 5,
+        "reason": "Uçuş/Kuş bakışı modlarının ve parlayan not regression testlerinin başarıyla doğrulanması."
+      }
+    ]
+  },
+  "Judge / Audit Agent": {
+    "score": 110,
+    "last_update": "2026-07-01T15:55:00Z",
+    "history": [
+      {
+        "task_id": "TASK-002",
+        "change": 5,
+        "reason": "Geometrik Nesne Oluşturucu geliştirmesindeki kritik hataları (BUG-001 ve BUG-002) kanıtlarıyla tespit ederek hakemlik görevini yerine getirdi."
+      },
+      {
+        "task_id": "TASK-004",
+        "change": 5,
+        "reason": "cameraMode TypeError hatasını ve eksik parıltı gereksinimini kanıtlarıyla bulup adil puan değerlendirmesini yaptı."
+      }
+    ]
+  }
+}

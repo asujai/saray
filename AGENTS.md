@@ -119,3 +119,40 @@ testsprite setup         # configure + verify + install agent skill in one shot
 
 Verify your setup anytime: `testsprite auth status`.
 <!-- END TESTSPRITE AGENT SECTION -->
+
+---
+
+# Atrium 3D — Saray Ajanı Yönergeleri (Saray Ajanı Guidelines)
+
+Bu projede yapılacak her geliştirme ve hata çözümü, **Saray Ajanı** (Agent League) sistemindeki uzman ajanların sorumluluğu ve kuralları altında yürütülür.
+
+## 🛠️ Temel Kurallar ve Çağırma Yapısı
+
+1. **Saray Ajanı Tetikleme Komutları:**
+   Kullanıcı aşağıdaki şablonlardan biriyle talimat verdiğinde sistem otomatik olarak Agent League iş akışını tetikler:
+   * **“Saray Ajanı ile şunu yap: [görev]”**
+   * **“Saray Ajanı başlat. Görev: [görev]”**
+   
+   Bu tetikleyicilerle birlikte ana ajan (Antigravity), görevi otomatik olarak uzmanlık alanlarına göre alt subagent'lara böler ve koordine eder.
+
+2. **Alt Ajan Rollerine Saygı:**
+   * **Orchestrator Agent:** Görev paylaşımı, subagent koordinasyonu ve nihai entegrasyon kararlarından sorumludur.
+   * **Product Agent:** Kapsam, MVP sınırları ve test edilebilir Kabul Kriterleri (Acceptance Criteria) hazırlar.
+   * **Architecture Agent:** Dosya yapısı, modülerlik ve sürdürülebilirlikten sorumludur.
+   * **UI/UX Agent:** 3D uzamsal deneyim ve glassmorphism temasına uyumluluğu denetler.
+   * **Implementation Agent:** Sadece geliştirme yapıp değiştirdiği dosyaları raporlar, varsayımlarını açıkça yazar.
+   * **QA/Test Agent:** Kabul kriterlerine göre test senaryoları yazar ve doğrular.
+   * **Judge/Audit Agent:** Hataların kaynağını adil ve kanıta dayalı olarak belirler, puanları günceller.
+
+3. **Dosya Tabanlı Takip:**
+   * Skorlar `agent-system/scoreboard.json` içinde tutulur.
+   * Hatalar `agent-system/bug-log.md` dosyasına kaydedilir.
+   * Görevler `agent-system/task-log.md` dosyasında loglanır.
+   * Her döngü sonu final raporu `agent-system/final-report.md` dosyasına yazılır.
+
+4. **Puanlama ve İtirazlar:**
+   * Her ajan 100 puan ile başlar.
+   * Puanlar sadece **Judge Agent** tarafından ve somut teknik kanıtlara dayanılarak güncellenebilir.
+   * Ajanlar birbirinin kodunu ve puanını doğrudan değiştiremez.
+   * Hatalı veya kanıtsız suçlamada bulunan ajanın puanı düşürülür.
+   * TestSprite E2E test kanıtı sunmak veya erken hata düzeltmek ek puan kazandırır.

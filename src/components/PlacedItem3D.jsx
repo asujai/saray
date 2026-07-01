@@ -1161,7 +1161,11 @@ export default function PlacedItem3D({
   onUpdate,
   onOpenNote,
   isCrosshairHovered = false,
-  onOpenBookNote
+  onOpenBookNote,
+  isConnected = false,
+  cameraMode = 'third-person',
+  movementMode = 'walk',
+  connectionGlowActive = true
 }) {
   const dragRef = useRef({ isDragging: false, pointerId: null, startPosition: [0, 0, 0], dragged: false, timer: null, progressInterval: null });
   const helperMeshRef = useRef();
@@ -1171,13 +1175,22 @@ export default function PlacedItem3D({
 
   useFrame((state) => {
     if (helperMeshRef.current) {
-      if (isFlashed) {
+      const isGlowActive = isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free');
+      if (isGlowActive) {
+        const time = state.clock.getElapsedTime();
+        const pulse = 0.2 + Math.sin(time * 2.0) * 0.15;
+        helperMeshRef.current.material.opacity = pulse;
+        helperMeshRef.current.material.color.set('#00f0ff');
+      } else if (isFlashed) {
         const pulse = 0.25 + 0.75 * Math.abs(Math.sin(state.clock.getElapsedTime() * 14));
         helperMeshRef.current.material.opacity = pulse;
+        helperMeshRef.current.material.color.set('#f43f5e');
       } else if (isSelected) {
         helperMeshRef.current.material.opacity = 0.7;
+        helperMeshRef.current.material.color.set(isItemMovingActive || isItemEditingActive ? '#fbbf24' : '#10b981');
       } else if (isCrosshairHovered) {
         helperMeshRef.current.material.opacity = 0.25;
+        helperMeshRef.current.material.color.set('#00f0ff');
       } else {
         helperMeshRef.current.material.opacity = 0;
       }
@@ -1415,9 +1428,11 @@ export default function PlacedItem3D({
             boxWidth={item.boxWidth}
             boxHeight={item.boxHeight}
             boxDepth={item.boxDepth}
+            radius={item.radius}
             imageData={item.imageData}
             imageFace={item.imageFace}
             imageFit={item.imageFit}
+            geometryType={item.geometryType}
           />
         );
       default:
@@ -1492,8 +1507,29 @@ export default function PlacedItem3D({
         return [0.8, 1.2, 0.8];
       case 'archive_box':
         return [0.7, 0.55, 0.52];
-      case 'customVisualBox':
+      case 'customVisualBox': {
+        const geom = item.geometryType || 'box';
+        if (geom === 'sphere') {
+          const r = item.radius || 0.5;
+          return [r * 2, r * 2, r * 2];
+        }
+        if (geom === 'cylinder' || geom === 'cone' || geom === 'pyramid' || geom === 'prism') {
+          const r = item.radius || 0.5;
+          const h = item.boxHeight || 1.0;
+          return [r * 2, h, r * 2];
+        }
+        if (geom === 'capsule') {
+          const r = item.radius || 0.5;
+          const h = item.boxHeight || 1.0;
+          const actualH = Math.max(0.1, h - 2 * r) + 2 * r;
+          return [r * 2, actualH, r * 2];
+        }
+        if (geom === 'cube') {
+          const w = item.boxWidth || 1.0;
+          return [w, w, w];
+        }
         return [item.boxWidth || 1.0, item.boxHeight || 1.0, item.boxDepth || 0.1];
+      }
       default:
         return [1, 1, 1];
     }
@@ -1533,17 +1569,29 @@ export default function PlacedItem3D({
         onPointerLeave={handlePointerLeave}
       >
         {renderModel()}
-        {(isSelected || isFlashed || isCrosshairHovered) && (
-          <mesh ref={helperMeshRef} position={[0, helperBounds[1] / 2, 0]}>
-            <boxGeometry args={helperBounds} />
-            <meshBasicMaterial transparent opacity={0} />
-            <Edges
-              color={isFlashed ? '#f43f5e' : (isSelected ? (isItemMovingActive || isItemEditingActive ? '#fbbf24' : '#10b981') : '#00f0ff')}
-              lineWidth={2.5}
-              toneMapped={false}
-            />
-          </mesh>
-        )}
+        {(isSelected || isFlashed || isCrosshairHovered || (isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free'))) && (() => {
+          const isGlowActive = isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free');
+          return (
+            <mesh 
+              ref={helperMeshRef} 
+              position={[0, helperBounds[1] / 2, 0]}
+              renderOrder={isGlowActive ? 999 : undefined}
+              data-testid="item-helper-mesh"
+            >
+              <boxGeometry args={helperBounds} />
+              <meshBasicMaterial 
+                transparent 
+                opacity={0} 
+                depthTest={isGlowActive ? false : true} 
+              />
+              <Edges
+                color={isGlowActive ? '#00f0ff' : (isFlashed ? '#f43f5e' : (isSelected ? (isItemMovingActive || isItemEditingActive ? '#fbbf24' : '#10b981') : '#00f0ff'))}
+                lineWidth={2.5}
+                toneMapped={false}
+              />
+            </mesh>
+          );
+        })()}
       </group>
 
       {longPressProgress > 0 && (
@@ -1646,7 +1694,7 @@ export default function PlacedItem3D({
 
 useGLTF.preload('/models/kitaplik_modeli.gltf');
 
-function adjustTextureFit(tex, fit, face, boxW, boxH, boxD) {
+function adjustTextureFit(tex, fit, face, boxW, boxH, boxD, radius, geom) {
   if (!tex || !tex.image) return;
   
   const imgW = tex.image.width;
@@ -1654,13 +1702,39 @@ function adjustTextureFit(tex, fit, face, boxW, boxH, boxD) {
   if (!imgW || !imgH) return;
   
   let faceW = boxW || 1;
-  let faceH = face === 'top' ? (boxD || 0.1) : (boxH || 1);
+  let faceH = boxH || 1;
+  
+  if (geom === 'sphere') {
+    const r = radius || 0.5;
+    faceW = r * Math.PI * 2;
+    faceH = r * Math.PI;
+  } else if (geom === 'cylinder' || geom === 'cone' || geom === 'pyramid' || geom === 'prism' || geom === 'capsule') {
+    const r = radius || 0.5;
+    if (face === 'top' || face === 'bottom') {
+      faceW = r * 2;
+      faceH = r * 2;
+    } else {
+      faceW = r * Math.PI * 2;
+      faceH = boxH || 1;
+    }
+  } else {
+    if (face === 'top' || face === 'bottom') {
+      faceW = boxW || 1;
+      faceH = boxD || 0.1;
+    } else if (face === 'left' || face === 'right') {
+      faceW = boxD || 0.1;
+      faceH = boxH || 1;
+    } else {
+      faceW = boxW || 1;
+      faceH = boxH || 1;
+    }
+  }
   
   const faceAspect = faceW / faceH;
   const imgAspect = imgW / imgH;
   
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
   
   if (fit === 'stretch') {
     tex.repeat.set(1, 1);
@@ -1689,14 +1763,17 @@ function adjustTextureFit(tex, fit, face, boxW, boxH, boxD) {
   tex.needsUpdate = true;
 }
 
-function CustomVisualBoxModel({ color, boxWidth, boxHeight, boxDepth, imageData, imageFace, imageFit }) {
+function CustomVisualBoxModel({ color, boxWidth, boxHeight, boxDepth, radius, imageData, imageFace, imageFit, geometryType }) {
+  const geom = geometryType || 'box';
   const w = boxWidth || 1.0;
   const h = boxHeight || 1.0;
   const d = boxDepth || 0.1;
+  const r = radius || 0.5;
   const face = imageFace || 'front';
   const fit = imageFit || 'contain';
 
   const [texture, setTexture] = useState(null);
+  const materialsRef = useRef(null);
 
   useEffect(() => {
     if (!imageData) {
@@ -1704,43 +1781,156 @@ function CustomVisualBoxModel({ color, boxWidth, boxHeight, boxDepth, imageData,
       return;
     }
     const loader = new THREE.TextureLoader();
+    let isMounted = true;
+    let loadedTex = null;
     loader.load(
       imageData,
       (tex) => {
-        adjustTextureFit(tex, fit, face, w, h, d);
-        setTexture(tex);
+        if (isMounted) {
+          adjustTextureFit(tex, fit, face, w, h, d, r, geom);
+          loadedTex = tex;
+          setTexture(tex);
+        } else {
+          tex.dispose();
+        }
       },
       undefined,
       (err) => {
         console.warn("Görsel yüklenirken hata oluştu:", err);
-        setTexture(null);
+        if (isMounted) setTexture(null);
       }
     );
-  }, [imageData, fit, face, w, h, d]);
+    return () => {
+      isMounted = false;
+      if (loadedTex) {
+        loadedTex.dispose();
+      }
+    };
+  }, [imageData, fit, face, w, h, d, r, geom]);
+
+  const disposeMaterials = (mats) => {
+    if (!mats) return;
+    if (Array.isArray(mats)) {
+      mats.forEach((m) => {
+        if (m && typeof m.dispose === 'function') m.dispose();
+      });
+    } else {
+      if (mats && typeof mats.dispose === 'function') mats.dispose();
+    }
+  };
 
   const materials = useMemo(() => {
     const baseMat = new THREE.MeshStandardMaterial({ color: color || '#818cf8', roughness: 0.7 });
-    const mats = [baseMat, baseMat, baseMat, baseMat, baseMat, baseMat];
-
-    if (texture) {
-      const texMat = new THREE.MeshStandardMaterial({
-        map: texture,
-        roughness: 0.5,
-        metalness: 0.1
-      });
-
-      if (face === 'top') {
-        mats[2] = texMat; // Top
-      } else {
-        mats[4] = texMat; // Front
-      }
+    
+    if (materialsRef.current) {
+      disposeMaterials(materialsRef.current);
     }
-    return mats;
-  }, [color, texture, face]);
 
-  return (
-    <mesh position={[0, h / 2, 0]} material={materials}>
-      <boxGeometry args={[w, h, d]} />
-    </mesh>
-  );
+    if (!texture) {
+      materialsRef.current = baseMat;
+      return baseMat;
+    }
+
+    const texMat = new THREE.MeshStandardMaterial({
+      map: texture,
+      color: color || '#818cf8',
+      roughness: 0.5,
+      metalness: 0.1
+    });
+
+    let newMats;
+    if (geom === 'box' || geom === 'cube') {
+      const mats = [baseMat, baseMat, baseMat, baseMat, baseMat, baseMat];
+      if (face === 'all') {
+        newMats = [texMat, texMat, texMat, texMat, texMat, texMat];
+      } else {
+        if (face === 'right') mats[0] = texMat;
+        if (face === 'left') mats[1] = texMat;
+        if (face === 'top') mats[2] = texMat;
+        if (face === 'bottom') mats[3] = texMat;
+        if (face === 'front') mats[4] = texMat;
+        if (face === 'back') mats[5] = texMat;
+        newMats = mats;
+      }
+    } else if (geom === 'cylinder' || geom === 'cone' || geom === 'pyramid' || geom === 'prism') {
+      const mats = [baseMat, baseMat, baseMat];
+      if (face === 'all') {
+        newMats = [texMat, texMat, texMat];
+      } else {
+        if (face === 'top') mats[1] = texMat;
+        if (face === 'bottom') mats[2] = texMat;
+        if (face === 'front' || face === 'back' || face === 'left' || face === 'right') mats[0] = texMat;
+        newMats = mats;
+      }
+    } else {
+      newMats = texMat;
+    }
+
+    materialsRef.current = newMats;
+    return newMats;
+  }, [color, texture, face, geom]);
+
+  useEffect(() => {
+    return () => {
+      if (materialsRef.current) {
+        disposeMaterials(materialsRef.current);
+      }
+    };
+  }, []);
+
+  const renderGeometry = () => {
+    switch (geom) {
+      case 'cube':
+        return (
+          <mesh position={[0, w / 2, 0]} material={materials} castShadow receiveShadow>
+            <boxGeometry args={[w, w, w]} />
+          </mesh>
+        );
+      case 'cylinder':
+        return (
+          <mesh position={[0, h / 2, 0]} material={materials} castShadow receiveShadow>
+            <cylinderGeometry args={[r, r, h, 32]} />
+          </mesh>
+        );
+      case 'sphere':
+        return (
+          <mesh position={[0, r, 0]} material={materials} castShadow receiveShadow>
+            <sphereGeometry args={[r, 32, 32]} />
+          </mesh>
+        );
+      case 'cone':
+        return (
+          <mesh position={[0, h / 2, 0]} material={materials} castShadow receiveShadow>
+            <coneGeometry args={[r, h, 32]} />
+          </mesh>
+        );
+      case 'pyramid':
+        return (
+          <mesh position={[0, h / 2, 0]} rotation={[0, Math.PI / 4, 0]} material={materials} castShadow receiveShadow>
+            <coneGeometry args={[r, h, 4]} />
+          </mesh>
+        );
+      case 'capsule':
+        return (
+          <mesh position={[0, h / 2, 0]} material={materials} castShadow receiveShadow>
+            <capsuleGeometry args={[r, Math.max(0.1, h - 2 * r), 8, 16]} />
+          </mesh>
+        );
+      case 'prism':
+        return (
+          <mesh position={[0, h / 2, 0]} rotation={[0, Math.PI / 6, 0]} material={materials} castShadow receiveShadow>
+            <cylinderGeometry args={[r, r, h, 3]} />
+          </mesh>
+        );
+      case 'box':
+      default:
+        return (
+          <mesh position={[0, h / 2, 0]} material={materials} castShadow receiveShadow>
+            <boxGeometry args={[w, h, d]} />
+          </mesh>
+        );
+    }
+  };
+
+  return renderGeometry();
 }

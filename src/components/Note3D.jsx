@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Text, Html } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // Safely normalize a page entry — guarantees { text, image, layout }
@@ -30,13 +31,56 @@ export default function Note3D({
   pendingConnectionSource = null,
   onStartConnection,
   onCancelConnection,
-  hideControls = false
+  hideControls = false,
+  isConnected = false,
+  movementMode = 'walk',
+  cameraMode = 'third-person',
+  allNotesGlowActive = true,
+  connectionGlowActive = true
 }) {
   const [hovered, setHovered] = useState(false);
   const [texture, setTexture] = useState(null);
   const [imageAspect, setImageAspect] = useState(1);
   const [hasError, setHasError] = useState(false);
   const [scrollLineIndex, setScrollLineIndex] = useState(0);
+  const materialRef = useRef();
+  const xrayMaterialRef = useRef();
+
+  useFrame((state) => {
+    const isGlowActive = !isPreview && isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free');
+    
+    if (xrayMaterialRef.current) {
+      if (isGlowActive) {
+        const time = state.clock.getElapsedTime();
+        const pulse = 0.45 + Math.sin(time * 2.0) * 0.3;
+        xrayMaterialRef.current.opacity = pulse;
+      } else {
+        xrayMaterialRef.current.opacity = 0;
+      }
+    }
+
+    if (isGlowActive && materialRef.current) {
+      const time = state.clock.getElapsedTime();
+      // Emissive intensity bounces between 0.3 and 1.5
+      const intensity = 0.9 + Math.sin(time * 5.0) * 0.6;
+      materialRef.current.emissiveIntensity = intensity;
+      materialRef.current.emissive.set('#00f0ff');
+    } else if (materialRef.current) {
+      if (isFlashed) {
+        materialRef.current.emissiveIntensity = 1.5;
+        materialRef.current.emissive.set('#00f0ff');
+      } else if (isSelected) {
+        materialRef.current.emissiveIntensity = 0.25;
+        materialRef.current.emissive.set('#ffffff');
+      } else if (hovered || isCrosshairHovered) {
+        materialRef.current.emissiveIntensity = 0.15;
+        materialRef.current.emissive.set('#ffffff');
+      } else {
+        materialRef.current.emissiveIntensity = 0.0;
+        materialRef.current.emissive.set(allNotesGlowActive ? (note.color || '#fef08a') : '#000000');
+      }
+    }
+  });
 
   const w = note.width || 0.7;
   const h = note.height || 0.7;
@@ -341,12 +385,13 @@ export default function Note3D({
       <mesh name={`note_mesh_${note.id}`} castShadow receiveShadow>
         <boxGeometry args={[w, h, 0.01]} />
         <meshStandardMaterial 
+          ref={materialRef}
           color={note.color || '#fef08a'} 
           roughness={0.6}
           metalness={0.1}
           transparent={isPreview}
           opacity={isPreview ? 0.6 : 1.0}
-          emissive={isFlashed ? '#00f0ff' : isSelected ? '#ffffff' : isCrosshairHovered ? '#ffffff' : note.color || '#fef08a'}
+          emissive={isFlashed ? '#00f0ff' : isSelected ? '#ffffff' : isCrosshairHovered ? '#ffffff' : allNotesGlowActive ? (note.color || '#fef08a') : '#000000'}
           emissiveIntensity={isFlashed ? 1.5 : isSelected ? 0.25 : (hovered || isCrosshairHovered) && !isPreview ? 0.15 : 0.0}
         />
       </mesh>
@@ -364,6 +409,24 @@ export default function Note3D({
         <mesh position={[0, 0, -0.003]}>
           <boxGeometry args={[w + 0.18, h + 0.18, 0.006]} />
           <meshBasicMaterial color="#00f0ff" transparent opacity={0.7} />
+        </mesh>
+      )}
+
+      {/* Glow Indicator Outline (Always visible on top of walls in fly/birds-eye/free modes) */}
+      {!isPreview && isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free') && (
+        <mesh 
+          position={[0, 0, 0.015]}
+          renderOrder={999}
+          data-testid="note-xray-hologram"
+        >
+          <boxGeometry args={[w + 0.12, h + 0.12, 0.005]} />
+          <meshBasicMaterial 
+            ref={xrayMaterialRef}
+            color="#00f0ff" 
+            transparent 
+            opacity={0.6} 
+            depthTest={false} 
+          />
         </mesh>
       )}
 
@@ -528,6 +591,71 @@ export default function Note3D({
             </Html>
           )}
         </>
+      )}
+
+      {/* Serbest Uçuş / Kuş Bakışı Modunda Bağlantılı Notlar İçin Görsel Gösterge (HTML Marker) */}
+      {!isPreview && movementMode === 'fly' && isConnected && (
+        <Html 
+          position={[0, h / 2 + 0.18, 0.02]} 
+          center 
+          distanceFactor={5}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            transform: 'translateY(-10px)',
+            animation: 'connectedPulse 2.5s infinite ease-in-out'
+          }}>
+            {/* Parlayan Neon Halka / Nokta */}
+            <div style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: '#00f0ff',
+              boxShadow: '0 0 12px #00f0ff, 0 0 24px #00f0ff',
+              animation: 'dotPulse 1.2s infinite alternate'
+            }} />
+            
+            {/* Glassmorphic Etiket */}
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0, 240, 255, 0.5)',
+              padding: '6px 12px',
+              borderRadius: '16px',
+              color: '#00f0ff',
+              fontSize: '10px',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 16px rgba(0, 240, 255, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.15)',
+              textShadow: '0 0 6px rgba(0, 240, 255, 0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span style={{ fontSize: '10px' }}>🔗</span>
+              <span>{(note.title || 'BAĞLANTILI NOT').toUpperCase()}</span>
+            </div>
+            
+            {/* CSS Animasyonunu enjekte etmek için style elementi */}
+            <style>{`
+              @keyframes dotPulse {
+                from { transform: scale(0.7); opacity: 0.6; box-shadow: 0 0 6px #00f0ff; }
+                to { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px #00f0ff, 0 0 28px #00f0ff; }
+              }
+              @keyframes connectedPulse {
+                0%, 100% { transform: translateY(-5px); }
+                50% { transform: translateY(5px); }
+              }
+            `}</style>
+          </div>
+        </Html>
       )}
     </group>
   );

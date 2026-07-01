@@ -47,9 +47,14 @@ export default function CrosshairRaycaster({ cameraView, isBlocked, onHoverChang
 
     raycaster.setFromCamera(centerCoords, camera);
 
-    // Yalnızca geçerli bir raycast fonksiyonu olan nesneleri kontrol et
-    const targets = scene.children.filter(obj => obj && typeof obj.raycast === 'function');
-    const intersects = raycaster.intersectObjects(targets, true);
+    const targets = [];
+    scene.traverse((obj) => {
+      if (obj && typeof obj.raycast === 'function') {
+        targets.push(obj);
+      }
+    });
+
+    const intersects = raycaster.intersectObjects(targets, false);
 
     let found = null;
 

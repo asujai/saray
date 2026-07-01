@@ -9,6 +9,7 @@ const MAX_HEIGHT = 22.5; // Raised boundary to allow full overhead view of the r
 export default function Player({ 
   movementMode, 
   cameraView, 
+  cameraMode,
   placedItems = [],
   devMode, 
   mobileControlsEnabled, 
@@ -183,6 +184,7 @@ export default function Player({
   const isItemEditingActiveRef = useRef(isItemEditingActive);
   const movementModeRef = useRef(movementMode);
   const cameraViewRef = useRef(cameraView);
+  const cameraModeRef = useRef(cameraMode);
   const isDrawingRef = useRef(isDrawing);
   const isEditorOpenRef = useRef(isEditorOpen);
   const isDashboardOpenRef = useRef(isDashboardOpen);
@@ -197,6 +199,7 @@ export default function Player({
     isItemEditingActiveRef.current = isItemEditingActive;
     movementModeRef.current = movementMode;
     cameraViewRef.current = cameraView;
+    cameraModeRef.current = cameraMode;
     isDrawingRef.current = isDrawing;
     isEditorOpenRef.current = isEditorOpen;
     isDashboardOpenRef.current = isDashboardOpen;
@@ -220,6 +223,7 @@ export default function Player({
 
   useEffect(() => {
     const handleCameraRotate = (e) => {
+      if (cameraModeRef.current === 'birds-eye') return;
       if (e.detail) {
         const sensitivity = 0.0025;
         yaw.current -= e.detail.x * sensitivity;
@@ -330,6 +334,7 @@ export default function Player({
     const handleMouseDown = (e) => {
       if (e.target.closest('.interactive-ui')) return;
       if (window.isDraggingPlacedItem) return;
+      if (cameraModeRef.current === 'birds-eye') return;
       // Do not rotate camera if in Add Mode, drawing a note, editor modal is open, or item drawer is open
       if (isAddModeRef.current || activeNoteIdRef.current || isDrawingRef.current || isEditorOpenRef.current || isDashboardOpenRef.current || isItemDrawerOpenRef.current) return;
       if (e.button === 0) {
@@ -340,6 +345,7 @@ export default function Player({
 
     const handleMouseMove = (e) => {
       if (!isDragging.current) return;
+      if (cameraModeRef.current === 'birds-eye') return;
       const sensitivity = 0.0025;
       yaw.current -= e.movementX * sensitivity;
       pitch.current -= e.movementY * sensitivity;
@@ -432,8 +438,13 @@ export default function Player({
 
     // Apply rotation quaternion to camera
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-    euler.x = pitch.current;
-    euler.y = yaw.current;
+    if (cameraMode === 'birds-eye') {
+      euler.x = -Math.PI / 2.1; // Look down almost vertically
+      euler.y = yaw.current; // Keep player's yaw
+    } else {
+      euler.x = pitch.current;
+      euler.y = yaw.current;
+    }
     camera.quaternion.setFromEuler(euler);
 
     // WASD + Space/Shift Flying movement (disabled when in large editor, dashboard, or item drawer open)
@@ -576,7 +587,10 @@ export default function Player({
     }
 
     // Camera Placement according to mode
-    if (cameraView === 'first') {
+    if (cameraMode === 'birds-eye') {
+      camera.position.set(currentPosition.current.x, 18.0, currentPosition.current.z);
+      camera.lookAt(currentPosition.current.x, currentPosition.current.y, currentPosition.current.z);
+    } else if (cameraView === 'first') {
       // First-Person view: camera is exactly at the current fly/eye position
       camera.position.copy(currentPosition.current);
     } else {
@@ -599,7 +613,7 @@ export default function Player({
   });
 
   // Avatar representation: Render only in Third Person view modes so it doesn't obstruct view in FPS Mode
-  const showAvatar = cameraView === 'third'; 
+  const showAvatar = cameraView === 'third' && cameraMode !== 'birds-eye'; 
 
   return (
     <group ref={avatarRef}>

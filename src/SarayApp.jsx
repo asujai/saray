@@ -342,6 +342,9 @@ export default function SarayApp() {
   const [editorMode, setEditorMode] = useState('note'); // 'note' or 'item'
   const [allowQuickTravel, setAllowQuickTravel] = useState(() => localStorage.getItem('saray_allow_quick_travel') === 'true');
   const [freeFlightEnabled, setFreeFlightEnabled] = useState(true);
+  const [cameraMode, setCameraMode] = useState(() => localStorage.getItem('saray_camera_mode') || 'third-person');
+  const [allNotesGlowActive, setAllNotesGlowActive] = useState(() => localStorage.getItem('saray_all_notes_glow_active') !== 'false');
+  const [connectionGlowActive, setConnectionGlowActive] = useState(() => localStorage.getItem('saray_connection_glow_active') !== 'false');
   const [devMode, setDevMode] = useState(() => localStorage.getItem('saray_dev_mode_enabled') === 'true');
   const [highlightedRoomId, setHighlightedRoomId] = useState(null);
   const highlightTimeoutRef = useRef(null);
@@ -408,7 +411,14 @@ export default function SarayApp() {
         } else if (!rot) {
           rot = { x: 0, y: 0, z: 0 };
         }
-        return { ...item, position: pos, rotation: rot };
+        
+        // Geriye dönük uyumluluk normalizasyonu
+        const normalizedItem = { ...item };
+        if (normalizedItem.type === 'customVisualBox' && !normalizedItem.geometryType) {
+          normalizedItem.geometryType = 'box';
+        }
+        
+        return { ...normalizedItem, position: pos, rotation: rot };
       });
     } catch {
       return [];
@@ -437,6 +447,31 @@ export default function SarayApp() {
   useEffect(() => {
     localStorage.setItem('saray_free_flight_enabled', freeFlightEnabled);
   }, [freeFlightEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_camera_mode', cameraMode);
+  }, [cameraMode]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_all_notes_glow_active', allNotesGlowActive);
+  }, [allNotesGlowActive]);
+
+  useEffect(() => {
+    localStorage.setItem('saray_connection_glow_active', connectionGlowActive);
+  }, [connectionGlowActive]);
+
+  useEffect(() => {
+    if (cameraMode === 'free') {
+      setMovementMode('fly');
+      setCameraView('first');
+    } else if (cameraMode === 'birds-eye') {
+      setMovementMode('walk');
+      setCameraView('third');
+    } else if (cameraMode === 'third-person') {
+      setMovementMode('walk');
+      setCameraView('third');
+    }
+  }, [cameraMode]);
 
   useEffect(() => {
     localStorage.setItem('saray_dev_mode_enabled', devMode);
@@ -1089,18 +1124,28 @@ export default function SarayApp() {
     const clampedX = Math.max(roomLimit.minX, Math.min(roomLimit.maxX, spawnX));
     const clampedZ = Math.max(roomLimit.minZ, Math.min(roomLimit.maxZ, spawnZ));
 
+    // Geometrik nesne tipi ayrıştırması
+    let actualType = type;
+    let geomType = 'box';
+    if (type.startsWith('customVisualBox_')) {
+      actualType = 'customVisualBox';
+      geomType = type.split('_')[1];
+    }
+
     const newItem = {
       id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-      type,
+      type: actualType,
       roomId,
       position: { x: clampedX, y: yPos, z: clampedZ },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: '#818cf8', // Varsayılan indigo
-      ...(type === 'customVisualBox' ? {
-        boxWidth: 1.0,
-        boxHeight: 1.0,
-        boxDepth: 0.1,
+      ...(actualType === 'customVisualBox' ? {
+        geometryType: geomType,
+        boxWidth: geomType === 'cube' ? 1.0 : geomType === 'sphere' ? 1.0 : 1.0,
+        boxHeight: geomType === 'cube' ? 1.0 : geomType === 'sphere' ? 1.0 : 1.0,
+        boxDepth: geomType === 'cube' ? 1.0 : (geomType === 'sphere' || geomType === 'cylinder') ? 1.0 : 0.1,
+        radius: (geomType === 'sphere' || geomType === 'cylinder' || geomType === 'cone' || geomType === 'pyramid' || geomType === 'capsule' || geomType === 'prism') ? 0.5 : undefined,
         imageData: '',
         imageFace: 'front',
         imageFit: 'contain'
@@ -1691,29 +1736,19 @@ export default function SarayApp() {
       }
 
       if (e.code === 'KeyV') {
-        let currentMode = 'walk-third';
-        if (movementMode === 'walk' && cameraView === 'first') currentMode = 'walk-first';
-        else if (movementMode === 'fly' && cameraView === 'third') currentMode = 'fly-third';
-        else if (movementMode === 'fly' && cameraView === 'first') currentMode = 'fly-first';
+        setCameraMode((prev) => {
+          if (prev === 'third-person') return freeFlightEnabled ? 'free' : 'third-person';
+          return 'third-person';
+        });
+      }
 
-        if (currentMode === 'walk-third') {
-          setCameraView('first');
-          setMovementMode('walk');
-        } else if (currentMode === 'walk-first') {
-          if (freeFlightEnabled) {
-            setCameraView('third');
-            setMovementMode('fly');
-          } else {
-            setCameraView('third');
-            setMovementMode('walk');
-          }
-        } else if (currentMode === 'fly-third') {
-          setCameraView('first');
-          setMovementMode('fly');
-        } else if (currentMode === 'fly-first') {
-          setCameraView('third');
-          setMovementMode('walk');
-        }
+      if (e.code === 'KeyC') {
+        setCameraMode((prev) => {
+          if (prev === 'third-person') return 'birds-eye';
+          if (prev === 'birds-eye') return freeFlightEnabled ? 'free' : 'third-person';
+          return 'third-person';
+        });
+        e.preventDefault();
       }
       
       if (e.code === 'KeyE') {
@@ -1770,7 +1805,7 @@ export default function SarayApp() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, movementMode, cameraView, isEditorOpen, pendingConnectionSource, freeFlightEnabled, setIsItemDrawerOpen, setIsSettingsOpen, setIsAddMode, setIsDashboardOpen]);
+  }, [isDashboardOpen, activeItemId, placedItems, isItemEditingActive, editingItemBackup, handleDeletePlacedItem, handleUpdatePlacedItem, crosshairHovered, theme, movementMode, cameraView, cameraMode, isEditorOpen, pendingConnectionSource, freeFlightEnabled, setIsItemDrawerOpen, setIsSettingsOpen, setIsAddMode, setIsDashboardOpen]);
 
   // Context Menu (Right Click) global listener to close editor and deselect active note / cancel item edit
   useEffect(() => {
@@ -2506,6 +2541,11 @@ export default function SarayApp() {
               onStartConnection={handleStartConnection}
               onCancelConnection={handleCancelConnection}
               hideControls={isAnyPanelOpen}
+              isConnected={connections.some(conn => conn.fromId === note.id || conn.toId === note.id)}
+              movementMode={movementMode}
+              cameraMode={cameraMode}
+              allNotesGlowActive={allNotesGlowActive}
+              connectionGlowActive={connectionGlowActive}
             />
           );
         })}
@@ -2555,6 +2595,10 @@ export default function SarayApp() {
               setIsEditorOpen(true);
             }}
             isCrosshairHovered={crosshairHovered?.type === 'item' && crosshairHovered?.id === item.id}
+            isConnected={connections.some(conn => conn.fromId === item.id || conn.toId === item.id)}
+            cameraMode={cameraMode}
+            movementMode={movementMode}
+            connectionGlowActive={connectionGlowActive}
           />
         ))}
 
@@ -2602,6 +2646,9 @@ export default function SarayApp() {
               }}
               isPreview={true}
               hideControls={isAnyPanelOpen}
+              cameraMode={cameraMode}
+              allNotesGlowActive={allNotesGlowActive}
+              connectionGlowActive={connectionGlowActive}
             />
           );
         })()}
@@ -2616,6 +2663,7 @@ export default function SarayApp() {
         <Player 
           movementMode={movementMode}
           cameraView={cameraView}
+          cameraMode={cameraMode}
           placedItems={placedItems}
           devMode={devMode}
           mobileControlsEnabled={mobileControlsEnabled}
@@ -2636,6 +2684,12 @@ export default function SarayApp() {
 
       {/* HTML overlay UI */}
       <UIOverlay
+        cameraMode={cameraMode}
+        setCameraMode={setCameraMode}
+        allNotesGlowActive={allNotesGlowActive}
+        setAllNotesGlowActive={setAllNotesGlowActive}
+        connectionGlowActive={connectionGlowActive}
+        setConnectionGlowActive={setConnectionGlowActive}
         isSettingsOpen={isSettingsOpen}
         setIsSettingsOpen={setIsSettingsOpen}
         uiTheme={uiTheme}

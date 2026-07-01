@@ -150,6 +150,25 @@ const UI_TRANSLATIONS = {
     item_box: 'Koli / Kutu',
     item_archive_box: 'Arşiv Sandığı',
     item_customVisualBox: 'Özel Görsel Kutu',
+    category_geometry: 'Geometrik Şekiller',
+    item_geom_box: 'Dikdörtgen Prizma',
+    item_geom_cube: 'Küp',
+    item_geom_cylinder: 'Silindir',
+    item_geom_sphere: 'Küre',
+    item_geom_cone: 'Koni',
+    item_geom_pyramid: 'Piramit',
+    item_geom_capsule: 'Kapsül',
+    item_geom_prism: 'Üçgen Prizma',
+    geom_shape_type: 'Şekil Tipi',
+    geom_radius: 'Yarıçap',
+    geom_uniform_scale: 'Genel Boyut (Uniform)',
+    geom_face_all: 'Tüm Yüzeyler',
+    geom_face_front: 'Ön Yüz',
+    geom_face_back: 'Arka Yüz',
+    geom_face_left: 'Sol Yüz',
+    geom_face_right: 'Sağ Yüz',
+    geom_face_top: 'Üst Yüz',
+    geom_face_bottom: 'Alt Yüz',
     item_plant: 'Saksı Bitkisi',
     item_large_plant: 'Büyük Saksı Bitkisi',
     item_item: 'Eşya',
@@ -229,7 +248,6 @@ const UI_TRANSLATIONS = {
     controls_title: 'Kontroller',
     select_target: 'Seçilecek Alan',
     floor_and_wall: 'Zemin & Duvar Renkleri',
-    select_color: 'Renk Seçin',
     apply_color: 'Rengi Uygula',
     cleanup_desc: 'Bu odadaki eşyaları veya notları toplu olarak silebilirsiniz.',
     what_to_remove: 'Temizlenecek Tür',
@@ -237,8 +255,7 @@ const UI_TRANSLATIONS = {
     remove_notes: 'Sadece Duvar Notları',
     remove_all: 'Tüm Oda İçeriği',
     remove_all_confirm: 'UYARI: Odadaki seçili tüm içerik silinecek. Devam etmek istiyor musunuz?',
-    btn_remove: 'Temizliği Başlat',
-    return_to_home: 'Ana Sayfaya Dön'
+    btn_remove: 'Temizliği Başlat'
   },
   en: {
     // General
@@ -342,6 +359,25 @@ const UI_TRANSLATIONS = {
     item_box: 'Box',
     item_archive_box: 'Archive Chest',
     item_customVisualBox: 'Custom Visual Box',
+    category_geometry: 'Geometric Shapes',
+    item_geom_box: 'Rectangle Prism',
+    item_geom_cube: 'Cube',
+    item_geom_cylinder: 'Cylinder',
+    item_geom_sphere: 'Sphere',
+    item_geom_cone: 'Cone',
+    item_geom_pyramid: 'Pyramid',
+    item_geom_capsule: 'Capsule',
+    item_geom_prism: 'Triangle Prism',
+    geom_shape_type: 'Shape Type',
+    geom_radius: 'Radius',
+    geom_uniform_scale: 'Uniform Scale',
+    geom_face_all: 'All Faces',
+    geom_face_front: 'Front Face',
+    geom_face_back: 'Back Face',
+    geom_face_left: 'Left Face',
+    geom_face_right: 'Right Face',
+    geom_face_top: 'Top Face',
+    geom_face_bottom: 'Bottom Face',
     item_plant: 'Potted Plant',
     item_large_plant: 'Large Potted Plant',
     item_item: 'Item',
@@ -421,7 +457,6 @@ const UI_TRANSLATIONS = {
     controls_title: 'Controls',
     select_target: 'Target Element',
     floor_and_wall: 'Floor & Wall Colors',
-    select_color: 'Select Color',
     apply_color: 'Apply Color',
     cleanup_desc: 'You can batch delete items or notes in this room.',
     what_to_remove: 'Select what to remove',
@@ -429,8 +464,7 @@ const UI_TRANSLATIONS = {
     remove_notes: 'Only Wall Notes',
     remove_all: 'Entire Room Content',
     remove_all_confirm: 'WARNING: All selected content in the room will be deleted. Do you want to continue?',
-    btn_remove: 'Execute Cleanup',
-    return_to_home: 'Return to Home Page'
+    btn_remove: 'Execute Cleanup'
   }
 };
 
@@ -554,6 +588,10 @@ export default function UIOverlay({
   onClearRoomTemplate,
   cameraMode,
   setCameraMode,
+  allNotesGlowActive = true,
+  setAllNotesGlowActive,
+  connectionGlowActive = true,
+  setConnectionGlowActive,
   isAddMode,
   setIsAddMode,
   activeNote,
@@ -1432,6 +1470,51 @@ export default function UIOverlay({
                   </div>
                 </div>
 
+                {/* Not Parlama Ayarları */}
+                <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
+                  <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>💡 {lang === 'en' ? 'Note Glow Settings' : 'Not Parlama Ayarları'}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)' }}>💡 {lang === 'en' ? 'All Notes Glow' : 'Tüm Notların Parlaması'}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{lang === 'en' ? 'Toggle emissive glow on sticky notes' : 'Yapışkan notların hafif ışık saçmasını kontrol eder'}</span>
+                      </div>
+                      <div 
+                        data-testid="all-notes-glow-toggle"
+                        onClick={() => setAllNotesGlowActive && setAllNotesGlowActive(!allNotesGlowActive)}
+                        style={{
+                          width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                          background: allNotesGlowActive ? '#10b981' : 'var(--button-bg-secondary)', cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{
+                          width: '14px', height: '14px', borderRadius: '50%', background: '#fff',
+                          position: 'absolute', top: '3px', left: allNotesGlowActive ? '19px' : '3px', transition: 'left 0.2s'
+                        }} />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)' }}>🔗 {lang === 'en' ? 'Connection X-Ray Glow' : 'Bağlantı X-Ray Parlaması'}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{lang === 'en' ? 'Toggle X-Ray glow on connected notes in birds-eye/fly mode' : 'Kuş bakışı/uçuş modunda bağlantılı notların X-Ray parlamasını açar'}</span>
+                      </div>
+                      <div 
+                        data-testid="connection-glow-toggle"
+                        onClick={() => setConnectionGlowActive && setConnectionGlowActive(!connectionGlowActive)}
+                        style={{
+                          width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                          background: connectionGlowActive ? '#10b981' : 'var(--button-bg-secondary)', cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{
+                          width: '14px', height: '14px', borderRadius: '50%', background: '#fff',
+                          position: 'absolute', top: '3px', left: connectionGlowActive ? '19px' : '3px', transition: 'left 0.2s'
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Kontroller (Controls) */}
                 <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--panel-border)' }}>
                   <h4 style={{ fontSize: '13px', color: 'var(--theme-accent-muted)', fontWeight: '600', margin: '0 0 12px 0' }}>🕹️ {t.controls_title}</h4>
@@ -2099,6 +2182,19 @@ export default function UIOverlay({
                 { id: 'plant', label: t.item_plant, icon: '🪴' },
                 { id: 'large_plant', label: t.item_large_plant, icon: '🌴' }
               ]
+            },
+            {
+              title: t.category_geometry,
+              items: [
+                { id: 'customVisualBox_box', label: t.item_geom_box, icon: '📦' },
+                { id: 'customVisualBox_cube', label: t.item_geom_cube, icon: '🧊' },
+                { id: 'customVisualBox_cylinder', label: t.item_geom_cylinder, icon: '🛢️' },
+                { id: 'customVisualBox_sphere', label: t.item_geom_sphere, icon: '🔮' },
+                { id: 'customVisualBox_cone', label: t.item_geom_cone, icon: '📐' },
+                { id: 'customVisualBox_pyramid', label: t.item_geom_pyramid, icon: '🔺' },
+                { id: 'customVisualBox_capsule', label: t.item_geom_capsule, icon: '💊' },
+                { id: 'customVisualBox_prism', label: t.item_geom_prism, icon: '🛕' }
+              ]
             }
           ].map((category) => (
             <div key={category.title} className="drawer-category-section" style={{ marginBottom: '18px' }}>
@@ -2234,7 +2330,16 @@ export default function UIOverlay({
           desk_lamp: t.item_desk_lamp,
           large_plant: t.item_large_plant,
           archive_box: t.item_archive_box,
-          customVisualBox: t.item_customVisualBox
+          customVisualBox: selectedItem.geometryType ? {
+            box: t.item_geom_box,
+            cube: t.item_geom_cube,
+            cylinder: t.item_geom_cylinder,
+            sphere: t.item_geom_sphere,
+            cone: t.item_geom_cone,
+            pyramid: t.item_geom_pyramid,
+            capsule: t.item_geom_capsule,
+            prism: t.item_geom_prism
+          }[selectedItem.geometryType] || t.item_customVisualBox : t.item_customVisualBox
         }[selectedItem.type] || t.item_item;
 
         // Renk paleti seçenekleri
@@ -2367,129 +2472,193 @@ export default function UIOverlay({
                 </div>
 
                 {/* 3. Özel Görsel Kutu Ayarları */}
-                {selectedItem.type === 'customVisualBox' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', width: '100%' }}>
-                    {/* Manuel Kutu Boyutları (Genişlik, Yükseklik, Derinlik) */}
-                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
-                      {/* Genişlik */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Width' : 'Genişlik'}</span>
-                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.max(0.1, (selectedItem.boxWidth || 1) - 0.1) }); }}>-</button>
-                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxWidth || 1).toFixed(1)}m</span>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.min(3.0, (selectedItem.boxWidth || 1) + 0.1) }); }}>+</button>
-                        </div>
-                      </div>
-
-                      {/* Yükseklik */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Height' : 'Yükseklik'}</span>
-                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.max(0.1, (selectedItem.boxHeight || 1) - 0.1) }); }}>-</button>
-                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxHeight || 1).toFixed(1)}m</span>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.min(3.0, (selectedItem.boxHeight || 1) + 0.1) }); }}>+</button>
-                        </div>
-                      </div>
-
-                      {/* Derinlik */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Depth' : 'Derinlik'}</span>
-                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.max(0.01, (selectedItem.boxDepth || 0.1) - 0.01) }); }}>-</button>
-                          <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxDepth || 0.1).toFixed(2)}m</span>
-                          <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.min(1.0, (selectedItem.boxDepth || 0.1) + 0.01) }); }}>+</button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Görsel Yükleme ve Yüzey Ayarları */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
-                      {/* Görsel Yükle */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>🖼️ {lang === 'en' ? 'Image' : 'Görsel'}</span>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            id="custom-box-image-upload"
-                            style={{ display: 'none' }}
+                {selectedItem.type === 'customVisualBox' && (() => {
+                  const geom = selectedItem.geometryType || 'box';
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', width: '100%' }}>
+                      {/* Şekil Tipi Seçimi */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {t.geom_shape_type}</span>
+                          <select
+                            className="btn-control"
+                            value={selectedItem.geometryType || 'box'}
                             onPointerDown={(e) => e.stopPropagation()}
                             onChange={(e) => {
                               e.stopPropagation();
-                              const file = e.target.files[0];
-                              if (file) {
-                                resizeAndCompressImage(file, (compressedDataUrl) => {
-                                  if (compressedDataUrl) {
-                                    onUpdatePlacedItem(activeItemId, { imageData: compressedDataUrl });
-                                  }
-                                });
-                              }
+                              const newGeom = e.target.value;
+                              onUpdatePlacedItem(activeItemId, { 
+                                geometryType: newGeom,
+                                boxWidth: newGeom === 'cube' ? 1.0 : (newGeom === 'sphere' ? 1.0 : (selectedItem.boxWidth || 1.0)),
+                                boxHeight: newGeom === 'cube' ? 1.0 : (newGeom === 'sphere' ? 1.0 : (selectedItem.boxHeight || 1.0)),
+                                boxDepth: newGeom === 'cube' ? 1.0 : (newGeom === 'sphere' || newGeom === 'cylinder' ? 1.0 : (selectedItem.boxDepth || 0.1)),
+                                radius: (newGeom === 'sphere' || newGeom === 'cylinder' || newGeom === 'cone' || newGeom === 'pyramid' || newGeom === 'capsule' || newGeom === 'prism') ? (selectedItem.radius || 0.5) : undefined
+                              });
                             }}
-                          />
-                          <label
-                            htmlFor="custom-box-image-upload"
-                            className="btn-control"
-                            style={{ cursor: 'pointer', flex: 1, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: 'var(--button-bg-secondary)', color: 'var(--theme-accent)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}
-                            onPointerDown={(e) => e.stopPropagation()}
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
                           >
-                            {selectedItem.imageData ? (lang === 'en' ? 'Change' : 'Değiştir') : (lang === 'en' ? 'Upload' : 'Yükle')}
-                          </label>
-                          {selectedItem.imageData && (
-                            <button
-                              className="btn-control"
-                              style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-bg)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--theme-danger-bg)' }}
-                              onPointerDown={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUpdatePlacedItem(activeItemId, { imageData: '' });
-                              }}
-                              title="Görseli Kaldır"
-                            >
-                              ✕
-                            </button>
-                          )}
+                            <option value="box">{t.item_geom_box}</option>
+                            <option value="cube">{t.item_geom_cube}</option>
+                            <option value="cylinder">{t.item_geom_cylinder}</option>
+                            <option value="sphere">{t.item_geom_sphere}</option>
+                            <option value="cone">{t.item_geom_cone}</option>
+                            <option value="pyramid">{t.item_geom_pyramid}</option>
+                            <option value="capsule">{t.item_geom_capsule}</option>
+                            <option value="prism">{t.item_geom_prism}</option>
+                          </select>
                         </div>
                       </div>
 
-                      {/* Yüzey */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {lang === 'en' ? 'Apply Face' : 'Yüzey'}</span>
-                        <select
-                          className="btn-control"
-                          value={selectedItem.imageFace || 'front'}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            onUpdatePlacedItem(activeItemId, { imageFace: e.target.value });
-                          }}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
-                        >
-                          <option value="front">{lang === 'en' ? 'Front Face' : 'Ön Yüz'}</option>
-                          <option value="top">{lang === 'en' ? 'Top Face' : 'Üst Yüz'}</option>
-                        </select>
+                      {/* Boyutlar (Genişlik, Yükseklik, Derinlik, Yarıçap) */}
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', width: '100%' }}>
+                        {(geom === 'box' || geom === 'cube') && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                            <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Width' : 'Genişlik'}</span>
+                            <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.max(0.1, (selectedItem.boxWidth || 1) - 0.1) }); }}>-</button>
+                              <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxWidth || 1).toFixed(1)}m</span>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxWidth: Math.min(3.0, (selectedItem.boxWidth || 1) + 0.1) }); }}>+</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {geom !== 'cube' && geom !== 'sphere' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                            <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Height' : 'Yükseklik'}</span>
+                            <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.max(0.1, (selectedItem.boxHeight || 1) - 0.1) }); }}>-</button>
+                              <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxHeight || 1).toFixed(1)}m</span>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxHeight: Math.min(3.0, (selectedItem.boxHeight || 1) + 0.1) }); }}>+</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {geom === 'box' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                            <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {lang === 'en' ? 'Depth' : 'Derinlik'}</span>
+                            <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.max(0.01, (selectedItem.boxDepth || 0.1) - 0.01) }); }}>-</button>
+                              <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.boxDepth || 0.1).toFixed(2)}m</span>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { boxDepth: Math.min(1.0, (selectedItem.boxDepth || 0.1) + 0.01) }); }}>+</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {(geom === 'cylinder' || geom === 'sphere' || geom === 'cone' || geom === 'pyramid' || geom === 'capsule' || geom === 'prism') && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                            <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📏 {t.geom_radius}</span>
+                            <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { radius: Math.max(0.1, (selectedItem.radius || 0.5) - 0.05) }); }}>-</button>
+                              <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{(selectedItem.radius || 0.5).toFixed(2)}m</span>
+                              <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); onUpdatePlacedItem(activeItemId, { radius: Math.min(2.0, (selectedItem.radius || 0.5) + 0.05) }); }}>+</button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 120px' }}>
+                          <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📐 {t.geom_uniform_scale}</span>
+                          <div className="btn-group" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(-0.1); }}>-</button>
+                            <span className="value-display" style={{ flex: 1, textAlign: 'center' }}>{scaleVal.toFixed(1)}x</span>
+                            <button className="btn-control" style={{ padding: '4px 10px' }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); e.currentTarget.blur(); handleScaleChange(0.1); }}>+</button>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Görsel Düzen */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📐 {lang === 'en' ? 'Image Fit' : 'Görsel Düzen'}</span>
-                        <select
-                          className="btn-control"
-                          value={selectedItem.imageFit || 'contain'}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            onUpdatePlacedItem(activeItemId, { imageFit: e.target.value });
-                          }}
-                          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
-                        >
-                          <option value="contain">{lang === 'en' ? 'Fit (Contain)' : 'Sığdır (Contain)'}</option>
-                          <option value="cover">{lang === 'en' ? 'Crop (Cover)' : 'Kırp (Cover)'}</option>
-                          <option value="stretch">{lang === 'en' ? 'Stretch' : 'Uzat (Stretch)'}</option>
-                        </select>
+                      {/* Görsel Yükleme ve Yüzey Ayarları */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                        {/* Görsel Yükle */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>🖼️ {lang === 'en' ? 'Image' : 'Görsel'}</span>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id="custom-box-image-upload"
+                              style={{ display: 'none' }}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                const file = e.target.files[0];
+                                if (file) {
+                                  resizeAndCompressImage(file, (compressedDataUrl) => {
+                                    if (compressedDataUrl) {
+                                      onUpdatePlacedItem(activeItemId, { imageData: compressedDataUrl });
+                                    }
+                                  });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="custom-box-image-upload"
+                              className="btn-control"
+                              style={{ cursor: 'pointer', flex: 1, padding: '6px 12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', background: 'var(--button-bg-secondary)', color: 'var(--theme-accent)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              {selectedItem.imageData ? (lang === 'en' ? 'Change' : 'Değiştir') : (lang === 'en' ? 'Upload' : 'Yükle')}
+                            </label>
+                            {selectedItem.imageData && (
+                              <button
+                                className="btn-control"
+                                style={{ color: 'var(--theme-danger)', background: 'var(--theme-danger-bg)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--theme-danger-bg)' }}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onUpdatePlacedItem(activeItemId, { imageData: '' });
+                                }}
+                                title="Görseli Kaldır"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Yüzey */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {lang === 'en' ? 'Apply Face' : 'Yüzey'}</span>
+                          <select
+                            className="btn-control"
+                            value={selectedItem.imageFace || 'front'}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              onUpdatePlacedItem(activeItemId, { imageFace: e.target.value });
+                            }}
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
+                          >
+                            <option value="all">{t.geom_face_all}</option>
+                            <option value="front">{t.geom_face_front}</option>
+                            <option value="back">{t.geom_face_back}</option>
+                            <option value="left">{t.geom_face_left}</option>
+                            <option value="right">{t.geom_face_right}</option>
+                            <option value="top">{t.geom_face_top}</option>
+                            <option value="bottom">{t.geom_face_bottom}</option>
+                          </select>
+                        </div>
+
+                        {/* Görsel Düzen */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📐 {lang === 'en' ? 'Image Fit' : 'Görsel Düzen'}</span>
+                          <select
+                            className="btn-control"
+                            value={selectedItem.imageFit || 'contain'}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              onUpdatePlacedItem(activeItemId, { imageFit: e.target.value });
+                            }}
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--button-bg)', color: 'var(--text-main)', outline: 'none', width: '100%', fontSize: '0.8rem' }}
+                          >
+                            <option value="contain">{lang === 'en' ? 'Fit (Contain)' : 'Sığdır (Contain)'}</option>
+                            <option value="cover">{lang === 'en' ? 'Crop (Cover)' : 'Kırp (Cover)'}</option>
+                            <option value="stretch">{lang === 'en' ? 'Stretch' : 'Uzat (Stretch)'}</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* 4. İnce Ayarlar (Katlanabilir Dikey Alan) */}
                 <FineTuneAccordion t={t} handleMoveCoord={handleMoveCoord} />
@@ -3786,7 +3955,7 @@ function FineTuneAccordion({ t, handleMoveCoord }) {
           alignItems: 'center'
         }}
       >
-        <span>🛠️ {t.lang === 'en' ? 'Fine Tuning (Positioning)' : 'İnce Ayar (Konumlandırma)'}</span>
+        <span>🛠️ {lang === 'en' ? 'Fine Tuning (Positioning)' : 'İnce Ayar (Konumlandırma)'}</span>
         <span style={{ fontSize: '0.65rem' }}>{isOpen ? '▲' : '▼'}</span>
       </button>
       {isOpen && (
