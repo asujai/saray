@@ -116,6 +116,8 @@ const UI_TRANSLATIONS = {
     category_boards: 'Panolar',
     category_lighting: 'Aydınlatma',
     category_decor: 'Dekor ve Yardımcılar',
+    category_bedroom: 'Yatak Odası',
+    category_bathroom: 'Banyo / WC',
     
     // Eşya Çevirileri
     item_desk: 'Çalışma Masası',
@@ -139,6 +141,18 @@ const UI_TRANSLATIONS = {
     item_large_rack: 'Büyük Raf Ünitesi',
     item_wallshelf: 'Duvar Rafı',
     item_small_wallshelf: 'Küçük Duvar Rafı',
+    item_bed: 'Yatak',
+    item_double_bed: 'Çift Kişilik Yatak',
+    item_nightstand: 'Komodin',
+    item_wardrobe: 'Gardırop',
+    item_sink: 'Lavabo',
+    item_toilet: 'Tuvalet',
+    item_shower: 'Duş Kabini',
+    item_bathtub: 'Küvet',
+    item_bathroom_cabinet: 'Banyo Dolabı',
+    item_mirror: 'Ayna',
+    item_towel_rack: 'Havluluk',
+    item_laundry_basket: 'Çamaşır Sepeti',
     item_board: 'Çalışma Panosu',
     item_large_board: 'Büyük Pano',
     item_whiteboard: 'Yazı Tahtası',
@@ -220,10 +234,13 @@ const UI_TRANSLATIONS = {
     unknown_object: 'Bilinmeyen Öğe',
     
     // Minimap
-    room_hall: 'Giriş / Hol',
+    room_entry: 'Giriş / Antre',
+    room_hall: 'Koridor',
+    room_bathroom: 'Banyo',
+    room_wc: 'WC / Tuvalet',
     room_bedroom: 'Yatak Odası',
-    room_kitchen: 'Mutfak',
     room_study: 'Çalışma Odası',
+    room_kitchen: 'Mutfak',
     room_living: 'Salon',
     room_unknown: 'Bilinmeyen Oda',
     
@@ -325,6 +342,8 @@ const UI_TRANSLATIONS = {
     category_boards: 'Boards',
     category_lighting: 'Lighting',
     category_decor: 'Decor & Helpers',
+    category_bedroom: 'Bedroom',
+    category_bathroom: 'Bathroom / WC',
     
     // Items
     item_desk: 'Study Desk',
@@ -348,6 +367,18 @@ const UI_TRANSLATIONS = {
     item_large_rack: 'Large Rack Unit',
     item_wallshelf: 'Wall Shelf',
     item_small_wallshelf: 'Small Wall Shelf',
+    item_bed: 'Single Bed',
+    item_double_bed: 'Double Bed',
+    item_nightstand: 'Nightstand',
+    item_wardrobe: 'Wardrobe',
+    item_sink: 'Sink',
+    item_toilet: 'Toilet',
+    item_shower: 'Shower Cabin',
+    item_bathtub: 'Bathtub',
+    item_bathroom_cabinet: 'Bathroom Cabinet',
+    item_mirror: 'Mirror',
+    item_towel_rack: 'Towel Rack',
+    item_laundry_basket: 'Laundry Basket',
     item_board: 'Study Board',
     item_large_board: 'Large Board',
     item_whiteboard: 'Whiteboard',
@@ -429,10 +460,13 @@ const UI_TRANSLATIONS = {
     unknown_object: 'Unknown Object',
     
     // Minimap
-    room_hall: 'Entrance / Hall',
+    room_entry: 'Entrance / Anteroom',
+    room_hall: 'Corridor',
+    room_bathroom: 'Bathroom',
+    room_wc: 'Toilet / WC',
     room_bedroom: 'Bedroom',
-    room_kitchen: 'Kitchen',
     room_study: 'Study Room',
+    room_kitchen: 'Kitchen',
     room_living: 'Living Room',
     room_unknown: 'Unknown Room',
     
@@ -666,6 +700,17 @@ export default function UIOverlay({
   const isTestMode = new URLSearchParams(window.location.search).get('testMode') === 'true';
   const [pages, setPages] = useState([{ text: '', image: null, layout: 'image-top-text-bottom' }]);
 
+  // Bağlantı Adı ve Açıklaması State'leri
+  const [connLabel, setConnLabel] = useState('');
+  const [connDesc, setConnDesc] = useState('');
+
+  useEffect(() => {
+    if (!isConceptSelectOpen) {
+      setConnLabel('');
+      setConnDesc('');
+    }
+  }, [isConceptSelectOpen]);
+
   // Gelişmiş Ayarlar Paneli Tab ve Seçim State'leri
   const [activeSettingsTab, setActiveSettingsTab] = useState('appearance');
   const [colorSelectedRoom, setColorSelectedRoom] = useState('kitchen');
@@ -685,6 +730,9 @@ export default function UIOverlay({
   const [wallZoom, setWallZoom] = useState(1.0);
   const [wallOffsetX, setWallOffsetX] = useState(0.0);
   const [wallOffsetY, setWallOffsetY] = useState(0.0);
+
+  // Eşya düzenleme paneli dock modu (sağa sabitle)
+  const [panelDocked, setPanelDocked] = useState(false);
 
   // Oda değişince o odanın ilk duvarını otomatik seç
   useEffect(() => {
@@ -2184,6 +2232,28 @@ export default function UIOverlay({
               ]
             },
             {
+              title: t.category_bedroom,
+              items: [
+                { id: 'bed', label: t.item_bed, icon: '🛏️' },
+                { id: 'double_bed', label: t.item_double_bed, icon: '🛏️' },
+                { id: 'nightstand', label: t.item_nightstand, icon: '🗄️' },
+                { id: 'wardrobe', label: t.item_wardrobe, icon: '🚪' }
+              ]
+            },
+            {
+              title: t.category_bathroom,
+              items: [
+                { id: 'sink', label: t.item_sink, icon: '🚰' },
+                { id: 'toilet', label: t.item_toilet, icon: '🚽' },
+                { id: 'shower', label: t.item_shower, icon: '🚿' },
+                { id: 'bathtub', label: t.item_bathtub, icon: '🛁' },
+                { id: 'bathroom_cabinet', label: t.item_bathroom_cabinet, icon: '🪞' },
+                { id: 'mirror', label: t.item_mirror, icon: '🖼️' },
+                { id: 'towel_rack', label: t.item_towel_rack, icon: '🧣' },
+                { id: 'laundry_basket', label: t.item_laundry_basket, icon: '🧺' }
+              ]
+            },
+            {
               title: t.category_geometry,
               items: [
                 { id: 'customVisualBox_box', label: t.item_geom_box, icon: '📦' },
@@ -2260,7 +2330,7 @@ export default function UIOverlay({
                 🚀 {lang === 'en' ? 'Item Moving Mode' : 'Taşıma Modu Aktif'}
               </span>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {lang === 'en' ? 'Drag to move (Use WASD to walk). Hold Space to move vertical (up-down).' : 'Sürükleyerek taşıyın (WASD ile yürüyün). Dikey (yukarı-aşağı) taşıma için Space tuşuna basılı tutun.'}
+                {lang === 'en' ? 'Drag to move (Use WASD to walk). Snaps automatically to surfaces.' : 'Sürükleyerek taşıyın (WASD ile yürüyün). Yüzeylere otomatik olarak tutunur.'}
               </span>
             </div>
             
@@ -2330,6 +2400,18 @@ export default function UIOverlay({
           desk_lamp: t.item_desk_lamp,
           large_plant: t.item_large_plant,
           archive_box: t.item_archive_box,
+          bed: t.item_bed,
+          double_bed: t.item_double_bed,
+          nightstand: t.item_nightstand,
+          wardrobe: t.item_wardrobe,
+          sink: t.item_sink,
+          toilet: t.item_toilet,
+          shower: t.item_shower,
+          bathtub: t.item_bathtub,
+          bathroom_cabinet: t.item_bathroom_cabinet,
+          mirror: t.item_mirror,
+          towel_rack: t.item_towel_rack,
+          laundry_basket: t.item_laundry_basket,
           customVisualBox: selectedItem.geometryType ? {
             box: t.item_geom_box,
             cube: t.item_geom_cube,
@@ -2382,12 +2464,41 @@ export default function UIOverlay({
 
         return (
           <div 
-            className="item-editor-bar glass-panel interactive-ui"
+            className={`item-editor-bar glass-panel interactive-ui ${isItemEditingActive && panelDocked ? 'panel-docked' : ''}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
-            style={isItemEditingActive ? {
+            style={isItemEditingActive ? (panelDocked ? {
+              /* DOCKED: Sağ yan panel modu */
+              position: 'fixed',
+              top: '0',
+              right: '0',
+              bottom: '0',
+              left: 'auto',
+              transform: 'none',
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '14px', 
+              padding: '16px 18px', 
+              width: '340px',
+              maxWidth: '92vw',
+              minWidth: '0',
+              maxHeight: '100vh',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              borderRadius: '0',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.12)',
+              borderTop: 'none',
+              borderBottom: 'none',
+              borderRight: 'none',
+              background: 'rgba(15, 23, 42, 0.92)',
+              backdropFilter: 'blur(16px)',
+              boxShadow: '-8px 0 32px 0 rgba(0, 0, 0, 0.5)',
+              zIndex: 100000,
+              animation: 'panel-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            } : {
+              /* CENTERED: Orta modal modu (mevcut) */
               display: 'flex', 
               flexDirection: 'column', 
               gap: '16px', 
@@ -2400,27 +2511,66 @@ export default function UIOverlay({
               background: 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(12px)',
               boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4)'
-            } : { 
+            }) : { 
               padding: '16px 24px', 
               flexWrap: 'wrap', 
               gap: '12px' 
             }}
           >
-            <div className="item-info">
-              <span className="item-label-glow">{defaultLabel}</span>
-              <span className="item-room-label" style={{ marginLeft: '12px' }}>{lang === 'en' ? 'Room' : 'Oda'}: {roomNames[selectedItem.roomId] || selectedItem.roomId}</span>
+            <div className="item-info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span className="item-label-glow">{defaultLabel}</span>
+                <span className="item-room-label">{lang === 'en' ? 'Room' : 'Oda'}: {roomNames[selectedItem.roomId] || selectedItem.roomId}</span>
+              </div>
+              {isItemEditingActive && (
+                <button
+                  className="btn-control interactive-ui"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.blur();
+                    setPanelDocked(!panelDocked);
+                  }}
+                  title={panelDocked 
+                    ? (lang === 'en' ? 'Center Panel' : 'Ortaya Al') 
+                    : (lang === 'en' ? 'Dock to Right' : 'Sağa Sabitle')}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '0.75rem',
+                    background: panelDocked ? 'var(--theme-accent-bg)' : 'rgba(255,255,255,0.05)',
+                    color: panelDocked ? 'var(--theme-accent)' : 'var(--text-muted)',
+                    border: panelDocked ? '1px solid var(--theme-accent)' : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer',
+                    width: 'auto',
+                    height: 'auto',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {panelDocked ? '⬜' : '▶️'} {panelDocked 
+                    ? (lang === 'en' ? 'Center' : 'Ortaya Al') 
+                    : (lang === 'en' ? 'Dock Right' : 'Sağa Sabitle')}
+                </button>
+              )}
             </div>
 
             {isItemEditingActive ? (
               // DÜZENLEME MODU AÇIKKEN (Sadeleştirilmiş Yeni Tasarım)
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: panelDocked ? '12px' : '16px', width: '100%' }}>
                 {/* 1. Üst Bilgilendirme */}
-                <div style={{ fontSize: '0.8rem', color: 'var(--theme-accent)', background: 'var(--theme-accent-bg)', padding: '6px 12px', borderRadius: '6px', width: '100%' }}>
-                  ⚙️ {lang === 'en' ? 'Editing item properties. Dragging is disabled in this mode.' : 'Eşya özellikleri düzenleniyor. Bu moddayken sahnede sürükleme yapılamaz.'}
+                <div style={{ fontSize: '0.75rem', color: 'var(--theme-accent)', background: 'var(--theme-accent-bg)', padding: '6px 10px', borderRadius: '6px', width: '100%' }}>
+                  {panelDocked 
+                    ? (lang === 'en' ? '🔴 Live preview active' : '🔴 Canlı önizleme aktif') 
+                    : (lang === 'en' ? '⚙️ Editing item properties. Dragging is disabled in this mode.' : '⚙️ Eşya özellikleri düzenleniyor. Bu moddayken sahnede sürükleme yapılamaz.')
+                  }
                 </div>
 
                 {/* 2. Temel Kontroller Satırı */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: panelDocked ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: panelDocked ? '10px' : '16px', width: '100%' }}>
                   {/* Renk Seçimi */}
                   <div className="editor-control-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <span className="control-label" style={{ fontWeight: '600' }}>🎨 {t.item_color}</span>
@@ -2477,7 +2627,7 @@ export default function UIOverlay({
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', width: '100%' }}>
                       {/* Şekil Tipi Seçimi */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: panelDocked ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: panelDocked ? '10px' : '16px', width: '100%' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {t.geom_shape_type}</span>
                           <select
@@ -2566,7 +2716,7 @@ export default function UIOverlay({
                       </div>
 
                       {/* Görsel Yükleme ve Yüzey Ayarları */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: panelDocked ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: panelDocked ? '10px' : '16px', width: '100%' }}>
                         {/* Görsel Yükle */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <span className="control-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>🖼️ {lang === 'en' ? 'Image' : 'Görsel'}</span>
@@ -2661,10 +2811,10 @@ export default function UIOverlay({
                 })()}
 
                 {/* 4. İnce Ayarlar (Katlanabilir Dikey Alan) */}
-                <FineTuneAccordion t={t} handleMoveCoord={handleMoveCoord} />
+                <FineTuneAccordion t={t} handleMoveCoord={handleMoveCoord} lang={lang} />
 
-                {/* 5. Aksiyon Grubu (Sağ Alt Köşe) */}
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px', width: '100%' }}>
+                {/* 5. Aksiyon Grubu */}
+                <div style={{ display: 'flex', gap: panelDocked ? '8px' : '10px', justifyContent: panelDocked ? 'stretch' : 'flex-end', flexDirection: panelDocked ? 'column' : 'row', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '12px', width: '100%', ...(panelDocked ? { position: 'sticky', bottom: 0, background: 'rgba(15, 23, 42, 0.95)', paddingBottom: '4px', marginTop: 'auto' } : {}) }}>
                   {/* Silme */}
                   <button 
                     className="btn-danger-item" 
@@ -3650,64 +3800,100 @@ export default function UIOverlay({
             </defs>
             <rect width="100" height="100" fill="url(#minimap-grid)" />
 
-            {/* Mutfak (Kitchen) - Sol Üst (z <= 0) */}
+            {/* Çalışma Odası (Study) - Sol Üst */}
             <rect 
-              x="2" y="2" width="36" height="46" 
+              x="2" y="2" width="37" height="47" 
               fill="rgba(0, 240, 255, 0.03)" 
               stroke="rgba(0, 240, 255, 0.15)" 
               strokeWidth="0.8" 
-              rx="4"
+              rx="3"
             />
-            <text x="20" y="25" fill="rgba(255, 255, 255, 0.55)" fontSize="5" fontWeight="bold" textAnchor="middle">
-              {roomNames.kitchen || 'Mutfak'}
+            <text x="20.5" y="26" fill="rgba(255, 255, 255, 0.55)" fontSize="4.5" fontWeight="bold" textAnchor="middle">
+              {roomNames.study || 'Çalışma Odası'}
             </text>
 
-            {/* Yatak Odası (Bedroom) - Sol Alt (z > 0) */}
+            {/* Yatak Odası (Bedroom) - Sol Alt */}
             <rect 
-              x="2" y="52" width="36" height="46" 
+              x="2" y="51" width="37" height="47" 
               fill="rgba(0, 240, 255, 0.03)" 
               stroke="rgba(0, 240, 255, 0.15)" 
               strokeWidth="0.8" 
-              rx="4"
+              rx="3"
             />
-            <text x="20" y="75" fill="rgba(255, 255, 255, 0.55)" fontSize="5" fontWeight="bold" textAnchor="middle">
+            <text x="20.5" y="75" fill="rgba(255, 255, 255, 0.55)" fontSize="4.5" fontWeight="bold" textAnchor="middle">
               {roomNames.bedroom || 'Yatak Odası'}
             </text>
 
-            {/* Giriş / Hol (Hall) - Orta Sütun */}
+            {/* Banyo (Bathroom) - Orta Üst Sol */}
             <rect 
-              x="40" y="2" width="20" height="96" 
+              x="41" y="2" width="8.5" height="37" 
+              fill="rgba(0, 240, 255, 0.03)" 
+              stroke="rgba(0, 240, 255, 0.15)" 
+              strokeWidth="0.8" 
+              rx="2"
+            />
+            <text x="45.25" y="21" fill="rgba(255, 255, 255, 0.45)" fontSize="3.5" fontWeight="bold" textAnchor="middle">
+              {roomNames.bathroom || 'Banyo'}
+            </text>
+
+            {/* WC (WC) - Orta Üst Sağ */}
+            <rect 
+              x="50.5" y="2" width="8.5" height="37" 
+              fill="rgba(0, 240, 255, 0.03)" 
+              stroke="rgba(0, 240, 255, 0.15)" 
+              strokeWidth="0.8" 
+              rx="2"
+            />
+            <text x="54.75" y="21" fill="rgba(255, 255, 255, 0.45)" fontSize="3.5" fontWeight="bold" textAnchor="middle">
+              {roomNames.wc || 'WC'}
+            </text>
+
+            {/* Koridor (Hall) - Orta Merkez */}
+            <rect 
+              x="41" y="41" width="18" height="38" 
               fill="rgba(0, 240, 255, 0.05)" 
               stroke="rgba(0, 240, 255, 0.25)" 
               strokeWidth="1.0" 
-              rx="4"
+              rx="3"
             />
-            <text x="50" y="50" fill="rgba(255, 255, 255, 0.7)" fontSize="5.5" fontWeight="bold" textAnchor="middle">
-              {roomNames.hall || 'Giriş'}
+            <text x="50" y="60" fill="rgba(255, 255, 255, 0.6)" fontSize="4.5" fontWeight="bold" textAnchor="middle">
+              {roomNames.hall || 'Koridor'}
             </text>
 
-            {/* Salon (Living) - Sağ Üst (z <= 0) */}
+            {/* Giriş / Antre (Entry) - Orta Alt */}
             <rect 
-              x="62" y="2" width="36" height="46" 
+              x="41" y="81" width="18" height="17" 
+              fill="rgba(0, 240, 255, 0.05)" 
+              stroke="rgba(0, 240, 255, 0.25)" 
+              strokeWidth="1.0" 
+              rx="3"
+            />
+            <text x="50" y="90" fill="rgba(255, 255, 255, 0.65)" fontSize="4" fontWeight="bold" textAnchor="middle">
+              {roomNames.entry || 'Antre'}
+            </text>
+
+            {/* Mutfak (Kitchen) - Sağ Üst */}
+            <rect 
+              x="61" y="2" width="37" height="47" 
               fill="rgba(0, 240, 255, 0.03)" 
               stroke="rgba(0, 240, 255, 0.15)" 
               strokeWidth="0.8" 
-              rx="4"
+              rx="3"
             />
-            <text x="80" y="25" fill="rgba(255, 255, 255, 0.55)" fontSize="5" fontWeight="bold" textAnchor="middle">
+            <text x="79.5" y="26" fill="rgba(255, 255, 255, 0.55)" fontSize="4.5" fontWeight="bold" textAnchor="middle">
+              {roomNames.kitchen || 'Mutfak'}
+            </text>
+
+            {/* Salon (Living) - Sağ Alt */}
+            <rect 
+              x="61" y="51" width="37" height="47" 
+              fill="rgba(0, 240, 255, 0.03)" 
+              stroke="rgba(0, 240, 255, 0.15)" 
+              strokeWidth="0.8" 
+              rx="3"
+            />
+            <text x="79.5" y="75" fill="rgba(255, 255, 255, 0.55)" fontSize="4.5" fontWeight="bold" textAnchor="middle">
               {roomNames.living || 'Salon'}
-            </text>
-
-            {/* Çalışma Odası (Study) - Sağ Alt (z > 0) */}
-            <rect 
-              x="62" y="52" width="36" height="46" 
-              fill="rgba(0, 240, 255, 0.03)" 
-              stroke="rgba(0, 240, 255, 0.15)" 
-              strokeWidth="0.8" 
-              rx="4"
-            />
-            <text x="80" y="75" fill="rgba(255, 255, 255, 0.55)" fontSize="5" fontWeight="bold" textAnchor="middle">
-              {roomNames.study || 'Çalışma Odası'}
             </text>
 
             {/* Oyuncu Pozisyon ve Yön Göstergesi */}
@@ -3767,6 +3953,47 @@ export default function UIOverlay({
               {t.concept_choose_desc}
             </div>
 
+            {/* Ad ve Açıklama Input Alanları */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'sans-serif' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>
+                {lang === 'en' ? 'Connection Name / Label' : 'Bağlantı Adı / Etiketi'}
+              </label>
+              <input 
+                type="text"
+                value={connLabel}
+                onChange={(e) => setConnLabel(e.target.value)}
+                placeholder={lang === 'en' ? 'e.g. Side Effect, Contraindication...' : 'Örn: Yan Etki, Kontrendikasyon...'}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--panel-border)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.8rem',
+                  outline: 'none'
+                }}
+              />
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'bold', marginTop: '4px' }}>
+                {lang === 'en' ? 'Description (Optional)' : 'Açıklama (İsteğe Bağlı)'}
+              </label>
+              <textarea 
+                value={connDesc}
+                onChange={(e) => setConnDesc(e.target.value)}
+                placeholder={lang === 'en' ? 'Describe the relationship...' : 'İlişkiyi açıklayın...'}
+                rows={2}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--panel-border)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.8rem',
+                  outline: 'none',
+                  resize: 'none'
+                }}
+              />
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
               {connectionConcepts.map((concept) => (
                 <button
@@ -3786,7 +4013,7 @@ export default function UIOverlay({
                     textAlign: 'left',
                     transition: 'all 0.2s ease'
                   }}
-                  onClick={() => onCompleteConnection(concept.id)}
+                  onClick={() => onCompleteConnection(concept.id, connLabel, connDesc)}
                 >
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: concept.color, boxShadow: `0 0 8px ${concept.color}` }}></div>
                   <span style={{ fontWeight: '500', fontFamily: 'sans-serif' }}>{concept.name}</span>
@@ -3934,7 +4161,7 @@ export default function UIOverlay({
   );
 }
 
-function FineTuneAccordion({ t, handleMoveCoord }) {
+function FineTuneAccordion({ t, handleMoveCoord, lang }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', overflow: 'hidden', width: '100%' }}>

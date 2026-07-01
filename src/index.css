@@ -1663,6 +1663,39 @@ canvas {
   }
 }
 
+/* Sağa Sabitlenmiş Panel Dock Modu */
+.item-editor-bar.panel-docked {
+  animation: panel-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes panel-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.item-editor-bar.panel-docked::-webkit-scrollbar {
+  width: 4px;
+}
+
+.item-editor-bar.panel-docked::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.item-editor-bar.panel-docked::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.item-editor-bar.panel-docked::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .item-info {
   display: flex;
   flex-direction: column;

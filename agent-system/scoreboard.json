@@ -1,7 +1,7 @@
 {
   "Orchestrator Agent": {
-    "score": 105,
-    "last_update": "2026-07-01T15:55:00Z",
+    "score": 114,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -22,12 +22,27 @@
         "task_id": "TASK-004",
         "change": 3,
         "reason": "Kuş bakışı ve serbest uçuş not parlama entegrasyonunun koordinasyonu."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 3,
+        "reason": "Genişletilmiş 8 odalı ev mimarisi ve gelecek kapıları entegrasyonunun koordinasyonu."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 3,
+        "reason": "Aydınlatma, renk zenginliği ve takip ışığı entegrasyonunun koordinasyonu."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 3,
+        "reason": "10 ilaç kutusunun visual preset entegrasyonunun koordinasyonu."
       }
     ]
   },
   "Product / Requirements Agent": {
-    "score": 100,
-    "last_update": "2026-07-01T15:35:00Z",
+    "score": 109,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -38,12 +53,27 @@
         "task_id": "TASK-002",
         "change": -5,
         "reason": "Geliştirmede hatalar saptandığı için temiz entegrasyon ödülü geri alındı."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 3,
+        "reason": "8 odalı yerleşim, kapılar ve minimap için net kabul kriterleri tanımlama."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 3,
+        "reason": "Yumuşak takip ışığı, gölge kontrolü ve canlandırma için gereksinim kriterlerinin belirlenmesi."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 3,
+        "reason": "10 ilaç prospektüs bilgisinin 3D not entegrasyonu ve ambalaj boyut kriterlerinin belirlenmesi."
       }
     ]
   },
   "Architecture Agent": {
-    "score": 105,
-    "last_update": "2026-07-01T15:45:00Z",
+    "score": 116,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -59,12 +89,27 @@
         "task_id": "TASK-003",
         "change": 5,
         "reason": "WebGL texture ve materials dispose (bellek sızıntısı önleme) tasarımının onaylanması."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "8 odalı ev mimarisi koordinat planı, çarpışma sınırları ve gelecek genişleme kapılarının mimari tasarımı."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 3,
+        "reason": "Avatar-relative aydınlatma yapısı ve renderer toneMapping katman tasarımının onaylanması."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 3,
+        "reason": "Mevcut local storage verilerini ezmeden yeni eklenen preset'leri listeye dinamik olarak ekleyen defensive state tasarımı."
       }
     ]
   },
   "UI / UX Agent": {
-    "score": 102,
-    "last_update": "2026-07-01T15:45:00Z",
+    "score": 117,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -80,12 +125,27 @@
         "task_id": "TASK-003",
         "change": 2,
         "reason": "Yerelleştirme dil kontrolü ve doku sığdırma oranlarının doğrulanması."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "Neon zemin şeritleri, tavan aydınlatma armatürleri, modüler geçiş kapıları ve 8 odalı orantılı minimap tasarımı."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 5,
+        "reason": "Sahneyi patlatmayan ACESFilmic toneMapping / exposure seçimi ve yumuşak warm-white takip ışığı renk tonu tasarımı."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 5,
+        "reason": "İlaç kutuları için 5x2 grid düzeni, ambalaj en/boy oranları ve kontrastlı ambalaj tasarımlarının UI/UX onaylaması."
       }
     ]
   },
   "Implementation Agent": {
-    "score": 110,
-    "last_update": "2026-07-01T15:55:00Z",
+    "score": 55,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -126,12 +186,52 @@
         "task_id": "TASK-004",
         "change": 10,
         "reason": "Kuş bakışı ve serbest uçuş modlarının ve derinlik testi devre dışı neon parıltı çerçevesinin kodlanması."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 10,
+        "reason": "8 odalı zemin/duvar renderlama, oyuncu çarpışma kontrolü, preset eşyalar, limits sınırları ve 8 odalı minimap ile not dashboard senkronizasyonu."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -25,
+        "reason": "Kritik Hata: FutureExpansionGate ReferenceError hatası (BUG-006)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -25,
+        "reason": "Kritik Hata: lang ReferenceError hatası (BUG-007)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -25,
+        "reason": "Kritik Hata: sans-serif font yükleme RangeError çökme hatası (BUG-008)."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 10,
+        "reason": "Ortam aydınlatması artırımı, ACESFilmic toneMapping/exposure yapılandırması ve karakter takip ışığının hatasız entegre edilmesi."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 10,
+        "reason": "10 ilaç kutusunun görsel ambalaj üretimi, 3D koordinat yerleşimleri, prospektüs notu ve dinamik defensive merge kodlaması."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": -25,
+        "reason": "Kritik Hata: FineTuneAccordion bileşeninde lang ReferenceError hatası (BUG-009)."
+      },
+      {
+        "task_id": "TASK-009",
+        "change": -10,
+        "reason": "Arayüz Hatası: Sahne boşluğuna tıklanıldığında eşya seçiminin kalkmaması (BUG-010)."
       }
     ]
   },
   "QA / Test Agent": {
-    "score": 110,
-    "last_update": "2026-07-01T15:55:00Z",
+    "score": 107,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -152,12 +252,52 @@
         "task_id": "TASK-004",
         "change": 5,
         "reason": "Uçuş/Kuş bakışı modlarının ve parlayan not regression testlerinin başarıyla doğrulanması."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "8 odalı zemin, çarpışma testleri, preset eşyaların sınırları ve minimap doğruluğunun build testi ile doğrulanması."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -5,
+        "reason": "Kritik ReferenceError hatasının doğrulama sürecinde gözden kaçırılması (BUG-006)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -5,
+        "reason": "Kritik lang ReferenceError hatasının doğrulama sürecinde gözden kaçırılması (BUG-007)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": -5,
+        "reason": "Kritik sans-serif RangeError font çökme hatasının doğrulama sürecinde gözden kaçırılması (BUG-008)."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 5,
+        "reason": "Aydınlatma ve toneMapping entegrasyonu sonrası derleme ve görsel uyumluluk testlerinin doğrulanması."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 5,
+        "reason": "10 ilaç kutusunun sahne renderlama, görsel yüklenme, interaktif not bağlantıları ve local storage merge regression testlerinin doğrulanması."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": -5,
+        "reason": "Kritik lang ReferenceError (FineTuneAccordion) çökme hatasının doğrulama sürecinde gözden kaçırılması (BUG-009)."
+      },
+      {
+        "task_id": "TASK-009",
+        "change": -3,
+        "reason": "Kullanıcı etkileşim hatasının (boşluğa basınca seçimin kalkmaması) doğrulama sürecinde gözden kaçırılması (BUG-010)."
       }
     ]
   },
   "Judge / Audit Agent": {
-    "score": 110,
-    "last_update": "2026-07-01T15:55:00Z",
+    "score": 155,
+    "last_update": "2026-07-01T18:41:00Z",
     "history": [
       {
         "task_id": "TASK-002",
@@ -168,6 +308,46 @@
         "task_id": "TASK-004",
         "change": 5,
         "reason": "cameraMode TypeError hatasını ve eksik parıltı gereksinimini kanıtlarıyla bulup adil puan değerlendirmesini yaptı."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "8 odalı ev mimarisi ve minimap/Dashboard uyumunun sıfır hata ile tamamlandığını tespit edip puan değerlendirmesini yaptı."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "Ekran görüntüsü kanıtıyla FutureExpansionGate ReferenceError hatasını tespit ederek puanları güncelledi (BUG-006)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "Ekran görüntüsü kanıtıyla lang ReferenceError hatasını tespit ederek puanları güncelledi (BUG-007)."
+      },
+      {
+        "task_id": "TASK-005",
+        "change": 5,
+        "reason": "Konsol hata kanıtıyla sans-serif font RangeError çökmesini tespit ederek puanları güncelledi (BUG-008)."
+      },
+      {
+        "task_id": "TASK-006",
+        "change": 5,
+        "reason": "Aydınlatma ve gölge dengesinin sıfır hata ile başarılı entegre edildiğini tespit edip puanları güncelledi."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 5,
+        "reason": "İlaç kutuları demo sahnesinin, görsellerin ve notların hatasız entegre edildiğini tespit edip değerlendirmesini yaptı."
+      },
+      {
+        "task_id": "TASK-007",
+        "change": 5,
+        "reason": "Kullanıcı geri bildirimiyle FineTuneAccordion bileşenindeki lang ReferenceError hatasını saptayarak puan tablosunu güncelledi (BUG-009)."
+      },
+      {
+        "task_id": "TASK-009",
+        "change": 5,
+        "reason": "Sahne boşluğuna tıklanıldığında eşya seçiminin kalkmaması hatasını saptayarak puan tablosunu güncelledi (BUG-010)."
       }
     ]
   }

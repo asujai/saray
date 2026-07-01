@@ -89,16 +89,42 @@ export default function Player({
   const performCollisionCheck = (oldX, oldZ, newX, newZ, radius = 0.4) => {
     // 1. Sabit oda duvarları (Sliding Collision)
     const walls = [
-      { minX: -5.1, maxX: -4.9, minZ: -25.0, maxZ: -14.0 },
-      { minX: -5.1, maxX: -4.9, minZ: -11.0, maxZ: 11.0 },
-      { minX: -5.1, maxX: -4.9, minZ: 14.0, maxZ: 25.0 },
+      // 1. Sol dikey bölmeler (X = -5)
+      { minX: -5.1, maxX: -4.9, minZ: -25.0, maxZ: -5.0 },  // Çalışma-Banyo
+      { minX: -5.1, maxX: -4.9, minZ: -5.0, maxZ: -4.0 },   // Çalışma-Koridor sol
+      { minX: -5.1, maxX: -4.9, minZ: -1.0, maxZ: 0.0 },    // Çalışma-Koridor sağ
+      { minX: -5.1, maxX: -4.9, minZ: 0.0, maxZ: 6.0 },     // Yatak-Koridor sol
+      { minX: -5.1, maxX: -4.9, minZ: 9.0, maxZ: 15.0 },    // Yatak-Koridor sağ
+      { minX: -5.1, maxX: -4.9, minZ: 15.0, maxZ: 25.0 },   // Yatak-Antre
       
-      { minX: 4.9, maxX: 5.1, minZ: -25.0, maxZ: -14.0 },
-      { minX: 4.9, maxX: 5.1, minZ: -11.0, maxZ: 11.0 },
-      { minX: 4.9, maxX: 5.1, minZ: 14.0, maxZ: 25.0 },
-      
-      { minX: -25.0, maxX: -5.0, minZ: -0.1, maxZ: 0.1 },
-      { minX: 5.0, maxX: 25.0, minZ: -0.1, maxZ: 0.1 }
+      // 2. Sağ dikey bölmeler (X = 5)
+      { minX: 4.9, maxX: 5.1, minZ: -25.0, maxZ: -5.0 },   // WC-Mutfak
+      { minX: 4.9, maxX: 5.1, minZ: -5.0, maxZ: -4.0 },    // Mutfak-Koridor sol
+      { minX: 4.9, maxX: 5.1, minZ: -1.0, maxZ: 0.0 },     // Mutfak-Koridor sağ
+      { minX: 4.9, maxX: 5.1, minZ: 0.0, maxZ: 6.0 },      // Salon-Koridor sol
+      { minX: 4.9, maxX: 5.1, minZ: 9.0, maxZ: 15.0 },     // Salon-Koridor sağ
+      { minX: 4.9, maxX: 5.1, minZ: 15.0, maxZ: 25.0 },    // Salon-Antre
+
+      // 3. Sol & Sağ Yatay Bölme Duvarları (Z = 0)
+      { minX: -25.0, maxX: -5.0, minZ: -0.05, maxZ: 0.05 }, // Çalışma-Yatak
+      { minX: 5.0, maxX: 25.0, minZ: -0.05, maxZ: 0.05 },   // Mutfak-Salon
+
+      // 4. Banyo & WC Arasındaki Dikey Bölme (X = 0)
+      { minX: -0.05, maxX: 0.05, minZ: -25.0, maxZ: -5.0 },
+
+      // 5. Banyo & WC Ön Duvarı (Z = -5)
+      { minX: -5.0, maxX: -3.5, minZ: -5.05, maxZ: -4.95 }, // Banyo kapı sol
+      { minX: -1.5, maxX: 0.0, minZ: -5.05, maxZ: -4.95 },  // Banyo kapı sağ
+      { minX: 0.0, maxX: 1.5, minZ: -5.05, maxZ: -4.95 },   // WC kapı sol
+      { minX: 3.5, maxX: 5.0, minZ: -5.05, maxZ: -4.95 },   // WC kapı sağ
+
+      // 6. Koridor & Antre Geçiş Kemeri (Z = 15)
+      { minX: -5.0, maxX: -3.0, minZ: 14.95, maxZ: 15.05 },
+      { minX: 3.0, maxX: 5.0, minZ: 14.95, maxZ: 15.05 },
+
+      // 7. Giriş Kapısı Yan Duvarları (Z = 25)
+      { minX: -5.0, maxX: -2.0, minZ: 24.9, maxZ: 25.1 },
+      { minX: 2.0, maxX: 5.0, minZ: 24.9, maxZ: 25.1 }
     ];
 
     let resX = newX;
@@ -617,6 +643,15 @@ export default function Player({
 
   return (
     <group ref={avatarRef}>
+      {/* Karakteri takip eden yumuşak dolgu ışığı (yakınındaki eşyaları net göstermek için) */}
+      <pointLight
+        position={[0, 1.5, 0]}
+        intensity={2.8}
+        distance={14}
+        decay={1.6}
+        color="#fffbeb"
+        castShadow={false}
+      />
       {showAvatar && (
         <group>
           {/* 1. Kafa & Dedektif Şapkası (Detective Hat) */}

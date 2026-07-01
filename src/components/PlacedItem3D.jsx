@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Text, Html, useGLTF, Edges } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { checkItemsCollide } from '../utils/collisionUtils';
 
 function isNoteNotEmpty(linkedNote) {
   if (!linkedNote) return false;
@@ -10,12 +11,43 @@ function isNoteNotEmpty(linkedNote) {
 }
 
 const ROOM_LIMITS = {
-  hall: { minX: -4.5, maxX: 4.5, minZ: -24.5, maxZ: 24.5 },
+  entry: { minX: -4.5, maxX: 4.5, minZ: 15.5, maxZ: 24.5 },
+  hall: { minX: -4.5, maxX: 4.5, minZ: -4.5, maxZ: 14.5 },
+  bathroom: { minX: -4.5, maxX: -0.5, minZ: -24.5, maxZ: -5.5 },
+  wc: { minX: 0.5, maxX: 4.5, minZ: -24.5, maxZ: -5.5 },
   bedroom: { minX: -24.5, maxX: -5.5, minZ: 0.5, maxZ: 24.5 },
-  kitchen: { minX: -24.5, maxX: -5.5, minZ: -24.5, maxZ: -0.5 },
-  study: { minX: 5.5, maxX: 24.5, minZ: 0.5, maxZ: 24.5 },
-  living: { minX: 5.5, maxX: 24.5, minZ: -24.5, maxZ: -0.5 },
+  study: { minX: -24.5, maxX: -5.5, minZ: -24.5, maxZ: -0.5 },
+  kitchen: { minX: 5.5, maxX: 24.5, minZ: -24.5, maxZ: -0.5 },
+  living: { minX: 5.5, maxX: 24.5, minZ: 0.5, maxZ: 24.5 },
   unknown: { minX: -24.5, maxX: 24.5, minZ: -24.5, maxZ: 24.5 }
+};
+
+const getRoomIdFromPosition = (x, z) => {
+  if (x >= -5 && x <= 5) {
+    if (z >= 15 && z <= 25) return 'entry';
+    if (z >= -5 && z < 15) return 'hall';
+    if (z >= -25 && z < -5) {
+      return x < 0 ? 'bathroom' : 'wc';
+    }
+  }
+  if (x < -5) {
+    if (z >= 0 && z <= 25) return 'bedroom';
+    if (z >= -25 && z < 0) return 'study';
+  }
+  if (x > 5) {
+    if (z >= 0 && z <= 25) return 'living';
+    if (z >= -25 && z < 0) return 'kitchen';
+  }
+  return 'unknown';
+};
+
+const isDescendantOf = (obj, parent) => {
+  let curr = obj;
+  while (curr) {
+    if (curr === parent) return true;
+    curr = curr.parent;
+  }
+  return false;
 };
 
 // --- Low-Poly Eşya Çizimleri ---
@@ -1134,14 +1166,394 @@ function ArchiveBoxModel({ color }) {
         <meshStandardMaterial color="#b45309" roughness={0.8} />
       </mesh>
       {/* Yan Tutma Boşluğu Detayı Sol */}
-      <mesh position={[-0.311, 0.26, 0]}>
-        <boxGeometry args={[0.002, 0.05, 0.12]} />
-        <meshStandardMaterial color="#27272a" />
-      </mesh>
-      {/* Yan Tutma Boşluğu Detayı Sağ */}
       <mesh position={[0.311, 0.26, 0]}>
         <boxGeometry args={[0.002, 0.05, 0.12]} />
         <meshStandardMaterial color="#27272a" />
+      </mesh>
+    </group>
+  );
+}
+
+function BedModel({ color }) {
+  return (
+    <group>
+      {/* Karyola Kasa */}
+      <mesh castShadow receiveShadow position={[0, 0.15, 0]}>
+        <boxGeometry args={[1.05, 0.28, 2.05]} />
+        <meshStandardMaterial color="#475569" roughness={0.8} />
+      </mesh>
+      {/* Yatak Başlığı */}
+      <mesh castShadow position={[0, 0.45, -0.98]}>
+        <boxGeometry args={[1.05, 0.7, 0.08]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} />
+      </mesh>
+      {/* Çarşaf/Nevresim */}
+      <mesh castShadow position={[0, 0.19, 0.2]}>
+        <boxGeometry args={[1.03, 0.22, 1.4]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Yastık */}
+      <mesh castShadow position={[0, 0.32, -0.72]}>
+        <boxGeometry args={[0.7, 0.08, 0.36]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.9} />
+      </mesh>
+      {/* Ayaklar */}
+      <mesh castShadow position={[-0.48, 0.04, -0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[0.48, 0.04, -0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[-0.48, 0.04, 0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[0.48, 0.04, 0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+function DoubleBedModel({ color }) {
+  return (
+    <group>
+      {/* Karyola Kasa */}
+      <mesh castShadow receiveShadow position={[0, 0.15, 0]}>
+        <boxGeometry args={[1.65, 0.28, 2.05]} />
+        <meshStandardMaterial color="#475569" roughness={0.8} />
+      </mesh>
+      {/* Yatak Başlığı */}
+      <mesh castShadow position={[0, 0.45, -0.98]}>
+        <boxGeometry args={[1.65, 0.7, 0.08]} />
+        <meshStandardMaterial color="#334155" roughness={0.7} />
+      </mesh>
+      {/* Çarşaf/Nevresim */}
+      <mesh castShadow position={[0, 0.19, 0.2]}>
+        <boxGeometry args={[1.63, 0.22, 1.4]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Sol Yastık */}
+      <mesh castShadow position={[-0.38, 0.32, -0.72]}>
+        <boxGeometry args={[0.55, 0.08, 0.36]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.9} />
+      </mesh>
+      {/* Sağ Yastık */}
+      <mesh castShadow position={[0.38, 0.32, -0.72]}>
+        <boxGeometry args={[0.55, 0.08, 0.36]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.9} />
+      </mesh>
+      {/* Ayaklar */}
+      <mesh castShadow position={[-0.78, 0.04, -0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.04, -0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[-0.78, 0.04, 0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+      <mesh castShadow position={[0.78, 0.04, 0.98]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.08]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+function NightstandModel({ color }) {
+  return (
+    <group>
+      {/* Gövde */}
+      <mesh castShadow receiveShadow position={[0, 0.23, 0]}>
+        <boxGeometry args={[0.5, 0.44, 0.45]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Üst Çekmece */}
+      <mesh castShadow position={[0, 0.32, 0.215]}>
+        <boxGeometry args={[0.42, 0.16, 0.03]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
+      </mesh>
+      {/* Alt Çekmece */}
+      <mesh castShadow position={[0, 0.12, 0.215]}>
+        <boxGeometry args={[0.42, 0.16, 0.03]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
+      </mesh>
+      {/* Kulp Üst */}
+      <mesh castShadow position={[0, 0.32, 0.235]}>
+        <boxGeometry args={[0.1, 0.02, 0.02]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Kulp Alt */}
+      <mesh castShadow position={[0, 0.12, 0.235]}>
+        <boxGeometry args={[0.1, 0.02, 0.02]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function WardrobeModel({ color }) {
+  return (
+    <group>
+      {/* Ana Gövde */}
+      <mesh castShadow receiveShadow position={[0, 0.975, 0]}>
+        <boxGeometry args={[1.25, 1.9, 0.6]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {/* Sol Kapak */}
+      <mesh castShadow position={[-0.3, 0.975, 0.305]}>
+        <boxGeometry args={[0.56, 1.8, 0.02]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
+      </mesh>
+      {/* Sağ Kapak */}
+      <mesh castShadow position={[0.3, 0.975, 0.305]}>
+        <boxGeometry args={[0.56, 1.8, 0.02]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.6} />
+      </mesh>
+      {/* Dikey Sol Kulp */}
+      <mesh castShadow position={[-0.04, 0.975, 0.32]}>
+        <boxGeometry args={[0.02, 0.3, 0.02]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Dikey Sağ Kulp */}
+      <mesh castShadow position={[0.04, 0.975, 0.32]}>
+        <boxGeometry args={[0.02, 0.3, 0.02]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function SinkModel({ color }) {
+  return (
+    <group>
+      {/* Alt Altlık / Dolap */}
+      <mesh castShadow receiveShadow position={[0, 0.36, 0]}>
+        <boxGeometry args={[0.56, 0.72, 0.48]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Lavabo Haznesi (Porselen) */}
+      <mesh castShadow position={[0, 0.77, 0]}>
+        <boxGeometry args={[0.62, 0.12, 0.52]} />
+        <meshStandardMaterial color="#f1f5f9" roughness={0.2} />
+      </mesh>
+      {/* İç Havuz Overlay */}
+      <mesh position={[0, 0.825, 0.02]}>
+        <boxGeometry args={[0.48, 0.01, 0.36]} />
+        <meshStandardMaterial color="#0284c7" transparent opacity={0.6} />
+      </mesh>
+      {/* Batarya / Musluk */}
+      <mesh castShadow position={[0, 0.88, -0.18]}>
+        <boxGeometry args={[0.04, 0.12, 0.04]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh castShadow position={[0, 0.94, -0.14]}>
+        <boxGeometry args={[0.04, 0.03, 0.12]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+      </mesh>
+    </group>
+  );
+}
+
+function ToiletModel({ color }) {
+  return (
+    <group>
+      {/* Klozet Ayağı ve Gövde */}
+      <mesh castShadow position={[0, 0.2, 0.1]}>
+        <cylinderGeometry args={[0.16, 0.14, 0.4, 16]} />
+        <meshStandardMaterial color="#f1f5f9" roughness={0.2} />
+      </mesh>
+      {/* Oturak Kapağı */}
+      <mesh castShadow position={[0, 0.41, 0.08]}>
+        <boxGeometry args={[0.36, 0.03, 0.42]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* Rezervuar */}
+      <mesh castShadow position={[0, 0.58, -0.16]}>
+        <boxGeometry args={[0.38, 0.34, 0.18]} />
+        <meshStandardMaterial color="#f1f5f9" roughness={0.2} />
+      </mesh>
+      {/* Rezervuar Butonu */}
+      <mesh castShadow position={[0, 0.755, -0.16]}>
+        <cylinderGeometry args={[0.03, 0.03, 0.01, 8]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+      </mesh>
+    </group>
+  );
+}
+
+function ShowerModel({ color }) {
+  return (
+    <group>
+      {/* Duş Teknesi */}
+      <mesh castShadow receiveShadow position={[0, 0.04, 0]}>
+        <boxGeometry args={[0.96, 0.08, 0.96]} />
+        <meshStandardMaterial color="#f1f5f9" roughness={0.3} />
+      </mesh>
+      {/* Arka Duvar Paneli */}
+      <mesh castShadow position={[-0.47, 1.0, 0]}>
+        <boxGeometry args={[0.02, 1.84, 0.94]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      <mesh castShadow position={[0, 1.0, -0.47]}>
+        <boxGeometry args={[0.94, 1.84, 0.02]} />
+        <meshStandardMaterial color={color} roughness={0.4} />
+      </mesh>
+      {/* Ön Cam Kapı */}
+      <mesh position={[0.47, 1.0, 0]}>
+        <boxGeometry args={[0.01, 1.84, 0.94]} />
+        <meshStandardMaterial color="#bae6fd" transparent opacity={0.35} roughness={0.1} />
+      </mesh>
+      <mesh position={[0, 1.0, 0.47]}>
+        <boxGeometry args={[0.94, 1.84, 0.01]} />
+        <meshStandardMaterial color="#bae6fd" transparent opacity={0.35} roughness={0.1} />
+      </mesh>
+      {/* Duş Başlığı Borusu */}
+      <mesh position={[-0.4, 1.5, -0.4]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.8]} />
+        <meshStandardMaterial color="#64748b" metalness={0.8} />
+      </mesh>
+      <mesh position={[-0.32, 1.9, -0.4]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.16]} />
+        <meshStandardMaterial color="#64748b" metalness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function BathtubModel({ color }) {
+  return (
+    <group>
+      {/* Küvet Gövde */}
+      <mesh castShadow receiveShadow position={[0, 0.28, 0]}>
+        <boxGeometry args={[0.8, 0.56, 1.6]} />
+        <meshStandardMaterial color="#f1f5f9" roughness={0.2} />
+      </mesh>
+      {/* İç Dolgu Su Görünümü */}
+      <mesh position={[0, 0.52, 0.02]}>
+        <boxGeometry args={[0.68, 0.01, 1.48]} />
+        <meshStandardMaterial color="#38bdf8" transparent opacity={0.65} roughness={0.1} />
+      </mesh>
+      {/* Batarya ve El Duşu */}
+      <mesh castShadow position={[0, 0.62, -0.74]}>
+        <boxGeometry args={[0.04, 0.12, 0.04]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh castShadow position={[0, 0.68, -0.7]}>
+        <boxGeometry args={[0.04, 0.03, 0.12]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+      </mesh>
+      {/* Banyo Perdesi Tutucu Direkler veya Oval Şerit */}
+      <mesh castShadow position={[0, 0.28, 0.76]}>
+        <boxGeometry args={[0.84, 0.58, 0.04]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+function BathroomCabinetModel({ color }) {
+  return (
+    <group>
+      {/* Alt Lavabo Dolabı */}
+      <mesh castShadow receiveShadow position={[0, 0.36, 0]}>
+        <boxGeometry args={[0.6, 0.72, 0.4]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Mermer/Porselen Tabla */}
+      <mesh castShadow position={[0, 0.74, 0]}>
+        <boxGeometry args={[0.62, 0.04, 0.42]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.3} />
+      </mesh>
+      {/* Ayna Bölmesi */}
+      <mesh castShadow position={[0, 1.25, -0.16]}>
+        <boxGeometry args={[0.52, 0.68, 0.04]} />
+        <meshStandardMaterial color={color} roughness={0.7} />
+      </mesh>
+      {/* Ayna Camı */}
+      <mesh position={[0, 1.25, -0.135]}>
+        <boxGeometry args={[0.46, 0.62, 0.01]} />
+        <meshStandardMaterial color="#eaeef2" metalness={0.95} roughness={0.05} />
+      </mesh>
+      {/* Üst Spot Lambalık / Raf */}
+      <mesh castShadow position={[0, 1.62, -0.08]}>
+        <boxGeometry args={[0.6, 0.06, 0.24]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+function MirrorModel({ color }) {
+  return (
+    <group>
+      {/* Ahşap/Metal Arka Çerçeve */}
+      <mesh castShadow position={[0, 0, -0.015]}>
+        <boxGeometry args={[0.56, 0.76, 0.02]} />
+        <meshStandardMaterial color={color} roughness={0.5} />
+      </mesh>
+      {/* Ayna Cam Yüzeyi */}
+      <mesh position={[0, 0, 0.001]}>
+        <boxGeometry args={[0.52, 0.72, 0.01]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.05} />
+      </mesh>
+    </group>
+  );
+}
+
+function TowelRackModel({ color }) {
+  return (
+    <group>
+      {/* Duvar Askı Demiri */}
+      <mesh castShadow position={[0, 0, -0.06]}>
+        <boxGeometry args={[0.56, 0.03, 0.03]} />
+        <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
+      </mesh>
+      <mesh castShadow position={[-0.26, 0, -0.03]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.06]} />
+        <meshStandardMaterial color="#64748b" metalness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.26, 0, -0.03]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.015, 0.015, 0.06]} />
+        <meshStandardMaterial color="#64748b" metalness={0.8} />
+      </mesh>
+      {/* Asılı Havlular */}
+      <mesh castShadow position={[-0.12, -0.18, 0]}>
+        <boxGeometry args={[0.16, 0.32, 0.06]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.12, -0.18, -0.02]}>
+        <boxGeometry args={[0.16, 0.32, 0.06]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function LaundryBasketModel({ color }) {
+  return (
+    <group>
+      {/* Sepet Gövde */}
+      <mesh castShadow receiveShadow position={[0, 0.32, 0]}>
+        <cylinderGeometry args={[0.22, 0.18, 0.64, 16]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Sepet Kapağı */}
+      <mesh castShadow position={[0, 0.65, 0]}>
+        <cylinderGeometry args={[0.23, 0.23, 0.03, 16]} />
+        <meshStandardMaterial color="#475569" roughness={0.6} />
+      </mesh>
+      {/* Tutma Kulpu */}
+      <mesh castShadow position={[0, 0.68, 0]}>
+        <boxGeometry args={[0.08, 0.03, 0.03]} />
+        <meshStandardMaterial color="#1e293b" />
       </mesh>
     </group>
   );
@@ -1165,18 +1577,82 @@ export default function PlacedItem3D({
   isConnected = false,
   cameraMode = 'third-person',
   movementMode = 'walk',
-  connectionGlowActive = true
+  connectionGlowActive = true,
+  placedItems = [],
+  lang = 'tr'
 }) {
   const dragRef = useRef({ isDragging: false, pointerId: null, startPosition: [0, 0, 0], dragged: false, timer: null, progressInterval: null });
   const helperMeshRef = useRef();
   const iconRef = useRef();
   const itemGroupRef = useRef();
   const [longPressProgress, setLongPressProgress] = useState(0);
+  const [isColliding, setIsColliding] = useState(false);
 
   useFrame((state) => {
+    if (dragRef.current.isDragging && itemGroupRef.current) {
+      // 1. Ray'i kameradan imleç konumuna göre güncelle
+      state.raycaster.setFromCamera(state.pointer, state.camera);
+      
+      // 2. Sahnedeki nesnelerle kesişimi bul (kendimizi ve yardımcı nesneleri hariç tutarak)
+      const intersects = state.raycaster.intersectObjects(state.scene.children, true);
+      
+      const maxDistance = 3.2; // Kontrollü ve yakın taşıma mesafesi (3.2 metre)
+      let targetPos = new THREE.Vector3();
+      let foundSurface = false;
+
+      for (let hit of intersects) {
+        // Kendimiz veya alt meshlerimiz mi?
+        if (itemGroupRef.current && (hit.object === itemGroupRef.current || isDescendantOf(hit.object, itemGroupRef.current))) {
+          continue;
+        }
+        // Helper çizgileri veya selection box'ları mı?
+        if (hit.object.name === 'helper-bounds' || hit.object.name === 'selection-helper' || hit.object.name?.includes('helper')) {
+          continue;
+        }
+        targetPos.copy(hit.point);
+        foundSurface = true;
+        break;
+      }
+
+      // Yüzey bulunamadıysa veya oyuncudan çok uzaktaysa bakış doğrultusunda konumlandır
+      const distToCamera = state.camera.position.distanceTo(targetPos);
+      if (!foundSurface || distToCamera > maxDistance) {
+        targetPos.copy(state.camera.position).addScaledVector(state.raycaster.ray.direction, maxDistance);
+      }
+
+      // 3. Konum Limitleri & Clamp (Zemin altına inmesin, tavanı aşmasın, oda sınırlarında kalsın)
+      const roomId = getRoomIdFromPosition(targetPos.x, targetPos.z);
+      const limits = ROOM_LIMITS[roomId] || ROOM_LIMITS.unknown;
+      
+      const clampedX = THREE.MathUtils.clamp(targetPos.x, limits.minX, limits.maxX);
+      const clampedZ = THREE.MathUtils.clamp(targetPos.z, limits.minZ, limits.maxZ);
+      const clampedY = Math.max(0.005, Math.min(3.8, targetPos.y));
+
+      itemGroupRef.current.position.set(clampedX, clampedY, clampedZ);
+      dragRef.current.dragged = true;
+
+      // 4. Çakışma Kontrolü (Simülasyon)
+      const simulatedItem = {
+        ...item,
+        position: { x: clampedX, y: clampedY, z: clampedZ }
+      };
+
+      const hasCollision = placedItems.some(otherItem => {
+        if (otherItem.id === item.id) return false;
+        return checkItemsCollide(simulatedItem, otherItem);
+      });
+
+      setIsColliding(hasCollision);
+    }
+
     if (helperMeshRef.current) {
       const isGlowActive = isConnected && connectionGlowActive && (movementMode === 'fly' || cameraMode === 'birds-eye' || cameraMode === 'free');
-      if (isGlowActive) {
+      if (isColliding) {
+        // Çakışma durumunda dikkat çekici kırmızı pulse efekti
+        const pulse = 0.65 + Math.sin(state.clock.getElapsedTime() * 12.0) * 0.2;
+        helperMeshRef.current.material.opacity = pulse;
+        helperMeshRef.current.material.color.set('#f43f5e');
+      } else if (isGlowActive) {
         const time = state.clock.getElapsedTime();
         const pulse = 0.2 + Math.sin(time * 2.0) * 0.15;
         helperMeshRef.current.material.opacity = pulse;
@@ -1227,13 +1703,15 @@ export default function PlacedItem3D({
     const isThisItemMoving = isItemMovingActive && isSelected;
 
     // Normal varsayılan Y konumu hesapla
-    const defaultY = (item.type === 'wallshelf' || item.type === 'small_wallshelf' || item.type === 'large_board') 
+    const defaultY = (item.type === 'wallshelf' || item.type === 'small_wallshelf' || item.type === 'large_board' || item.type === 'mirror') 
       ? 1.4 
-      : item.type === 'desk_lamp' 
-        ? 0.72 
-        : item.type === 'rug' 
-          ? 0.001 
-          : 0.005;
+      : item.type === 'towel_rack'
+        ? 1.2
+        : item.type === 'desk_lamp' 
+          ? 0.72 
+          : item.type === 'rug' 
+            ? 0.001 
+            : 0.005;
 
     dragRef.current = {
       isDragging: isThisItemMoving,
@@ -1280,41 +1758,6 @@ export default function PlacedItem3D({
       return;
     }
     e.stopPropagation();
-
-    if (window.isSpaceKeyPressed) {
-      // Space basılıyken yukarı-aşağı dikey taşıma
-      const dy = (dragRef.current.startY - e.clientY) * 0.02; // Hassasiyet katsayısı
-      let targetY = dragRef.current.startYCoord + dy;
-
-      // Odanın zemini ve tavanı limitleri (Y >= 0.001, Y <= 4.0)
-      targetY = Math.max(0.001, Math.min(4.0, targetY));
-
-      const startX = dragRef.current.startPosition[0];
-      const startZ = dragRef.current.startPosition[2];
-
-      if (itemGroupRef.current) {
-        itemGroupRef.current.position.set(startX, targetY, startZ);
-      }
-      dragRef.current.dragged = true;
-    } else {
-      // Normal X-Z düzleminde taşıma
-      e.ray.intersectPlane(floorPlane, intersectionVec);
-
-      let targetX = intersectionVec.x;
-      let targetZ = intersectionVec.z;
-
-      const limits = ROOM_LIMITS[item.roomId] || ROOM_LIMITS.unknown;
-      const clampedX = Math.max(limits.minX, Math.min(limits.maxX, targetX));
-      const clampedZ = Math.max(limits.minZ, Math.min(limits.maxZ, targetZ));
-
-      // Önceden ayarlanmış olan Y yüksekliğini koru
-      const currentY = itemGroupRef.current ? itemGroupRef.current.position.y : (item.position?.y ?? 0.005);
-
-      if (itemGroupRef.current) {
-        itemGroupRef.current.position.set(clampedX, currentY, clampedZ);
-      }
-      dragRef.current.dragged = true;
-    }
   };
 
   const handlePointerUp = (e) => {
@@ -1326,9 +1769,21 @@ export default function PlacedItem3D({
       } catch {}
 
       if (dragRef.current.dragged && itemGroupRef.current) {
-        const newX = itemGroupRef.current.position.x;
-        const newZ = itemGroupRef.current.position.z;
-        onUpdate(item.id, { position: { x: newX, y: itemGroupRef.current.position.y, z: newZ } });
+        if (isColliding) {
+          // Çakışma var! Eski geçerli konumuna sıfırla
+          const [oldX, oldY, oldZ] = dragRef.current.startPosition;
+          itemGroupRef.current.position.set(oldX, oldY, oldZ);
+          setIsColliding(false);
+          window.dispatchEvent(new CustomEvent('show-toast', { 
+            detail: lang === 'en' ? '⚠️ Cannot place here (Collision)' : '⚠️ Bu konuma yerleştirilemez (Çakışma var)' 
+          }));
+        } else {
+          // Çakışma yok, konumu güncelle
+          const newX = itemGroupRef.current.position.x;
+          const newY = itemGroupRef.current.position.y;
+          const newZ = itemGroupRef.current.position.z;
+          onUpdate(item.id, { position: { x: newX, y: newY, z: newZ } });
+        }
       }
     }
     clearLongPress();
@@ -1421,6 +1876,30 @@ export default function PlacedItem3D({
         return <LargePlantModel color={item.color} />;
       case 'archive_box':
         return <ArchiveBoxModel color={item.color} />;
+      case 'bed':
+        return <BedModel color={item.color} />;
+      case 'double_bed':
+        return <DoubleBedModel color={item.color} />;
+      case 'nightstand':
+        return <NightstandModel color={item.color} />;
+      case 'wardrobe':
+        return <WardrobeModel color={item.color} />;
+      case 'sink':
+        return <SinkModel color={item.color} />;
+      case 'toilet':
+        return <ToiletModel color={item.color} />;
+      case 'shower':
+        return <ShowerModel color={item.color} />;
+      case 'bathtub':
+        return <BathtubModel color={item.color} />;
+      case 'bathroom_cabinet':
+        return <BathroomCabinetModel color={item.color} />;
+      case 'mirror':
+        return <MirrorModel color={item.color} />;
+      case 'towel_rack':
+        return <TowelRackModel color={item.color} />;
+      case 'laundry_basket':
+        return <LaundryBasketModel color={item.color} />;
       case 'customVisualBox':
         return (
           <CustomVisualBoxModel
@@ -1507,6 +1986,30 @@ export default function PlacedItem3D({
         return [0.8, 1.2, 0.8];
       case 'archive_box':
         return [0.7, 0.55, 0.52];
+      case 'bed':
+        return [1.1, 0.8, 2.1];
+      case 'double_bed':
+        return [1.7, 0.8, 2.1];
+      case 'nightstand':
+        return [0.55, 0.55, 0.5];
+      case 'wardrobe':
+        return [1.3, 2.0, 0.65];
+      case 'sink':
+        return [0.65, 0.85, 0.55];
+      case 'toilet':
+        return [0.45, 0.75, 0.65];
+      case 'shower':
+        return [1.0, 2.0, 1.0];
+      case 'bathtub':
+        return [0.85, 0.65, 1.7];
+      case 'bathroom_cabinet':
+        return [0.65, 1.8, 0.45];
+      case 'mirror':
+        return [0.6, 0.8, 0.05];
+      case 'towel_rack':
+        return [0.6, 0.2, 0.15];
+      case 'laundry_basket':
+        return [0.5, 0.7, 0.5];
       case 'customVisualBox': {
         const geom = item.geometryType || 'box';
         if (geom === 'sphere') {

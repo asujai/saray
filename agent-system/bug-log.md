@@ -46,3 +46,39 @@ Bu dosyada Saray Ajanı denetim sürecinde uzman subagent'lar tarafından tespit
 * **Hata Sorumlusu:** Implementation Agent
 * **Çözüm:** `SarayApp.jsx` dosyasına `cameraMode` state'i, localStorage senkronizasyonu ve klavye kısayolu 'C' entegre edildi. `Player` ve `UIOverlay` bileşenlerine prop olarak geçildi. `Note3D.jsx` içinde bağlantılı notların kuş bakışı ve serbest uçuş modlarında neon mavi parıltıyla (`emissiveIntensity` ve `emissive` güncellenmesi) ve duvar arkasından dahi görünmelerini sağlayan `depthTest={false}` holografik çerçeve ile render edilmesi sağlandı.
 * **Durum:** Çözüldü (TASK-004)
+
+### [BUG-006] FutureExpansionGate ReferenceError Hatası
+* **Saptayan Ajan:** Judge / Audit Agent (Ekran Görüntüsü Kanıtı)
+* **Hata Tanımı:** TASK-005 kapsamında `Room.jsx` içerisine yerleştirilen holografik genişleme kapıları (`FutureExpansionGate`) bileşeninin tanımının yapılmamış olması sebebiyle 3D sahne render edilirken `Uncaught ReferenceError: FutureExpansionGate is not defined` hatası alınıyor ve uygulama beyaz ekranda kalıyordu.
+* **Hata Sorumlusu:** Implementation Agent
+* **Çözüm:** `Room.jsx` içerisine neon kesikli holografik tel kafes ve 3D etiketleri barındıran `<FutureExpansionGate>` bileşeni tanımlanarak ReferenceError hatası tamamen giderildi.
+* **Durum:** Çözüldü (TASK-005 Düzeltmesi)
+
+### [BUG-007] lang ReferenceError Hatası
+* **Saptayan Ajan:** Judge / Audit Agent (Ekran Görüntüsü Kanıtı)
+* **Hata Tanımı:** `Room.jsx` içerisindeki holografik genişleme kapılarına `lang` değişkeni parametre olarak geçilmiş olmasına karşın `Room` bileşeninde `lang` prop'unun tanımlanmamış olması sebebiyle render sırasında `Uncaught ReferenceError: lang is not defined` hatası alınıyor ve uygulama beyaz ekranda kalıyordu.
+* **Hata Sorumlusu:** Implementation Agent
+* **Çözüm:** `SarayApp.jsx` içinde `Room` bileşenine `lang={lang}` prop'u geçildi; `Room.jsx` dosyası içerisindeki `Room` bileşen tanımında `lang = 'tr'` prop olarak destructure edilerek hata giderildi.
+* **Durum:** Çözüldü (TASK-005 Düzeltmesi)
+
+### [BUG-008] Failure Loading Font (sans-serif) RangeError Hatası
+* **Saptayan Ajan:** Judge / Audit Agent (Konsol Logu Kanıtı)
+* **Hata Tanımı:** `FutureExpansionGate` bileşenindeki `<Text>` bileşenlerine `font="sans-serif"` atanması nedeniyle Troika text rendering motoru local sunucudan `/sans-serif` dosyasını çekmeye çalışıyor ve HTML yanıtını binary font olarak parse ederken `RangeError: Offset is outside the bounds of the DataView` fırlatarak 3D sahneyi çökertiyordu.
+* **Hata Sorumlusu:** Implementation Agent
+* **Çözüm:** `<Text>` bileşenlerindeki `font="sans-serif"` parametreleri kaldırılarak gömülü varsayılan fontun kullanılması sağlandı ve çökme engellendi.
+* **Durum:** Çözüldü (TASK-005 Düzeltmesi)
+
+### [BUG-009] FineTuneAccordion lang ReferenceError Hatası
+* **Saptayan Ajan:** Judge / Audit Agent (Kullanıcı Geri Bildirimi)
+* **Hata Tanımı:** `UIOverlay.jsx` içerisindeki `<FineTuneAccordion>` alt bileşeninde `lang` değişkeni kullanılmasına rağmen component tanımında `lang` prop'unun destructure edilmemiş olması ve üst bileşenden geçilmemiş olması sebebiyle 'Özellikleri Düzenle' butonuna basıldığında `Uncaught ReferenceError: lang is not defined` fırlatılıyor ve uygulama tamamen beyaz ekranda kalıyordu.
+* **Hata Sorumlusu:** Implementation Agent
+* **Çözüm:** `UIOverlay.jsx` içinde `<FineTuneAccordion lang={lang} />` olarak prop geçildi; alt bileşen tanımında `lang` parametresi destructure edilerek hata giderildi.
+* **Durum:** Çözüldü (TASK-007 Düzeltmesi)
+
+### [BUG-010] Sahne Boşluğuna Tıklanıldığında Eşya Seçiminin Kalkmaması Hatası
+* **Saptayan Ajan:** Kullanıcı (Geri Bildirim)
+* **Hata Tanımı:** 3D sahnedeki sadece belirli zemin/duvar mesh'lerinin tıklama dinleyicisi olması; buna karşılık tavan, statik süs eşyaları veya sahne dışındaki boşluklar tıklandığında `onDeselect` olayının tetiklenmemesi nedeniyle kutu seçim çerçevesinin (glow efekti) seçili kalması.
+* **Hata Sorumlusu:** Implementation Agent
+* **Çözüm:** `<Canvas>` bileşenine `onPointerMissed={handleDeselect}` prop'u eklenerek boşluğa veya tıklama dinleyicisi olmayan herhangi bir statik yapıya tıklandığında seçimin güvenle kalkması sağlandı.
+* **Durum:** Çözüldü (TASK-009 Düzeltmesi)
+

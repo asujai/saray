@@ -12,6 +12,7 @@ import CrosshairRaycaster from './components/CrosshairRaycaster';
 import { getAllNotes, saveAllNotesToDB, initDB } from './utils/db';
 import MiniMapTracker from './components/MiniMapTracker';
 import { QuadraticBezierLine } from '@react-three/drei';
+import { checkItemsCollide } from './utils/collisionUtils';
 
 function PlayerRoomTracker({ getRoomIdFromPosition, onRoomChange }) {
   const { camera } = useThree();
@@ -80,7 +81,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "desk",
       source: "preset",
       roomId: "study",
-      position: { x: 15, y: 0.005, z: 9 },
+      position: { x: -15, y: 0.005, z: -16 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#a1a1aa",
@@ -100,7 +101,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "chair",
       source: "preset",
       roomId: "study",
-      position: { x: 15, y: 0.005, z: 10.2 },
+      position: { x: -15, y: 0.005, z: -14.8 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#3f3f46",
@@ -114,8 +115,8 @@ const getPresetItems = (lang = 'tr') => {
       type: "shelf",
       source: "preset",
       roomId: "study",
-      position: { x: 23.5, y: 0.005, z: 15 },
-      rotation: { x: 0, y: -Math.PI / 2, z: 0 },
+      position: { x: -24.5, y: 0.005, z: -10 },
+      rotation: { x: 0, y: Math.PI / 2, z: 0 },
       scale: [1, 1, 1],
       color: "#71717a",
       linkedNote: {
@@ -134,7 +135,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "board",
       source: "preset",
       roomId: "study",
-      position: { x: 15, y: 1.5, z: 6.2 },
+      position: { x: -15, y: 1.5, z: -24.8 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#d97706",
@@ -154,7 +155,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "plant",
       source: "preset",
       roomId: "study",
-      position: { x: 23.2, y: 0.005, z: 7.5 },
+      position: { x: -23.2, y: 0.005, z: -17.5 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#22c55e",
@@ -168,7 +169,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "lamp",
       source: "preset",
       roomId: "study",
-      position: { x: 7.5, y: 0.005, z: 7.5 },
+      position: { x: -6.5, y: 0.005, z: -17.5 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#eab308",
@@ -182,8 +183,8 @@ const getPresetItems = (lang = 'tr') => {
       type: "wallshelf",
       source: "preset",
       roomId: "study",
-      position: { x: 23.5, y: 1.5, z: 9 },
-      rotation: { x: 0, y: -Math.PI / 2, z: 0 },
+      position: { x: -24.8, y: 1.5, z: -16 },
+      rotation: { x: 0, y: Math.PI / 2, z: 0 },
       scale: [1, 1, 1],
       color: "#52525b",
       linkedNote: {
@@ -202,7 +203,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "rug",
       source: "preset",
       roomId: "study",
-      position: { x: 15, y: 0.001, z: 13.5 },
+      position: { x: -15, y: 0.001, z: -11.5 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#e4e4e7",
@@ -216,7 +217,7 @@ const getPresetItems = (lang = 'tr') => {
       type: "libraryShelf",
       source: "preset",
       roomId: "study",
-      position: { x: 9.5, y: 0.005, z: 1.2 },
+      position: { x: -9.5, y: 0.005, z: -24.5 },
       rotation: { x: 0, y: 0, z: 0 },
       scale: [1, 1, 1],
       color: "#5c4033",
@@ -248,7 +249,263 @@ const getPresetItems = (lang = 'tr') => {
           }
         }
       ],
-      linkedNote: null,
+    },
+    {
+      id: "preset_item_med_aspirin",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -23.0, y: 1.8, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.8,
+      boxHeight: 0.5,
+      boxDepth: 0.18,
+      imageData: "/med_aspirin.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Aspirin 500mg",
+        pages: [{ text: isEn ? "Active ingredient: Acetylsalicylic acid. Used as pain reliever, anti-inflammatory, and antipyretic. Also used to prevent blood clots." : "Etken madde: Asetilsalisilik asit. Ağrı kesici, ateş düşürücü ve antiinflamatuar olarak kullanılır. Kan pıhtılaşmasını önleme amacıyla da reçete edilir.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Aspirin"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_paracetamol",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -21.5, y: 1.8, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.7,
+      boxHeight: 0.45,
+      boxDepth: 0.15,
+      imageData: "/med_paracetamol.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Paracetamol 500mg",
+        pages: [{ text: isEn ? "Active ingredient: Paracetamol. Mild to moderate pain relief and fever reduction. Safe for most age groups when taken correctly." : "Etken madde: Parasetamol. Hafif ve orta şiddetteki ağrıların giderilmesi ile ateşin düşürülmesinde etkilidir. Mide dostudur.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Paracetamol"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_ibuprofen",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -20.0, y: 1.8, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.75,
+      boxHeight: 0.4,
+      boxDepth: 0.16,
+      imageData: "/med_ibuprofen.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Ibuprofen 400mg",
+        pages: [{ text: isEn ? "Active ingredient: Ibuprofen. Nonsteroidal anti-inflammatory drug (NSAID). Relieves pain, reduces fever, and fights inflammation." : "Etken madde: İbuprofen. Steroid olmayan antiinflamatuar ilaç (NSAİİ). Ağrıyı hafifletir, ateşi düşürür ve vücuttaki iltihapla savaşır.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Ibuprofen"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_amoxicillin",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -18.5, y: 1.8, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.9,
+      boxHeight: 0.5,
+      boxDepth: 0.2,
+      imageData: "/med_amoxicillin.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Amoxicillin 500mg",
+        pages: [{ text: isEn ? "Active ingredient: Amoxicillin. Broad-spectrum penicillin antibiotic. Treats bacterial infections like sinusitis, pneumonia, and ear infections." : "Etken madde: Amoksisilin. Geniş spektrumlu penisilin grubu antibiyotik. Sinüzit, pnömoni ve kulak enfeksiyonları gibi bakteriyel hastalıkların tedavisinde kullanılır.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Amoxicillin"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_metformin",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -17.0, y: 1.8, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.85,
+      boxHeight: 0.45,
+      boxDepth: 0.18,
+      imageData: "/med_metformin.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Metformin 850mg",
+        pages: [{ text: isEn ? "Active ingredient: Metformin Hydrochloride. First-line medication for the treatment of type 2 diabetes. Helps improve insulin sensitivity." : "Etken madde: Metformin Hidroklorür. Tip 2 diyabet tedavisinde ilk seçenek ilaçtır. Hücrelerin insüline karşı duyarlılığını artırarak kan şekerini düzenler.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Metformin"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_atorvastatin",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -23.0, y: 1.0, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.7,
+      boxHeight: 0.4,
+      boxDepth: 0.15,
+      imageData: "/med_atorvastatin.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Atorvastatin 20mg",
+        pages: [{ text: isEn ? "Active ingredient: Atorvastatin. Lipid-lowering statin medication. Prevents cardiovascular disease and lowers LDL cholesterol." : "Etken madde: Atorvastatin. Kolesterol düşürücü statin grubu ilaç. LDL kolesterol seviyesini azaltarak kalp damar hastalıkları riskini düşürür.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Atorvastatin"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_lisinopril",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -21.5, y: 1.0, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.65,
+      boxHeight: 0.45,
+      boxDepth: 0.14,
+      imageData: "/med_lisinopril.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Lisinopril 10mg",
+        pages: [{ text: isEn ? "Active ingredient: Lisinopril. ACE inhibitor. Used to treat high blood pressure, heart failure, and after heart attacks." : "Etken madde: Lizinopril. ACE inhibitörüdür. Yüksek tansiyon, kalp yetmezliği tedavisi ve kalp krizinden sonra iyileşme sürecinde kullanılır.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Lisinopril"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_omeprazole",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -20.0, y: 1.0, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.75,
+      boxHeight: 0.5,
+      boxDepth: 0.17,
+      imageData: "/med_omeprazole.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Omeprazole 20mg",
+        pages: [{ text: isEn ? "Active ingredient: Omeprazole. Proton pump inhibitor (PPI). Reduces stomach acid production. Treats GERD, ulcers, and acid reflux." : "Etken madde: Omeprazol. Proton pompası inhibitörüdür (PPİ). Mide asidi üretimini azaltarak reflü, gastrit ve ülser şikayetlerini tedavi eder.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Omeprazole"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_levothyroxine",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -18.5, y: 1.0, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.6,
+      boxHeight: 0.4,
+      boxDepth: 0.12,
+      imageData: "/med_levothyroxine.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Levothyroxine 50mcg",
+        pages: [{ text: isEn ? "Active ingredient: Levothyroxine Sodium. Synthetic thyroid hormone. Used to treat hypothyroidism (underactive thyroid gland)." : "Etken madde: Levotiroksin Sodyum. Sentetik tiroid hormonudur. Yetersiz çalışan tiroid bezinin (hipotiroidi) tedavisinde eksik hormonu yerine koyar.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Levothyroxine"]
+      },
+      isRemovable: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: "preset_item_med_cetirizine",
+      type: "customVisualBox",
+      geometryType: "box",
+      source: "preset",
+      roomId: "study",
+      position: { x: -17.0, y: 1.0, z: -24.8 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: [1, 1, 1],
+      color: "#ffffff",
+      boxWidth: 0.65,
+      boxHeight: 0.4,
+      boxDepth: 0.13,
+      imageData: "/med_cetirizine.png",
+      imageFace: "front",
+      imageFit: "cover",
+      linkedNote: {
+        title: "Cetirizine 10mg",
+        pages: [{ text: isEn ? "Active ingredient: Cetirizine Hydrochloride. Antihistamine medication. Relieves allergy symptoms such as hay fever, hives, and runny nose." : "Etken madde: Setirizin Hidroklorür. Antihistaminiktir. Saman nezlesi, kurdeşen, göz sulanması ve burun akıntısı gibi alerjik belirtileri hafifletir.", image: null, layout: 'image-top-text-bottom' }],
+        currentPageIndex: 0,
+        tags: [isEn ? "Medicine" : "İlaç", "Cetirizine"]
+      },
       isRemovable: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -274,6 +531,14 @@ export default function SarayApp() {
   useEffect(() => {
     localStorage.setItem('saray_app_lang', lang);
   }, [lang]);
+
+  useEffect(() => {
+    const handleCustomToast = (e) => {
+      if (e.detail) showSavedToast(e.detail);
+    };
+    window.addEventListener('show-toast', handleCustomToast);
+    return () => window.removeEventListener('show-toast', handleCustomToast);
+  }, []);
 
   const showSavedToast = (message = '✓ Kaydedildi') => {
     let finalMessage = message;
@@ -390,39 +655,49 @@ export default function SarayApp() {
     const saved = localStorage.getItem('saray_placed_items');
     const presetInitialized = localStorage.getItem('saray_preset_rooms_initialized');
     const currentLang = localStorage.getItem('saray_app_lang') || 'tr';
+    let loadedItems = [];
     if (!saved) {
       if (!presetInitialized) {
-        return getPresetItems(currentLang);
+        loadedItems = getPresetItems(currentLang);
       }
-      return [];
+    } else {
+      try {
+        const items = JSON.parse(saved);
+        loadedItems = items.map(item => {
+          let pos = item.position;
+          if (Array.isArray(pos)) {
+            pos = { x: pos[0] ?? 0, y: pos[1] ?? 0, z: pos[2] ?? 0 };
+          } else if (!pos) {
+            pos = { x: 0, y: 0, z: 0 };
+          }
+          let rot = item.rotation;
+          if (Array.isArray(rot)) {
+            rot = { x: rot[0] ?? 0, y: rot[1] ?? 0, z: rot[2] ?? 0 };
+          } else if (!rot) {
+            rot = { x: 0, y: 0, z: 0 };
+          }
+          
+          const normalizedItem = { ...item };
+          if (normalizedItem.type === 'customVisualBox' && !normalizedItem.geometryType) {
+            normalizedItem.geometryType = 'box';
+          }
+          
+          return { ...normalizedItem, position: pos, rotation: rot };
+        });
+      } catch {
+        loadedItems = [];
+      }
     }
-    try {
-      const items = JSON.parse(saved);
-      return items.map(item => {
-        let pos = item.position;
-        if (Array.isArray(pos)) {
-          pos = { x: pos[0] ?? 0, y: pos[1] ?? 0, z: pos[2] ?? 0 };
-        } else if (!pos) {
-          pos = { x: 0, y: 0, z: 0 };
-        }
-        let rot = item.rotation;
-        if (Array.isArray(rot)) {
-          rot = { x: rot[0] ?? 0, y: rot[1] ?? 0, z: rot[2] ?? 0 };
-        } else if (!rot) {
-          rot = { x: 0, y: 0, z: 0 };
-        }
-        
-        // Geriye dönük uyumluluk normalizasyonu
-        const normalizedItem = { ...item };
-        if (normalizedItem.type === 'customVisualBox' && !normalizedItem.geometryType) {
-          normalizedItem.geometryType = 'box';
-        }
-        
-        return { ...normalizedItem, position: pos, rotation: rot };
-      });
-    } catch {
-      return [];
+
+    // Eksik preset elemanları (örneğin ilaç kutuları) mevcut listeye ekle
+    const presets = getPresetItems(currentLang);
+    const existingIds = new Set(loadedItems.map(item => item.id));
+    const newPresetsToAppend = presets.filter(p => !existingIds.has(p.id));
+    if (newPresetsToAppend.length > 0) {
+      loadedItems = [...loadedItems, ...newPresetsToAppend];
     }
+
+    return loadedItems;
   });
 
   const [activeItemId, setActiveItemId] = useState(null);
@@ -525,16 +800,22 @@ export default function SarayApp() {
     if (saved) return JSON.parse(saved);
     
     return currentLang === 'en' ? {
-      hall: 'Entrance / Hall',
+      entry: 'Entrance / Anteroom',
+      hall: 'Corridor',
+      bathroom: 'Bathroom',
+      wc: 'Toilet / WC',
       bedroom: 'Bedroom',
-      kitchen: 'Kitchen',
       study: 'Study Room',
+      kitchen: 'Kitchen',
       living: 'Living Room'
     } : {
-      hall: 'Giriş / Hol',
+      entry: 'Giriş / Antre',
+      hall: 'Koridor',
+      bathroom: 'Banyo',
+      wc: 'WC / Tuvalet',
       bedroom: 'Yatak Odası',
-      kitchen: 'Mutfak',
       study: 'Çalışma Odası',
+      kitchen: 'Mutfak',
       living: 'Salon'
     };
   });
@@ -543,17 +824,23 @@ export default function SarayApp() {
     setRoomNames((prev) => {
       const newNames = { ...prev };
       const defaultTr = {
-        hall: 'Giriş / Hol',
+        entry: 'Giriş / Antre',
+        hall: 'Koridor',
+        bathroom: 'Banyo',
+        wc: 'WC / Tuvalet',
         bedroom: 'Yatak Odası',
-        kitchen: 'Mutfak',
         study: 'Çalışma Odası',
+        kitchen: 'Mutfak',
         living: 'Salon'
       };
       const defaultEn = {
-        hall: 'Entrance / Hall',
+        entry: 'Entrance / Anteroom',
+        hall: 'Corridor',
+        bathroom: 'Bathroom',
+        wc: 'Toilet / WC',
         bedroom: 'Bedroom',
-        kitchen: 'Kitchen',
         study: 'Study Room',
+        kitchen: 'Kitchen',
         living: 'Living Room'
       };
 
@@ -571,10 +858,13 @@ export default function SarayApp() {
   const [roomFloorColors, setRoomFloorColors] = useState(() => {
     const saved = localStorage.getItem('saray_room_floor_colors');
     return saved ? JSON.parse(saved) : {
+      entry: null,
       hall: null,
+      bathroom: null,
+      wc: null,
       bedroom: null,
-      kitchen: null,
       study: null,
+      kitchen: null,
       living: null
     };
   });
@@ -582,10 +872,13 @@ export default function SarayApp() {
   const [roomWallColors, setRoomWallColors] = useState(() => {
     const saved = localStorage.getItem('saray_room_wall_colors');
     return saved ? JSON.parse(saved) : {
+      entry: null,
       hall: null,
+      bathroom: null,
+      wc: null,
       bedroom: null,
-      kitchen: null,
       study: null,
+      kitchen: null,
       living: null
     };
   });
@@ -1077,11 +1370,21 @@ export default function SarayApp() {
   };
 
   const getRoomIdFromPosition = (x, z) => {
-    if (x >= -5 && x <= 5) return 'hall';
-    if (x < -5 && z > 0) return 'bedroom';
-    if (x < -5 && z <= 0) return 'kitchen';
-    if (x > 5 && z > 0) return 'study';
-    if (x > 5 && z <= 0) return 'living';
+    if (x >= -5 && x <= 5) {
+      if (z >= 15 && z <= 25) return 'entry';
+      if (z >= -5 && z < 15) return 'hall';
+      if (z >= -25 && z < -5) {
+        return x < 0 ? 'bathroom' : 'wc';
+      }
+    }
+    if (x < -5) {
+      if (z >= 0 && z <= 25) return 'bedroom';
+      if (z >= -25 && z < 0) return 'study';
+    }
+    if (x > 5) {
+      if (z >= 0 && z <= 25) return 'living';
+      if (z >= -25 && z < 0) return 'kitchen';
+    }
     return 'unknown';
   };
 
@@ -1102,20 +1405,25 @@ export default function SarayApp() {
     const roomId = getRoomIdFromPosition(spawnX, spawnZ);
     
     // Halı zemin hizasında, raflar ve panolar havada, masa lambası masaüstü seviyesinde, diğerleri zeminde
-    const yPos = (type === 'wallshelf' || type === 'small_wallshelf' || type === 'large_board') 
+    const yPos = (type === 'wallshelf' || type === 'small_wallshelf' || type === 'large_board' || type === 'mirror') 
       ? 1.4 
-      : type === 'desk_lamp' 
-        ? 0.72 
-        : type === 'rug' 
-          ? 0.001 
-          : 0.005;
+      : type === 'towel_rack'
+        ? 1.2
+        : type === 'desk_lamp' 
+          ? 0.72 
+          : type === 'rug' 
+            ? 0.001 
+            : 0.005;
 
     const limits = {
-      hall: { minX: -4.5, maxX: 4.5, minZ: -24.5, maxZ: 24.5 },
+      entry: { minX: -4.5, maxX: 4.5, minZ: 15.5, maxZ: 24.5 },
+      hall: { minX: -4.5, maxX: 4.5, minZ: -4.5, maxZ: 14.5 },
+      bathroom: { minX: -4.5, maxX: -0.5, minZ: -24.5, maxZ: -5.5 },
+      wc: { minX: 0.5, maxX: 4.5, minZ: -24.5, maxZ: -5.5 },
       bedroom: { minX: -24.5, maxX: -5.5, minZ: 0.5, maxZ: 24.5 },
-      kitchen: { minX: -24.5, maxX: -5.5, minZ: -24.5, maxZ: -0.5 },
-      study: { minX: 5.5, maxX: 24.5, minZ: 0.5, maxZ: 24.5 },
-      living: { minX: 5.5, maxX: 24.5, minZ: -24.5, maxZ: -0.5 },
+      study: { minX: -24.5, maxX: -5.5, minZ: -24.5, maxZ: -0.5 },
+      kitchen: { minX: 5.5, maxX: 24.5, minZ: -24.5, maxZ: -0.5 },
+      living: { minX: 5.5, maxX: 24.5, minZ: 0.5, maxZ: 24.5 },
       unknown: { minX: -24.5, maxX: 24.5, minZ: -24.5, maxZ: 24.5 }
     };
 
@@ -1167,6 +1475,31 @@ export default function SarayApp() {
   };
 
   const handleUpdatePlacedItem = (id, fields) => {
+    // Sadece konum, döndürme veya ölçek/boyut güncelleniyorsa çakışma kontrolü yap
+    const affectsCollision = fields.position || fields.rotation || fields.scale || 
+      fields.boxWidth || fields.boxHeight || fields.boxDepth || fields.radius;
+
+    if (affectsCollision) {
+      // Çakışma testi için güncellenecek eşyanın simülasyonunu yap
+      const currentItem = placedItems.find(item => item.id === id);
+      if (currentItem) {
+        const simulatedItem = {
+          ...currentItem,
+          ...fields
+        };
+
+        const hasCollision = placedItems.some(otherItem => {
+          if (otherItem.id === id) return false;
+          return checkItemsCollide(simulatedItem, otherItem);
+        });
+
+        if (hasCollision) {
+          showSavedToast(lang === 'en' ? '⚠️ Cannot place here (Collision)' : '⚠️ Bu konuma yerleştirilemez (Çakışma var)');
+          return; // Güncellemeyi yapma
+        }
+      }
+    }
+
     setPlacedItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, ...fields, updatedAt: new Date().toISOString() } : item
@@ -2313,7 +2646,7 @@ export default function SarayApp() {
     setConnections(prev => prev.map(c => c.id === id ? { ...c, isVisible: !c.isVisible } : c));
   };
 
-  const handleAddConcept = (name, color) => {
+  const handleAddConcept = (name, color, description = '') => {
     const trimmed = name.trim();
     if (!trimmed) return;
 
@@ -2326,7 +2659,9 @@ export default function SarayApp() {
     const newConcept = {
       id: 'concept_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
       name: trimmed,
-      color
+      color,
+      description: description || '',
+      visible: true
     };
 
     setConnectionConcepts(prev => [...prev, newConcept]);
@@ -2382,6 +2717,10 @@ export default function SarayApp() {
       if (!objectExists(c.fromId, c.fromType) || !objectExists(c.toId, c.toType)) return false;
       if (isObjectHidden(c.fromId, c.fromType) || isObjectHidden(c.toId, c.toType)) return false;
 
+      // Kategori/konsept görünürlüğü denetimi
+      const concept = connectionConcepts.find(cc => cc.id === c.conceptId);
+      if (concept && concept.visible === false) return false;
+
       if (connectionVisibilityMode === 'selected-only') {
         const selectedId = activeNoteId || activeItemId;
         if (!selectedId) return false;
@@ -2389,7 +2728,7 @@ export default function SarayApp() {
       }
       return true;
     });
-  }, [connections, connectionVisibilityMode, notes, placedItems, activeNoteId, activeItemId]);
+  }, [connections, connectionVisibilityMode, notes, placedItems, activeNoteId, activeItemId, connectionConcepts]);
 
   // Close Editor Panel only, keeps note selected
   const handleCloseEditor = () => {
@@ -2482,8 +2821,11 @@ export default function SarayApp() {
         camera={{ fov: 75, near: 0.1, far: 100, position: [0, 1.6, 5] }}
         onCreated={({ gl }) => {
           gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.35; // renklerin canlı ve doygun görünmesi için
           setIsCanvasMounted(Boolean(gl.domElement && gl.domElement.isConnected));
         }}
+        onPointerMissed={handleDeselect}
       >
         {/* Sis ve Yumuşak Gökyüzü Atmosferi */}
         <color attach="background" args={[envConfig.bgColor]} />
@@ -2517,6 +2859,7 @@ export default function SarayApp() {
           onDrawingMove={handleDrawingMove}
           onDrawingEnd={handleDrawingEnd}
           onDeselect={handleDeselect}
+          lang={lang}
         />
 
         {/* 3D Sticky Notes */}
@@ -2599,6 +2942,8 @@ export default function SarayApp() {
             cameraMode={cameraMode}
             movementMode={movementMode}
             connectionGlowActive={connectionGlowActive}
+            placedItems={placedItems}
+            lang={lang}
           />
         ))}
 

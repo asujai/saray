@@ -396,6 +396,58 @@ function NeonLine({ start, end, color }) {
   );
 }
 
+// --- Modüler Gelecek Genişleme Kapısı Bileşeni ---
+function FutureExpansionGate({ position, rotation = [0, 0, 0], label, lang }) {
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Holografik neon kesikli çerçeve */}
+      <mesh position={[0, 3.5, 0]}>
+        <boxGeometry args={[4, 7, 0.05]} />
+        <meshBasicMaterial 
+          color="#00f0ff" 
+          wireframe={true} 
+          transparent={true} 
+          opacity={0.3} 
+        />
+      </mesh>
+      
+      {/* Kapı eşiği neon zemin çizgisi */}
+      <mesh position={[0, 0.01, 0]}>
+        <boxGeometry args={[4, 0.02, 0.3]} />
+        <meshBasicMaterial 
+          color="#00f0ff" 
+          transparent={true} 
+          opacity={0.8} 
+        />
+      </mesh>
+
+      {/* 3D Etiket */}
+      <Text
+        position={[0, 7.5, 0]}
+        fontSize={0.45}
+        color="#00f0ff"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.05}
+        outlineColor="#0f172a"
+      >
+        {label}
+      </Text>
+      <Text
+        position={[0, 7.0, 0]}
+        fontSize={0.25}
+        color="#a1a1aa"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.03}
+        outlineColor="#0f172a"
+      >
+        {lang === 'en' ? '(Coming Soon)' : '(Yakında)'}
+      </Text>
+    </group>
+  );
+}
+
 // --- Ana Oda / Çevre Bileşeni ---
 
 export default function Room({ 
@@ -414,7 +466,8 @@ export default function Room({
   onDrawingStart, 
   onDrawingMove, 
   onDrawingEnd, 
-  onDeselect 
+  onDeselect,
+  lang = 'tr'
 }) {
   
   const isMinimal = currentTheme === 'minimal';
@@ -615,7 +668,7 @@ export default function Room({
   }), [roomWallColors, defaultWallColor, defaultInnerWallColor]);
 
   // Işık parametreleri
-  const ambientIntensity = 0.15; // Tavan lambasının kontrastını artırmak için loş ortam
+  const ambientIntensity = 0.55; // Genel aydınlatmayı artırmak ve gölgeleri yumuşatmak için
   const pointColor = isMinimal ? '#fffbeb' : isLibrary ? '#fbbf24' : '#00f0ff';
 
   const handlePointerDown = (e) => {
@@ -674,36 +727,66 @@ export default function Room({
       <ambientLight intensity={ambientIntensity} />
 
       {/* --- TAVAN LAMBALARI (ARM ATÜRLER) --- */}
-      
-      {/* 1. Hol / Koridor Ön Lamba */}
-      <mesh position={[0, 8.95, 12.5]}>
+      {/* 1. Giriş / Antre Lambası */}
+      <mesh position={[0, 8.95, 20]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
       </mesh>
-      <pointLight position={[0, 8.75, 12.5]} intensity={9.0} color={pointColor} distance={25} decay={1.2} />
+      <pointLight position={[0, 8.75, 20]} intensity={9.0} color={pointColor} distance={20} decay={1.2} />
 
-      {/* 2. Hol / Koridor Arka Lamba */}
-      <mesh position={[0, 8.95, -12.5]}>
+      {/* 2. Koridor Lambası */}
+      <mesh position={[0, 8.95, 5]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
       </mesh>
-      <pointLight position={[0, 8.75, -12.5]} intensity={9.0} color={pointColor} distance={25} decay={1.2} />
+      <pointLight position={[0, 8.75, 5]} intensity={9.0} color={pointColor} distance={25} decay={1.2} />
 
-      {/* 3. Yatak Odası Lambası */}
+      {/* 3. Banyo Lambası */}
+      <mesh position={[-2.5, 8.95, -15]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.08, 32]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
+      </mesh>
+      <pointLight position={[-2.5, 8.75, -15]} intensity={9.0} color={pointColor} distance={20} decay={1.2} />
+
+      {/* 4. WC Lambası */}
+      <mesh position={[2.5, 8.95, -15]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.08, 32]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
+      </mesh>
+      <pointLight position={[2.5, 8.75, -15]} intensity={9.0} color={pointColor} distance={20} decay={1.2} />
+
+      {/* 5. Yatak Odası Lambası */}
       <mesh position={[-15, 8.95, 12.5]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
       </mesh>
       <pointLight position={[-15, 8.75, 12.5]} intensity={10.0} color={pointColor} distance={30} decay={1.2} />
 
-      {/* 4. Mutfak Lambası */}
+      {/* 6. Çalışma Odası Lambası (Gölge Düşüren) */}
       <mesh position={[-15, 8.95, -12.5]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
       </mesh>
-      <pointLight position={[-15, 8.75, -12.5]} intensity={10.0} color={pointColor} distance={30} decay={1.2} />
+      <pointLight 
+        position={[-15, 8.75, -12.5]} 
+        intensity={12.0} 
+        color={pointColor} 
+        distance={35} 
+        decay={1.2}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-bias={-0.001}
+      />
 
-      {/* 5. Çalışma Odası Lambası (Gölge Düşüren) */}
+      {/* 7. Mutfak Lambası */}
+      <mesh position={[15, 8.95, -12.5]}>
+        <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
+      </mesh>
+      <pointLight position={[15, 8.75, -12.5]} intensity={10.0} color={pointColor} distance={30} decay={1.2} />
+
+      {/* 8. Salon Lambası (Gölge Düşüren) */}
       <mesh position={[15, 8.95, 12.5]}>
         <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
         <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
@@ -720,81 +803,52 @@ export default function Room({
         shadow-bias={-0.001}
       />
 
-      {/* 6. Salon Lambası (Gölge Düşüren) */}
-      <mesh position={[15, 8.95, -12.5]}>
-        <cylinderGeometry args={[0.4, 0.4, 0.08, 32]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.8} />
-      </mesh>
-      <pointLight 
-        position={[15, 8.75, -12.5]} 
-        intensity={12.0} 
-        color={pointColor} 
-        distance={35} 
-        decay={1.2}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-bias={-0.001}
-      />
-
       {/* --- Odaların Zeminleri --- */}
       
-      {/* 1. Giriş / Hol */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[0, 0, 0]} 
-        receiveShadow 
-        name="floor_hall"
-        onPointerDown={handleFloorPointerDown}
-      >
-        <planeGeometry args={[10, 50]} />
+      {/* 1. Giriş / Antre */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 20]} receiveShadow name="floor_entry" onPointerDown={handleFloorPointerDown}>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color={floorColors.entry} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
+      </mesh>
+
+      {/* 2. Koridor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 5]} receiveShadow name="floor_hall" onPointerDown={handleFloorPointerDown}>
+        <planeGeometry args={[10, 20]} />
         <meshStandardMaterial color={floorColors.hall} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
       </mesh>
 
-      {/* 2. Yatak Odası */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[-15, 0, 12.5]} 
-        receiveShadow 
-        name="floor_bedroom"
-        onPointerDown={handleFloorPointerDown}
-      >
+      {/* 3. Banyo */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2.5, 0, -15]} receiveShadow name="floor_bathroom" onPointerDown={handleFloorPointerDown}>
+        <planeGeometry args={[5, 20]} />
+        <meshStandardMaterial color={floorColors.bathroom} roughness={0.8} metalness={isSciFi ? 0.6 : 0.1} />
+      </mesh>
+
+      {/* 4. WC */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2.5, 0, -15]} receiveShadow name="floor_wc" onPointerDown={handleFloorPointerDown}>
+        <planeGeometry args={[5, 20]} />
+        <meshStandardMaterial color={floorColors.wc} roughness={0.8} metalness={isSciFi ? 0.6 : 0.1} />
+      </mesh>
+
+      {/* 5. Yatak Odası */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-15, 0, 12.5]} receiveShadow name="floor_bedroom" onPointerDown={handleFloorPointerDown}>
         <planeGeometry args={[20, 25]} />
         <meshStandardMaterial color={floorColors.bedroom} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
       </mesh>
 
-      {/* 3. Mutfak */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[-15, 0, -12.5]} 
-        receiveShadow 
-        name="floor_kitchen"
-        onPointerDown={handleFloorPointerDown}
-      >
-        <planeGeometry args={[20, 25]} />
-        <meshStandardMaterial color={floorColors.kitchen} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
-      </mesh>
-
-      {/* 4. Çalışma Odası */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[15, 0, 12.5]} 
-        receiveShadow 
-        name="floor_study"
-        onPointerDown={handleFloorPointerDown}
-      >
+      {/* 6. Çalışma Odası */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-15, 0, -12.5]} receiveShadow name="floor_study" onPointerDown={handleFloorPointerDown}>
         <planeGeometry args={[20, 25]} />
         <meshStandardMaterial color={floorColors.study} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
       </mesh>
 
-      {/* 5. Salon */}
-      <mesh 
-        rotation={[-Math.PI / 2, 0, 0]} 
-        position={[15, 0, -12.5]} 
-        receiveShadow 
-        name="floor_living"
-        onPointerDown={handleFloorPointerDown}
-      >
+      {/* 7. Mutfak */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, 0, -12.5]} receiveShadow name="floor_kitchen" onPointerDown={handleFloorPointerDown}>
+        <planeGeometry args={[20, 25]} />
+        <meshStandardMaterial color={floorColors.kitchen} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
+      </mesh>
+
+      {/* 8. Salon */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, 0, 12.5]} receiveShadow name="floor_living" onPointerDown={handleFloorPointerDown}>
         <planeGeometry args={[20, 25]} />
         <meshStandardMaterial color={floorColors.living} roughness={0.75} metalness={isSciFi ? 0.5 : 0.1} />
       </mesh>
@@ -802,19 +856,19 @@ export default function Room({
       {/* Oda Vurgu Overlay'leri (Panelden nota git tıklanınca oda parlıyor) */}
       {highlightedRoomId && (() => {
         const highlightConfig = {
-          hall:    { position: [0, 0.03, 0],      size: [10, 50] },
-          bedroom: { position: [-15, 0.03, 12.5], size: [20, 25] },
-          kitchen: { position: [-15, 0.03, -12.5],size: [20, 25] },
-          study:   { position: [15, 0.03, 12.5],  size: [20, 25] },
-          living:  { position: [15, 0.03, -12.5], size: [20, 25] },
+          entry:    { position: [0, 0.03, 20],     size: [10, 10] },
+          hall:     { position: [0, 0.03, 5],      size: [10, 20] },
+          bathroom: { position: [-2.5, 0.03, -15], size: [5, 20] },
+          wc:       { position: [2.5, 0.03, -15],  size: [5, 20] },
+          bedroom:  { position: [-15, 0.03, 12.5], size: [20, 25] },
+          study:    { position: [-15, 0.03, -12.5],size: [20, 25] },
+          kitchen:  { position: [15, 0.03, -12.5], size: [20, 25] },
+          living:   { position: [15, 0.03, 12.5],  size: [20, 25] },
         };
         const cfg = highlightConfig[highlightedRoomId];
         if (!cfg) return null;
         return (
-          <mesh
-            rotation={[-Math.PI / 2, 0, 0]}
-            position={cfg.position}
-          >
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={cfg.position}>
             <planeGeometry args={cfg.size} />
             <meshBasicMaterial color="#fbbf24" transparent opacity={0.18} depthWrite={false} />
           </mesh>
@@ -822,681 +876,262 @@ export default function Room({
       })()}
 
       {/* Dinamik Oda Etiketleri */}
-      <Text
-        position={[0, 0.02, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={2.2}
-        color={isSciFi ? '#00f0ff' : '#f8fafc'}
-        fillOpacity={isSciFi ? 0.45 : 0.25}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {roomNames?.hall || 'Giriş / Hol'}
+      <Text position={[0, 0.02, 20]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.0} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
+        {roomNames?.entry || 'Giriş / Antre'}
       </Text>
-      <Text
-        position={[-15, 0.02, 12.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={2.5}
-        color={isSciFi ? '#00f0ff' : '#f8fafc'}
-        fillOpacity={isSciFi ? 0.45 : 0.25}
-        anchorX="center"
-        anchorY="middle"
-      >
+      <Text position={[0, 0.02, 5]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.0} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
+        {roomNames?.hall || 'Koridor'}
+      </Text>
+      <Text position={[-2.5, 0.02, -15]} rotation={[-Math.PI / 2, 0, 0]} fontSize={1.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
+        {roomNames?.bathroom || 'Banyo'}
+      </Text>
+      <Text position={[2.5, 0.02, -15]} rotation={[-Math.PI / 2, 0, 0]} fontSize={1.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
+        {roomNames?.wc || 'WC'}
+      </Text>
+      <Text position={[-15, 0.02, 12.5]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
         {roomNames?.bedroom || 'Yatak Odası'}
       </Text>
-      <Text
-        position={[-15, 0.02, -12.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={2.5}
-        color={isSciFi ? '#00f0ff' : '#f8fafc'}
-        fillOpacity={isSciFi ? 0.45 : 0.25}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {roomNames?.kitchen || 'Mutfak'}
-      </Text>
-      <Text
-        position={[15, 0.02, 12.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={2.5}
-        color={isSciFi ? '#00f0ff' : '#f8fafc'}
-        fillOpacity={isSciFi ? 0.45 : 0.25}
-        anchorX="center"
-        anchorY="middle"
-      >
+      <Text position={[-15, 0.02, -12.5]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
         {roomNames?.study || 'Çalışma Odası'}
       </Text>
-      <Text
-        position={[15, 0.02, -12.5]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={2.5}
-        color={isSciFi ? '#00f0ff' : '#f8fafc'}
-        fillOpacity={isSciFi ? 0.45 : 0.25}
-        anchorX="center"
-        anchorY="middle"
-      >
+      <Text position={[15, 0.02, -12.5]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
+        {roomNames?.kitchen || 'Mutfak'}
+      </Text>
+      <Text position={[15, 0.02, 12.5]} rotation={[-Math.PI / 2, 0, 0]} fontSize={2.5} color={isSciFi ? '#00f0ff' : '#f8fafc'} fillOpacity={0.25} anchorX="center" anchorY="middle">
         {roomNames?.living || 'Salon'}
       </Text>
 
-      {/* Grid Helper - Sadece ekleme/düzenleme/taşıma veya çekmece açıkken gösterilir */}
+      {/* Grid Helper */}
       {showGrid && (
         <gridHelper args={[WIDTH, 50, isSciFi ? '#a855f7' : '#6366f1', isSciFi ? '#1e1b4b' : '#334155']} position={[0, 0.01, 0]} />
       )}
 
       {/* --- Duvarlar (Oda Sınırlarına Göre Parçalanmış & Özelleştirilebilir Duvarlar) --- */}
 
-      {/* Arka Dış Duvar (Z = -25) */}
-      {/* 1. Mutfak Arka Duvarı */}
-      <mesh position={[-15, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_kitchen" receiveShadow castShadow>
+      {/* Arka Dış Duvarlar (Z = -25) */}
+      <mesh position={[-15, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_study" receiveShadow castShadow>
+        <boxGeometry args={[20, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
+      </mesh>
+      <mesh position={[-2.5, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_bathroom" receiveShadow castShadow>
+        <boxGeometry args={[5, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.bathroom} roughness={0.6} />
+      </mesh>
+      <mesh position={[2.5, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_wc" receiveShadow castShadow>
+        <boxGeometry args={[5, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.wc} roughness={0.6} />
+      </mesh>
+      <mesh position={[15, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_kitchen" receiveShadow castShadow>
         <boxGeometry args={[20, 7.5, 0.2]} />
         <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_back_kitchen ? (
-        <mesh position={[-15, 3.75, -24.895]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_back_kitchen"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-15, 3.75, -24.895]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={kitchenTextures.size20x5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* 2. Hol Arka Duvarı */}
-      <mesh position={[0, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_hall" receiveShadow castShadow>
-        <boxGeometry args={[10, 7.5, 0.2]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
-      </mesh>
-      {/* 3. Salon Arka Duvarı */}
-      <mesh position={[15, 3.75, -25]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_back_living" receiveShadow castShadow>
-        <boxGeometry args={[20, 7.5, 0.2]} />
-        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_back_living && (
-        <mesh position={[15, 3.75, -24.895]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_back_living"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      )}
 
-      {/* Ön Dış Duvar (Z = 25) */}
-      {/* 1. Yatak Odası Ön Duvarı */}
+      {/* Ön Dış Duvarlar (Z = 25) */}
       <mesh position={[-15, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_bedroom" receiveShadow castShadow>
         <boxGeometry args={[20, 7.5, 0.2]} />
         <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_front_bedroom ? (
-        <mesh position={[-15, 3.75, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_front_bedroom"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-15, 3.75, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={bedroomTextures.front} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* 2. Hol Ön Duvarı */}
-      <mesh position={[0, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_hall" receiveShadow castShadow>
-        <boxGeometry args={[10, 7.5, 0.2]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
-      </mesh>
-      {/* 3. Çalışma Odası Ön Duvarı */}
-      <mesh position={[15, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_study" receiveShadow castShadow>
+      <mesh position={[15, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_living" receiveShadow castShadow>
         <boxGeometry args={[20, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
+      </mesh>
+
+      {/* Ön Giriş Kapısı ve Duvarı (X = -5 ile 5, Z = 25) */}
+      <mesh position={[-3.5, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_entry_left" receiveShadow castShadow>
+        <boxGeometry args={[3, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.entry} roughness={0.6} />
+      </mesh>
+      <mesh position={[3.5, 3.75, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_entry_right" receiveShadow castShadow>
+        <boxGeometry args={[3, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.entry} roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 5.5, 25]} rotation={[0, Math.PI, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_front_entry_lintel" receiveShadow castShadow>
+        <boxGeometry args={[4, 4.0, 0.2]} />
+        <meshStandardMaterial color={wallColors.entry} roughness={0.6} />
+      </mesh>
+
+      {/* Sol Dış Duvarlar (X = -25) */}
+      <mesh position={[-25, 3.75, -12.5]} rotation={[0, Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_left_study" receiveShadow castShadow>
+        <boxGeometry args={[25, 7.5, 0.2]} />
         <meshStandardMaterial color={wallColors.study} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_front_study ? (
-        <mesh position={[15, 3.75, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_front_study"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        footballThemeActive && footballTextures && (
-          <mesh position={[15, 3.75, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={footballTextures.front} roughness={0.5} />
-          </mesh>
-        )
-      )}
-
-      {/* Çalışma Odası Futbol Teması Duvar Kaplamaları */}
-      {footballThemeActive && footballTextures && (
-        <>
-          {/* Ön Duvar */}
-          <mesh position={[15, 2.5, 24.895]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 5]} />
-            <meshStandardMaterial map={footballTextures.front} roughness={0.5} />
-          </mesh>
-          {/* Sağ Duvar */}
-          <mesh position={[24.895, 2.5, 12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[25, 5]} />
-            <meshStandardMaterial map={footballTextures.right} roughness={0.5} />
-          </mesh>
-          {/* Arka Duvar (İç bölme Z=0) */}
-          <mesh position={[15, 2.5, 0.105]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 5]} />
-            <meshStandardMaterial map={footballTextures.back} roughness={0.5} />
-          </mesh>
-          {/* Sol Duvar - Alt Segment (Z=0 → Z=11, kapıya kadar) */}
-          <mesh position={[5.105, 2.5, 5.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 5]} />
-            <meshStandardMaterial map={footballTextures.left} roughness={0.5} />
-          </mesh>
-          {/* Sol Duvar - Üst Segment (Z=14 → Z=25, kapıdan sonra) */}
-          <mesh position={[5.105, 2.5, 19.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 5]} />
-            <meshStandardMaterial map={footballTextures.left} roughness={0.5} />
-          </mesh>
-        </>
-      )}
-
-      {/* Sol Dış Duvar (X = -25) */}
-      {/* 1. Mutfak Sol Duvarı */}
-      <mesh position={[-25, 3.75, -12.5]} rotation={[0, Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_left_kitchen" receiveShadow castShadow>
-        <boxGeometry args={[25, 7.5, 0.2]} />
-        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_left_kitchen ? (
-        <mesh position={[-24.895, 3.75, -12.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[25, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_left_kitchen"
-            wallCustomizations={wallCustomizations}
-            wallWidth={25} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-24.895, 3.75, -12.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[25, 7.5]} />
-            <meshStandardMaterial map={kitchenTextures.size25x5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* 2. Yatak Odası Sol Duvarı */}
       <mesh position={[-25, 3.75, 12.5]} rotation={[0, Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_left_bedroom" receiveShadow castShadow>
         <boxGeometry args={[25, 7.5, 0.2]} />
         <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_left_bedroom ? (
+      {wallCustomizations?.wall_left_bedroom && (
         <mesh position={[-24.895, 3.75, 12.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
           <planeGeometry args={[25, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_left_bedroom"
-            wallCustomizations={wallCustomizations}
-            wallWidth={25} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-          />
+          <CustomWallOverlay wallId="wall_left_bedroom" wallCustomizations={wallCustomizations} wallWidth={25} wallHeight={7.5} globalWallWidth={25} globalWallHeight={7.5} />
         </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-24.895, 3.75, 12.5]} rotation={[0, Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[25, 7.5]} />
-            <meshStandardMaterial map={bedroomTextures.left} roughness={0.5} />
-          </mesh>
-        )
       )}
 
-      {/* Sağ Dış Duvar (X = 25) */}
-      {/* 1. Salon Sağ Duvarı */}
-      <mesh position={[25, 3.75, -12.5]} rotation={[0, -Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_right_living" receiveShadow castShadow>
+      {/* Sağ Dış Duvarlar (X = 25) */}
+      <mesh position={[25, 3.75, -12.5]} rotation={[0, -Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_right_kitchen" receiveShadow castShadow>
+        <boxGeometry args={[25, 7.5, 0.2]} />
+        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
+      </mesh>
+      <mesh position={[25, 3.75, 12.5]} rotation={[0, -Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_right_living" receiveShadow castShadow>
         <boxGeometry args={[25, 7.5, 0.2]} />
         <meshStandardMaterial color={wallColors.living} roughness={0.6} />
       </mesh>
       {wallCustomizations?.wall_right_living && (
-        <mesh position={[24.895, 3.75, -12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[25, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_right_living"
-            wallCustomizations={wallCustomizations}
-            wallWidth={25} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-          />
-        </mesh>
-      )}
-      {/* 2. Çalışma Odası Sağ Duvarı */}
-      <mesh position={[25, 3.75, 12.5]} rotation={[0, -Math.PI / 2, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_right_study" receiveShadow castShadow>
-        <boxGeometry args={[25, 7.5, 0.2]} />
-        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_right_study ? (
         <mesh position={[24.895, 3.75, 12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
           <planeGeometry args={[25, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_right_study"
-            wallCustomizations={wallCustomizations}
-            wallWidth={25} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-          />
+          <CustomWallOverlay wallId="wall_right_living" wallCustomizations={wallCustomizations} wallWidth={25} wallHeight={7.5} globalWallWidth={25} globalWallHeight={7.5} />
         </mesh>
-      ) : (
-        footballThemeActive && footballTextures && (
-          <mesh position={[24.895, 3.75, 12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[25, 7.5]} />
-            <meshStandardMaterial map={footballTextures.right} roughness={0.5} />
-          </mesh>
-        )
       )}
 
-      {/* İç Yatay Bölme Duvarları (Z = 0) */}
-      {/* Mutfak - Yatak Odası Ortak Duvarı */}
-      {/* Mutfak Tarafı (Z = -0.05) */}
-      <mesh position={[-15, 3.75, -0.05]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_division_kitchen" receiveShadow castShadow>
+      {/* --- İç Bölme Duvarları --- */}
+
+      {/* Sol Odalar Z = 0 Bölmesi (Çalışma Odası & Yatak Odası) */}
+      <mesh position={[-15, 3.75, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_division" receiveShadow castShadow>
         <boxGeometry args={[20, 7.5, 0.1]} />
-        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_left_division_kitchen ? (
-        <mesh position={[-15, 3.75, -0.105]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_division_kitchen"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-15, 3.75, -0.105]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={kitchenTextures.size20x5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Yatak Odası Tarafı (Z = 0.05) */}
-      <mesh position={[-15, 3.75, 0.05]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_division_bedroom" receiveShadow castShadow>
+
+      {/* Sağ Odalar Z = 0 Bölmesi (Mutfak & Salon) */}
+      <mesh position={[15, 3.75, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_division" receiveShadow castShadow>
         <boxGeometry args={[20, 7.5, 0.1]} />
-        <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_left_division_bedroom ? (
-        <mesh position={[-15, 3.75, 0.105]} rotation={[0, 0, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_division_bedroom"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-15, 3.75, 0.105]} rotation={[0, 0, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={bedroomTextures.back} roughness={0.5} />
-          </mesh>
-        )
-      )}
 
-      {/* Salon - Çalışma Odası Ortak Duvarı */}
-      {/* Salon Tarafı (Z = -0.05) */}
-      <mesh position={[15, 3.75, -0.05]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_division_living" receiveShadow castShadow>
-        <boxGeometry args={[20, 7.5, 0.1]} />
-        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
+      {/* Sol Dikey Bölmeler (X = -5) */}
+      {/* 1. Çalışma Odası & Banyo Sınırı (Z = -25 ile -5) */}
+      <mesh position={[-5, 3.75, -15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_study_bathroom" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 20]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_right_division_living && (
-        <mesh position={[15, 3.75, -0.105]} rotation={[0, Math.PI, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_right_division_living"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      )}
-      {/* Çalışma Odası Tarafı (Z = 0.05) */}
-      <mesh position={[15, 3.75, 0.05]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_division_study" receiveShadow castShadow>
-        <boxGeometry args={[20, 7.5, 0.1]} />
-        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
+      {/* 2. Çalışma Odası & Koridor Sınırı (Z = -5 ile 0, Kapı Boşluğu Z = -4 ile -1) */}
+      <mesh position={[-5, 3.75, -4.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_study_left" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_right_division_study ? (
-        <mesh position={[15, 3.75, 0.105]} rotation={[0, 0, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[20, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_right_division_study"
-            wallCustomizations={wallCustomizations}
-            wallWidth={20} wallHeight={7.5}
-            globalWallWidth={20} globalWallHeight={7.5}
-          />
-        </mesh>
-      ) : (
-        footballThemeActive && footballTextures && (
-          <mesh position={[15, 3.75, 0.105]} rotation={[0, 0, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[20, 7.5]} />
-            <meshStandardMaterial map={footballTextures.back} roughness={0.5} />
-          </mesh>
-        )
-      )}
-
-      {/* İç Sol Dikey Bölme Duvarları (X = -5) */}
-      {/* Hol - Mutfak Alt Dikey Duvarı (Z = -19.5) */}
-      {/* Mutfak Tarafı (X = -5.05) */}
-      <mesh position={[-5.05, 3.75, -19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_kitchen_lower" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
+      <mesh position={[-5, 3.75, -0.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_study_right" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_left_hall_kitchen_lower ? (
-        <mesh position={[-5.105, 3.75, -19.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[11, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_kitchen_lower"
-            wallCustomizations={wallCustomizations}
-            wallWidth={11} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={0} globalOffsetY={0}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-5.105, 3.75, -19.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 7.5]} />
-            <meshStandardMaterial map={kitchenTextures.size11x5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Hol Tarafı (X = -4.95) */}
-      <mesh position={[-4.95, 3.75, -19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_lower" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
-      </mesh>
-      
-      {/* Kapı Üst Kirişi 1 (Mutfak Kapısı, Z = -12.5) */}
-      {/* Mutfak Tarafı */}
-      <mesh position={[-5.05, 5.5, -12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_lintel1_kitchen" receiveShadow castShadow>
+      <mesh position={[-5, 5.5, -2.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_study_lintel" receiveShadow castShadow>
         <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_left_hall_lintel1_kitchen ? (
-        <mesh position={[-5.105, 5.5, -12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[3, 4.0]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_lintel1_kitchen"
-            wallCustomizations={wallCustomizations}
-            wallWidth={3} wallHeight={4.0}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={11} globalOffsetY={3.5}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-5.105, 5.5, -12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[3, 4.0]} />
-            <meshStandardMaterial map={kitchenTextures.size3x1_5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Hol Tarafı */}
-      <mesh position={[-4.95, 5.5, -12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_lintel1" receiveShadow castShadow>
+
+      {/* 3. Yatak Odası & Koridor Sınırı (Z = 0 ile 15, Kapı Boşluğu Z = 6 ile 9) */}
+      <mesh position={[-5, 3.75, 3.0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bedroom_left" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 6]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[-5, 3.75, 12.0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bedroom_right" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 6]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[-5, 5.5, 7.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bedroom_lintel" receiveShadow castShadow>
         <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* Hol - Odalar Orta Dikey Duvarı (Z = 0 merkezli, Z > 0 Yatak Odası, Z <= 0 Mutfak) */}
-      {/* Yatak Odası Tarafı (X = -5.05, Z > 0) */}
-      <mesh position={[-5.05, 3.75, 5.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_bedroom_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_inner_left_hall_bedroom_mid ? (
-        <mesh position={[-5.105, 3.75, 5.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[11, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_bedroom_mid"
-            wallCustomizations={wallCustomizations}
-            wallWidth={11} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={0} globalOffsetY={0}
-          />
-        </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-5.105, 3.75, 5.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 7.5]} />
-            <meshStandardMaterial map={bedroomTextures.right} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Mutfak Tarafı (X = -5.05, Z <= 0) */}
-      <mesh position={[-5.05, 3.75, -5.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_kitchen_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.kitchen} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_inner_left_hall_kitchen_mid ? (
-        <mesh position={[-5.105, 3.75, -5.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[11, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_kitchen_mid"
-            wallCustomizations={wallCustomizations}
-            wallWidth={11} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={14} globalOffsetY={0}
-          />
-        </mesh>
-      ) : (
-        kitchenPatternActive && kitchenTextures && (
-          <mesh position={[-5.105, 3.75, -5.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 7.5]} />
-            <meshStandardMaterial map={kitchenTextures.size11x5} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Hol Tarafı (X = -4.95, Z = 0) */}
-      <mesh position={[-4.95, 3.75, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 22]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      {/* 4. Yatak Odası & Antre Sınırı (Z = 15 ile 25) */}
+      <mesh position={[-5, 3.75, 20]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bedroom_entry" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 10]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* Kapı Üst Kirişi 2 (Yatak Odası Kapısı, Z = 12.5) */}
-      {/* Yatak Odası Tarafı */}
-      <mesh position={[-5.05, 5.5, 12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_lintel2_bedroom" receiveShadow castShadow>
+      {/* Sağ Dikey Bölmeler (X = 5) */}
+      {/* 1. WC & Mutfak Sınırı (Z = -25 ile -5) */}
+      <mesh position={[5, 3.75, -15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_wc_kitchen" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 20]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      {/* 2. Mutfak & Koridor Sınırı (Z = -5 ile 0, Kapı Boşluğu Z = -4 ile -1) */}
+      <mesh position={[5, 3.75, -4.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_kitchen_left" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[5, 3.75, -0.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_kitchen_right" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[5, 5.5, -2.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_kitchen_lintel" receiveShadow castShadow>
         <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {wallCustomizations?.wall_inner_left_hall_lintel2_bedroom ? (
-        <mesh position={[-5.105, 5.5, 12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[3, 4.0]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_lintel2_bedroom"
-            wallCustomizations={wallCustomizations}
-            wallWidth={3} wallHeight={4.0}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={11} globalOffsetY={3.5}
-          />
-        </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-5.105, 5.5, 12.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[3, 4.0]} />
-            <meshStandardMaterial map={bedroomTextures.right} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Hol Tarafı */}
-      <mesh position={[-4.95, 5.5, 12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_lintel2" receiveShadow castShadow>
+
+      {/* 3. Salon & Koridor Sınırı (Z = 0 ile 15, Kapı Boşluğu Z = 6 ile 9) */}
+      <mesh position={[5, 3.75, 3.0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_living_left" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 6]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[5, 3.75, 12.0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_living_right" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 6]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[5, 5.5, 7.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_living_lintel" receiveShadow castShadow>
         <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* Hol - Yatak Odası Üst Dikey Duvarı (Z = 19.5) */}
-      {/* Yatak Odası Tarafı (X = -5.05) */}
-      <mesh position={[-5.05, 3.75, 19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_bedroom_upper" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.bedroom} roughness={0.6} />
-      </mesh>
-      {wallCustomizations?.wall_inner_left_hall_bedroom_upper ? (
-        <mesh position={[-5.105, 3.75, 19.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-          <planeGeometry args={[11, 7.5]} />
-          <CustomWallOverlay 
-            wallId="wall_inner_left_hall_bedroom_upper"
-            wallCustomizations={wallCustomizations}
-            wallWidth={11} wallHeight={7.5}
-            globalWallWidth={25} globalWallHeight={7.5}
-            globalOffsetX={14} globalOffsetY={0}
-          />
-        </mesh>
-      ) : (
-        bedroomTextures && (
-          <mesh position={[-5.105, 3.75, 19.5]} rotation={[0, -Math.PI / 2, 0]} raycast={null} receiveShadow>
-            <planeGeometry args={[11, 7.5]} />
-            <meshStandardMaterial map={bedroomTextures.right} roughness={0.5} />
-          </mesh>
-        )
-      )}
-      {/* Hol Tarafı (X = -4.95) */}
-      <mesh position={[-4.95, 3.75, 19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_left_hall_upper" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      {/* 4. Salon & Antre Sınırı (Z = 15 ile 25) */}
+      <mesh position={[5, 3.75, 20]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_living_entry" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 10]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-
-      {/* İç Sağ Dikey Bölme Duvarları (X = 5) */}
-      {/* Hol - Salon Alt Dikey Duvarı (Z = -19.5) */}
-      {/* Salon Tarafı (X = 5.05) */}
-      <mesh position={[5.05, 3.75, -19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_living_lower" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
-      </mesh>
-      {/* Hol Tarafı (X = 4.95) */}
-      <mesh position={[4.95, 3.75, -19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_lower" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
-      </mesh>
-      
-      {/* Kapı Üst Kirişi 1 (Salon Kapısı, Z = -12.5) */}
-      {/* Salon Tarafı */}
-      <mesh position={[5.05, 5.5, -12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_lintel1_living" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
-      </mesh>
-      {/* Hol Tarafı */}
-      <mesh position={[4.95, 5.5, -12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_lintel1" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      {/* Banyo & WC Arasındaki Dikey Bölme (X = 0, Z = -25 ile -5) */}
+      <mesh position={[0, 3.75, -15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_partition_bathroom_wc" receiveShadow castShadow>
+        <boxGeometry args={[0.1, 7.5, 20]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* Hol - Odalar Orta Dikey Duvarı (Z = 0 merkezli, Z > 0 Çalışma Odası, Z <= 0 Salon) */}
-      {/* Çalışma Odası Tarafı (X = 5.05, Z > 0) */}
-      <mesh position={[5.05, 3.75, 5.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_study_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
+      {/* Banyo & WC Ön Duvarı (Z = -5, X = -5 ile 5) */}
+      {/* 1. Banyo Kapı Duvarı (X = -5 ile 0, Kapı Boşluğu X = -3.5 ile -1.5) */}
+      <mesh position={[-4.25, 3.75, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bathroom_left" receiveShadow castShadow>
+        <boxGeometry args={[1.5, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {/* Salon Tarafı (X = 5.05, Z <= 0) */}
-      <mesh position={[5.05, 3.75, -5.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_living_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.living} roughness={0.6} />
+      <mesh position={[-0.75, 3.75, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bathroom_right" receiveShadow castShadow>
+        <boxGeometry args={[1.5, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {/* Hol Tarafı (X = 4.95, Z = 0) */}
-      <mesh position={[4.95, 3.75, 0]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_mid" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 22]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      <mesh position={[-2.5, 5.5, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_bathroom_lintel" receiveShadow castShadow>
+        <boxGeometry args={[2, 4.0, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* Kapı Üst Kirişi 2 (Çalışma Odası Kapısı, Z = 12.5) */}
-      {/* Çalışma Odası Tarafı */}
-      <mesh position={[5.05, 5.5, 12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_lintel2_study" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
+      {/* 2. WC Kapı Duvarı (X = 0 ile 5, Kapı Boşluğu X = 1.5 ile 3.5) */}
+      <mesh position={[0.75, 3.75, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_wc_left" receiveShadow castShadow>
+        <boxGeometry args={[1.5, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-      {/* Hol Tarafı */}
-      <mesh position={[4.95, 5.5, 12.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_lintel2" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 4.0, 3]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      <mesh position={[4.25, 3.75, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_wc_right" receiveShadow castShadow>
+        <boxGeometry args={[1.5, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
-
-      {/* Hol - Çalışma Odası Üst Dikey Duvarı (Z = 19.5) */}
-      {/* Çalışma Odası Tarafı (X = 5.05) */}
-      <mesh position={[5.05, 3.75, 19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_study_upper" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.study} roughness={0.6} />
-      </mesh>
-      {/* Hol Tarafı (X = 4.95) */}
-      <mesh position={[4.95, 3.75, 19.5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_right_hall_upper" receiveShadow castShadow>
-        <boxGeometry args={[0.1, 7.5, 11]} />
-        <meshStandardMaterial color={wallColors.hall} roughness={0.6} />
+      <mesh position={[2.5, 5.5, -5]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_wc_lintel" receiveShadow castShadow>
+        <boxGeometry args={[2, 4.0, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
       </mesh>
 
-      {/* --- Tema Seçimine Göre Mobilyaların Yerleşimi --- */}
+      {/* Koridor & Antre Geçiş Kemeri (Z = 15, X = -5 ile 5, Kemer Boşluğu X = -3.0 ile 3.0) */}
+      <mesh position={[-4, 3.75, 15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_archway_left" receiveShadow castShadow>
+        <boxGeometry args={[2, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[4, 3.75, 15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_archway_right" receiveShadow castShadow>
+        <boxGeometry args={[2, 7.5, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 5.5, 15]} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} name="wall_inner_archway_lintel" receiveShadow castShadow>
+        <boxGeometry args={[6, 4.0, 0.1]} />
+        <meshStandardMaterial color={wallColors.inner} roughness={0.6} />
+      </mesh>
 
-      {/* 1. Minimal Çalışma Evi Mobilyaları (Dinamik eşyalarla yer değiştirildi) */}
-      {isMinimal && (
-        <group>
-          {/* Sadece boş grup, hazır eşyalar artık placedItems state'inde dinamik olarak yaratılıyor */}
-        </group>
-      )}
+      {/* --- MODÜLER GENİŞLEME KAPILARI (GÖRSEL HOLOGRAFİK GEÇİŞLER) --- */}
+      <FutureExpansionGate position={[24.95, 0.01, -12.5]} rotation={[0, -Math.PI / 2, 0]} label={lang === 'en' ? 'Library Room' : 'Kütüphane Odası'} lang={lang} />
+      <FutureExpansionGate position={[24.95, 0.01, 12.5]} rotation={[0, -Math.PI / 2, 0]} label={lang === 'en' ? 'Guest Room' : 'Misafir Odası'} lang={lang} />
+      <FutureExpansionGate position={[-15, 0.01, 24.95]} rotation={[0, Math.PI, 0]} label={lang === 'en' ? 'Extra Study' : 'Ek Çalışma Odası'} lang={lang} />
+      <FutureExpansionGate position={[0, 0.01, 24.95]} rotation={[0, Math.PI, 0]} label={lang === 'en' ? 'Hobby Room' : 'Hobi Odası'} lang={lang} />
 
-      {/* 2. Kütüphane / Bilgi Evi Mobilyaları (Dinamik eşyalarla yer değiştirildi) */}
-      {isLibrary && (
-        <group>
-          {/* Sadece boş grup, hazır eşyalar artık placedItems state'inde dinamik olarak yaratılıyor */}
-        </group>
-      )}
 
-      {/* 3. Bilim Kurgu / Hologram Evi Mobilyaları */}
-      {isSciFi && (
-        <group>
-          {/* Yarı Saydam Ekran Panelleri */}
-          <mesh position={[23.8, 1.2, 14]} rotation={[0, -Math.PI / 2, 0]}>
-            <planeGeometry args={[1.5, 1.0]} />
-            <meshBasicMaterial color="#00f0ff" transparent opacity={0.3} side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[23.8, 1.2, 14]} rotation={[0, -Math.PI / 2, 0]}>
-            <boxGeometry args={[1.5, 1.0, 0.01]} />
-            <meshStandardMaterial color="#0f172a" transparent opacity={0.15} />
-          </mesh>
-          {/* Neon oda çizgileri */}
-          <NeonLine start={[6, 0.012, 6]} end={[24, 0.012, 6]} color="#00f0ff" />
-          <NeonLine start={[6, 0.012, 24]} end={[24, 0.012, 24]} color="#00f0ff" />
-          <NeonLine start={[6, 0.012, 6]} end={[6, 0.012, 24]} color="#00f0ff" />
-          <NeonLine start={[24, 0.012, 6]} end={[24, 0.012, 24]} color="#00f0ff" />
-
-          {/* Neon çizgiler salon */}
-          <NeonLine start={[6, 0.012, -24]} end={[24, 0.012, -24]} color="#a855f7" />
-          <NeonLine start={[6, 0.012, -6]} end={[24, 0.012, -6]} color="#a855f7" />
-          <NeonLine start={[6, 0.012, -24]} end={[6, 0.012, -6]} color="#a855f7" />
-          <NeonLine start={[24, 0.012, -24]} end={[24, 0.012, -6]} color="#a855f7" />
-
-          {/* Yatak odası neon çizgileri */}
-          <NeonLine start={[-24, 0.012, 6]} end={[-6, 0.012, 6]} color="#00f0ff" />
-          <NeonLine start={[-24, 0.012, 24]} end={[-6, 0.012, 24]} color="#00f0ff" />
-          <NeonLine start={[-24, 0.012, 6]} end={[-24, 0.012, 24]} color="#00f0ff" />
-          <NeonLine start={[-6, 0.012, 6]} end={[-6, 0.012, 24]} color="#00f0ff" />
-
-          {/* Hol */}
-          <NeonLine start={[0, 0.012, -24]} end={[0, 0.012, 24]} color="#3b82f6" />
-          <NeonLine start={[-4, 0.012, 0]} end={[4, 0.012, 0]} color="#3b82f6" />
-          {/* Hologram panel hissi veren parlayan duvar */}
-          <mesh position={[-4.9, 2.0, 0]} rotation={[0, Math.PI / 2, 0]}>
-            <planeGeometry args={[2.5, 1.6]} />
-            <meshBasicMaterial color="#00f0ff" transparent opacity={0.25} side={THREE.DoubleSide} />
-          </mesh>
-        </group>
-      )}
 
       {/* Sade Dış Çevre Platformu (Büyük Ada) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow>
